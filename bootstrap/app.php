@@ -46,6 +46,10 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
+$app->middleware([
+    App\Http\Middleware\CorsMiddleware::class
+]);
+
 /*
 |--------------------------------------------------------------------------
 | Register Middleware
