@@ -27,8 +27,8 @@ class AuthController extends Controller{
             $user->user_email = $request->input('user_email');
             $plainPassword = $request->input('user_password');
             $user->user_password = app('hash')->make($plainPassword);
-            $user->user_role_id = $request->input('user_role_id');
-            $user->user_status = $request->input('user_status');
+            $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : 1;
+            $user->user_status = $request->input('user_status')? $request->input('user_status') : 1;
             $user->save();
             $user->id;
 
