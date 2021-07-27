@@ -26,6 +26,7 @@ class CreateTokenTable extends Migration
             $table->string('token_property_value')->nullable();
             $table->string('token_filename');
             $table->integer('token_saletype');
+            $table->string('token_urgency');
             $table->integer('token_status');
             $table->timestamp('token_created_at')->useCurrent();
             $table->timestamp('token_updated_at')->useCurrent();

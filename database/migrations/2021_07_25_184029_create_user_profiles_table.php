@@ -17,11 +17,13 @@ class CreateUserProfilesTable extends Migration
             $table->increments('user_profile_id');
             $table->integer('user_id');
             $table->string('user_profile_full_name');
+            $table->text('user_bio')->nullable();
             $table->date('user_profile_birthday')->nullable();
             $table->string('user_profile_contactno')->nullable();
             $table->string('user_profile_address')->nullable();
             $table->string('user_profile_company')->nullable();
             $table->string('user_profile_avatar')->nullable();
+            $table->boolean('user_notification_settings');
             $table->timestamp('user_profile_updated_at')->useCurrent();
             $table->timestamp('user_profile_created_at')->useCurrent();
         });

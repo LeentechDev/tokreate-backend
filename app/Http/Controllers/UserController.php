@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use  App\User;
+use  App\User_profile;
 use DB;
 
 class UserController extends Controller
@@ -21,6 +22,7 @@ class UserController extends Controller
     public function profile(){
         $user=DB::select("SELECT * FROM `users`
             LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id` 
+            LEFT JOIN `wallets` ON `users`.`user_id`=`wallets`.`user_id`
             WHERE `users`.`user_id`='".Auth::user()->user_id."' and `users`.`user_role_id`='1'");
             $response=(object)[
                 "success" => true,  
@@ -33,7 +35,8 @@ class UserController extends Controller
 
     public function allUsers(){
         $user=DB::select("SELECT * FROM `users`
-            LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id` 
+            LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id`
+            LEFT JOIN `wallets` ON `users`.`user_id`=`wallets`.`user_id` 
             WHERE `users`.`user_role_id`='1'");
             $response=(object)[
                 "success" => true,  
@@ -60,5 +63,46 @@ class UserController extends Controller
             return response()->json(['message' => 'user not found!'], 404);
         }
 
+    }
+
+    public function updateAccount(Request $request){
+        function getRandomString($n) {
+            $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $randomString = '';
+            
+            for ($i = 0; $i < $n; $i++) {
+                $index = rand(0, strlen($characters) - 1);
+                $randomString .= $characters[$index];
+            }
+            
+            return $randomString;
+        }
+        // try {
+            $user_details = User_profile::where('user_id', Auth::user()->user_id);
+            if($user_details){
+                $user_details->update($request->all());
+                if($request->hasFile('user_profile_avatar')){
+                    $user_file      = $request->file('user_profile_avatar');
+                    $user_filename  = $user_file->getClientOriginalName();
+                    $user_extension = $user_file->guessExtension();
+                    $user_picture   = date('His').'-'.getRandomString(8);
+                    $user_avatar    = $user_picture.'.'.$user_extension;
+                    $destination_path = 'app/images/user_avatar';
+                    $user_file->move($destination_path, $user_avatar);
+                    DB::statement("UPDATE `user_profiles` set `user_profile_avatar` = '".$user_avatar."' Where `user_id` = '".Auth::user()->user_id."'");
+                }
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Account has been successfully updated."
+                    ]
+                ];
+                return response()->json($response, 201);
+            }else{
+                return response()->json(['message' => 'Account update failed!'], 409);
+            }
+        // }catch (\Exception $e) {
+        //     return response()->json(['message' => 'Account update failed!'], 409);
+        // }
     }
 }

@@ -20,7 +20,7 @@ class AuthController extends Controller{
             'user_email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
-        try {
+        // try {
             //registration
             $user = new User;
             $user->user_name = $request->input('user_name');
@@ -37,6 +37,7 @@ class AuthController extends Controller{
                 [
                     "user_id" =>  $user_id,
                     "user_profile_full_name" => $request->input('user_profile_full_name'),
+                    "user_notification_settings" => "1",
                 ]
             );
 
@@ -49,9 +50,9 @@ class AuthController extends Controller{
             ];
 
             return response()->json($response, 201);
-        }catch (\Exception $e) {
-            return response()->json(['message' => 'User Registration Failed!'], 409);
-        }
+        // }catch (\Exception $e) {
+        //     return response()->json(['message' => 'User Registration Failed!'], 409);
+        // }
     }
 
     public function login(Request $request){

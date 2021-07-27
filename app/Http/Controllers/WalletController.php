@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\User;
 use App\User_profile;
 use App\Wallet;
+use App\Transaction;
 use DB;
 
 class WalletController extends Controller{
@@ -101,7 +102,17 @@ class WalletController extends Controller{
             $wallet->user_id = Auth::user()->user_id;
             $wallet->wallet_status = 0;
             $wallet->save();
-
+            $transaction = Transaction::create(
+                [
+                    "user_id" =>  Auth::user()->user_id,
+                    "transaction_type" => 3,
+                    "transaction_payment_method" =>  $request->input('transaction_payment_method'),
+                    "transaction_details" =>  $request->input('transaction_details'),
+                    "transaction_service_fee" =>  $request->input('transaction_service_fee'),
+                    "transaction_grand_total" =>  $request->input('transaction_grand_total'),
+                    "transaction_status" =>  1,
+                ]
+            );
             $response=(object)[
                 "success" => true,
                 "result" => [
@@ -142,5 +153,41 @@ class WalletController extends Controller{
         }catch (\Exception $e) {
             return response()->json(['message' => 'Wallet request failed!'], 409);
         }
+    }
+
+    public function walletList(Request $request){
+        $search="";
+        if($request->has('search_keyword')){
+            $search=" AND (`user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%')";
+        }
+        $wallets= DB::select("SELECT COUNT(*) as total_wallet FROM wallets
+        LEFT JOIN `user_profiles` ON `wallets`.`user_id`=`user_profiles`.`user_id` ".$search);
+        $total_wallet=$wallets[0]->{'total_wallet'};
+        $total_pages=ceil($total_wallet / $request->input('limit'));
+        $offset = ($request->page-1) * $request->limit;
+        $wallet_list= DB::select("SELECT * FROM `wallets` 
+        LEFT JOIN `user_profiles` ON `wallets`.`user_id`=`user_profiles`.`user_id` ".$search. "
+        LIMIT ".$offset.", ". $request->limit);
+        if($wallet_list){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $wallet_list,
+                    "total_pages" => $total_pages,
+                    "page" => $request->page,
+                    "total" => $total_wallet,
+                    "limit" => $request->limit,
+                    "message" => "Here are the list of wallets",
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available wallets",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
     }
 }

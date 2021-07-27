@@ -25,7 +25,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     const UPDATED_AT = 'user_last_login';
     protected $primaryKey = 'user_id';
     protected $fillable = [
-        'user_name', 'user_email','user_role_id','user_last_login','user_status'
+        'user_name', 'user_bio', 'user_email','user_role_id','user_last_login','user_status','user_notification_settings'
     ];
 
     /**
