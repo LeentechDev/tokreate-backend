@@ -20,4 +20,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('profile', 'UserController@profile');
     $router->get('users/{user_id}', 'UserController@singleUser');
     $router->get('users', 'UserController@allUsers');
+    $router->post('token/request-minting', 'TokenController@test');
+});
+
+$router->group(['prefix' => 'api/token'], function () use ($router) {
+    $router->post('request-minting', 'TokenController@mintRequest');
 });
