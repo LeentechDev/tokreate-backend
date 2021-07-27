@@ -45,40 +45,45 @@ class TokenController extends Controller{
             
             return $randomString;
         }
-        try {
-            $token = new Token;
-            $token_file             = $request->file('token_filename');
-            $token_original_name    = $token_file->getClientOriginalName();
-            $token_extension        = $token_file->guessExtension();
-            $token_new_file_name    = date('His').'-'.getRandomString(8);
-            $generated_token        = $token_new_file_name.'.'.$token_extension;
-            // destination path for production
-            // $token_destination_path = storage_path('app/images/user_avatar');
-            $token_destination_path = 'app/images/user_avatar';
-            $token_file->move($token_destination_path, $generated_token);
-            
+        $wallet_details = DB::select("SELECT * from wallets WHERE user_id='".$request->input('user_id')."' and wallet_status=1");
+        if($wallet_details){
+            try {
+                $token = new Token;
+                $token_file             = $request->file('token_filename');
+                $token_original_name    = $token_file->getClientOriginalName();
+                $token_extension        = $token_file->guessExtension();
+                $token_new_file_name    = date('His').'-'.getRandomString(8);
+                $generated_token        = $token_new_file_name.'.'.$token_extension;
+                // destination path for production
+                // $token_destination_path = storage_path('app/images/user_avatar');
+                $token_destination_path = 'app/images/user_avatar';
+                $token_file->move($token_destination_path, $generated_token);
+                
 
-            $token->user_id = $request->input('user_id');
-            $token->token_collectible = $request->input('token_collectible');
-            $token->token_collectible_count = $request->input('token_collectible_count');
-            $token->token_title = $request->input('token_title');
-            $token->token_description = $request->input('token_description');
-            $token->token_starting_price = $request->input('token_starting_price');
-            $token->token_royalty = $request->input('token_royalty');
-            $token->token_filename = $generated_token;
-            $token->token_saletype = $request->input('token_saletype');
-            $token->token_status = $request->input('token_status');
-            $token->save();
-            $token_id = $token->token_id;
-            // $user_profile = User_profile::create(
-            //     [
-            //         "user_id" =>  $user_id,
-            //         "user_profile_full_name" => $request->input('user_profile_full_name'),
-            //     ]
-            // );
-            return response()->json(['user' => $token, 'message' => 'CREATED'], 201);
-        }catch (\Exception $e) {
-            return response()->json(['message' => 'User Registration Failed!'], 409);
+                $token->user_id = $request->input('user_id');
+                $token->token_collectible = $request->input('token_collectible');
+                $token->token_collectible_count = $request->input('token_collectible_count');
+                $token->token_title = $request->input('token_title');
+                $token->token_description = $request->input('token_description');
+                $token->token_starting_price = $request->input('token_starting_price');
+                $token->token_royalty = $request->input('token_royalty');
+                $token->token_filename = $generated_token;
+                $token->token_saletype = $request->input('token_saletype');
+                $token->token_status = $request->input('token_status');
+                $token->save();
+                $token_id = $token->token_id;
+                // $user_profile = User_profile::create(
+                //     [
+                //         "user_id" =>  $user_id,
+                //         "user_profile_full_name" => $request->input('user_profile_full_name'),
+                //     ]
+                // );
+                return response()->json(['user' => $token, 'message' => 'Your artwork has been successfully request for minting'], 201);
+            }catch (\Exception $e) {
+                return response()->json(['message' => 'User Registration Failed!'], 409);
+            }
+        }else{
+            return response()->json(['message' => 'Please set up your wallet first'], 409);
         }
     }
     public function portfolio(Request $request){

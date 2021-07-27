@@ -57,13 +57,8 @@ class UserController extends Controller
             ];
             return response()->json($response, 200);
         } catch (\Exception $e) {
-
             return response()->json(['message' => 'user not found!'], 404);
         }
 
-    }
-    public function mintRequest(Request $request){
-        $name = $request->input('user_id');
-        dd($name);
     }
 }

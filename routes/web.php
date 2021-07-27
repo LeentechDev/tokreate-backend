@@ -20,7 +20,6 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('profile', 'UserController@profile');
     $router->get('users/{user_id}', 'UserController@singleUser');
     $router->get('users', 'UserController@allUsers');
-    $router->post('token/request-minting', 'TokenController@test');
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {
@@ -32,4 +31,11 @@ $router->group(['prefix' => 'api/home'], function () use ($router) {
     $router->post('browse-token', 'HomeController@browseToken');
     $router->get('token', 'HomeController@homeToken');
     $router->get('specific-token/{token_id}', 'HomeController@specificToken');
+});
+
+$router->group(['prefix' => 'api/wallet'], function () use ($router) {
+    $router->post('connect-wallet', 'WalletController@connectWallet');
+    $router->post('create-wallet', 'WalletController@createWallet');
+    $router->post('request-wallet', 'WalletController@requestWallet');
+    $router->post('decrypt-seed-phrase', 'WalletController@decryptSeedPhrase');
 });
