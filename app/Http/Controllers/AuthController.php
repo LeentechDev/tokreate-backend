@@ -27,19 +27,28 @@ class AuthController extends Controller{
             $user->user_email = $request->input('user_email');
             $plainPassword = $request->input('password');
             $user->password = app('hash')->make($plainPassword);
-            $user->user_role_id = $request->input('user_role_id');
-            $user->user_status = $request->input('user_status');
+            $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : 1;
+            $user->user_status = $request->input('user_status')? $request->input('user_status') : 1;
             $user->save();
             $user->id;
             $user_id = $user->user_id;
             //user profile            
-            $user_profile = User_profile::create(
+            $user_data = User_profile::create(
                 [
                     "user_id" =>  $user_id,
                     "user_profile_full_name" => $request->input('user_profile_full_name'),
                 ]
             );
-            return response()->json(['user' => $user, 'message' => 'CREATED'], 201);
+
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "user_profile" => $user_data,
+                    "message" => 'Congratulation, your account has been successfully created',
+                ]
+            ];
+
+            return response()->json($response, 201);
         }catch (\Exception $e) {
             return response()->json(['message' => 'User Registration Failed!'], 409);
         }
@@ -52,8 +61,13 @@ class AuthController extends Controller{
         ]);
         $credentials = $request->only(['user_email', 'password']);
         if (! $token = Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            return response()->json(['message' => 'Incorrect Email or Password'], 401);
         }
-        return $this->respondWithToken($token);
+        
+        $user_data = User::where('user_id', Auth::user()->user_id)->first();
+
+        $user_data['profile'] = $user_data->profile;
+
+        return $this->respondWithToken($user_data,$token);
     }
 }
