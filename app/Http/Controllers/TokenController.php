@@ -81,4 +81,69 @@ class TokenController extends Controller{
             return response()->json(['message' => 'User Registration Failed!'], 409);
         }
     }
+    public function portfolio(Request $request){
+        $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
+        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
+        WHERE `tokens`.`user_id`='".Auth::user()->user_id."' and `tokens`.`token_status`='3'");
+        $total_token=$token[0]->{'total_token'};
+        $total_pages=ceil($total_token / $request->input('limit'));
+        $offset = ($request->page-1) * $request->limit;
+        $token_list= DB::select("SELECT * FROM `tokens` 
+        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
+        WHERE `tokens`.`user_id`='".Auth::user()->user_id."' and `tokens`.`token_status`='3'
+        LIMIT ".$offset.", ". $request->limit);
+        if($token_list){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $token_list,
+                    "total_pages" => $total_pages,
+                    "page" => $request->page,
+                    "total" => $total_token,
+                    "limit" => $request->limit
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available artwork for sale",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
+    }
+
+    public function browseToken(Request $request){
+        $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
+        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
+        WHERE `token_status`='3'");
+        $total_token=$token[0]->{'total_token'};
+        $total_pages=ceil($total_token / $request->input('limit'));
+        $offset = ($request->page-1) * $request->limit;
+        $token_list= DB::select("SELECT * FROM `tokens` 
+        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
+        WHERE `token_status`='3'
+        LIMIT ".$offset.", ". $request->limit);
+        if($token_list){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $token_list,
+                    "total_pages" => $total_pages,
+                    "page" => $request->page,
+                    "total" => $total_token,
+                    "limit" => $request->limit
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available artwork for sale",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
+    }
 }

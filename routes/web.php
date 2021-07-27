@@ -25,4 +25,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->post('request-minting', 'TokenController@mintRequest');
+    $router->post('portfolio', 'TokenController@portfolio');
+});
+
+$router->group(['prefix' => 'api/home'], function () use ($router) {
+    $router->post('browse-token', 'HomeController@browseToken');
+    $router->get('token', 'HomeController@homeToken');
+    $router->get('specific-token/{token_id}', 'HomeController@specificToken');
 });
