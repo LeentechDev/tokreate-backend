@@ -31,11 +31,11 @@ class AuthController extends Controller{
             $user->user_status = $request->input('user_status')? $request->input('user_status') : 1;
             $user->save();
             $user->id;
-
+            $user_id = $user->user_id;
             //user profile            
             $user_profile = User_profile::create(
                 [
-                    "user_id" =>  $user->id,
+                    "user_id" =>  $user_id,
                     "user_profile_full_name" => $request->input('user_profile_full_name'),
                 ]
             );
