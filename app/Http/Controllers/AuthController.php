@@ -33,13 +33,22 @@ class AuthController extends Controller{
             $user->id;
             $user_id = $user->user_id;
             //user profile            
-            $user_profile = User_profile::create(
+            $user_data = User_profile::create(
                 [
                     "user_id" =>  $user_id,
                     "user_profile_full_name" => $request->input('user_profile_full_name'),
                 ]
             );
-            return response()->json(['user' => $user, 'message' => 'CREATED'], 201);
+
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "user_profile" => $user_data,
+                    "message" => 'Congratulation, your account has been successfully created',
+                ]
+            ];
+
+            return response()->json($response, 201);
         }catch (\Exception $e) {
             return response()->json(['message' => 'User Registration Failed!'], 409);
         }
