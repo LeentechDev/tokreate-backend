@@ -17,14 +17,14 @@ class AuthController extends Controller{
     public function register(Request $request){
         $this->validate($request, [
             'user_name' => 'required|string',
-            'email' => 'required|email|unique:users',
+            'user_email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
         try {
             //registration
             $user = new User;
             $user->user_name = $request->input('user_name');
-            $user->email = $request->input('email');
+            $user->user_email = $request->input('user_email');
             $plainPassword = $request->input('password');
             $user->password = app('hash')->make($plainPassword);
             $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : 1;
@@ -47,10 +47,10 @@ class AuthController extends Controller{
 
     public function login(Request $request){
         $this->validate($request, [
-            'email' => 'required|string',
+            'user_email' => 'required|string',
             'password' => 'required|string',
         ]);
-        $credentials = $request->only(['email', 'password']);
+        $credentials = $request->only(['user_email', 'password']);
         if (! $token = Auth::attempt($credentials)) {
             return response()->json(['message' => 'Incorrect Email or Password'], 401);
         }
