@@ -17,16 +17,16 @@ class AuthController extends Controller{
     public function register(Request $request){
         $this->validate($request, [
             'user_name' => 'required|string',
-            'user_email' => 'required|email|unique:users',
-            'user_password' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string',
         ]);
         try {
             //registration
             $user = new User;
             $user->user_name = $request->input('user_name');
-            $user->user_email = $request->input('user_email');
-            $plainPassword = $request->input('user_password');
-            $user->user_password = app('hash')->make($plainPassword);
+            $user->email = $request->input('email');
+            $plainPassword = $request->input('password');
+            $user->password = app('hash')->make($plainPassword);
             $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : 1;
             $user->user_status = $request->input('user_status')? $request->input('user_status') : 1;
             $user->save();
@@ -47,13 +47,18 @@ class AuthController extends Controller{
 
     public function login(Request $request){
         $this->validate($request, [
-            'user_email' => 'required|string',
-            'user_password' => 'required|string',
+            'email' => 'required|string',
+            'password' => 'required|string',
         ]);
-        $credentials = $request->only(['user_email', 'user_password']);
+        $credentials = $request->only(['email', 'password']);
         if (! $token = Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            return response()->json(['message' => 'Incorrect Email or Password'], 401);
         }
-        return $this->respondWithToken($token);
+        
+        $user_data = User::where('user_id', Auth::user()->user_id)->first();
+
+        $user_data['profile'] = $user_data->profile;
+
+        return $this->respondWithToken($user_data,$token);
     }
 }

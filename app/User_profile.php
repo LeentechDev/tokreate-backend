@@ -13,7 +13,7 @@ class User_profile extends Model implements
     AuthorizableContract
 {
     use Authenticatable, Authorizable;
-
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -33,4 +33,5 @@ class User_profile extends Model implements
      */
     protected $hidden = [
     ];
+
 }
