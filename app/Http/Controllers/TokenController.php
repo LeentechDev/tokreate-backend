@@ -120,15 +120,10 @@ class TokenController extends Controller{
                     "limit" => $request->limit
                 ]
             ];
+            return response()->json($response, 200);
         }else{
-            $response=(object)[
-                "success" => false,
-                "result" => [
-                    "message" => "There are no available artwork for sale",
-                ]
-            ];
+            return response()->json(['message' => 'There are no available artwork for sale.'], 409);
         }
-        return response()->json($response, 200);
     }
 
     public function browseToken(Request $request){
@@ -153,15 +148,10 @@ class TokenController extends Controller{
                     "limit" => $request->limit
                 ]
             ];
+            return response()->json($response, 200);
         }else{
-            $response=(object)[
-                "success" => false,
-                "result" => [
-                    "message" => "There are no available artwork for sale",
-                ]
-            ];
-        }
-        return response()->json($response, 200);
+            return response()->json(['message' => 'There are no available artwork for sale.'], 409);
+        }   
     }
 
     public function updateTokenStatus(Request $request){
@@ -213,15 +203,10 @@ class TokenController extends Controller{
                     "message" => "Here are the list of token",
                 ]
             ];
+            return response()->json($response, 200);
         }else{
-            $response=(object)[
-                "success" => false,
-                "result" => [
-                    "message" => "There are no available artwork for sale",
-                ]
-            ];
-        }
-        return response()->json($response, 200);
+            return response()->json(['message' => 'There are no available artwork for sale.'], 409);
+        }    
     }
 
     public function specificToken($id){
@@ -237,6 +222,7 @@ class TokenController extends Controller{
                     "message" => "Here are the details of the token.",
                 ]
             ];
+            return response()->json($response, 200);
         }else{
             $response=(object)[
                 "success" => false,
@@ -244,7 +230,7 @@ class TokenController extends Controller{
                     "message" => "Token not found.",
                 ]
             ];
+            return response()->json(['message' => 'Token not found.'], 409);
         }
-        return response()->json($response, 200);
     }
 }

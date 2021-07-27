@@ -20,7 +20,7 @@ class AuthController extends Controller{
             'user_email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
-        // try {
+        try {
             //registration
             $user = new User;
             $user->user_name = $request->input('user_name');
@@ -50,9 +50,9 @@ class AuthController extends Controller{
             ];
 
             return response()->json($response, 201);
-        // }catch (\Exception $e) {
-        //     return response()->json(['message' => 'User Registration Failed!'], 409);
-        // }
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'User Registration Failed!'], 409);
+        }
     }
 
     public function login(Request $request){
@@ -60,15 +60,19 @@ class AuthController extends Controller{
             'user_email' => 'required|string',
             'password' => 'required|string',
         ]);
-        $credentials = $request->only(['user_email', 'password']);
-        if (! $token = Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Incorrect Email or Password'], 401);
+        try {
+            $credentials = $request->only(['user_email', 'password']);
+            if (! $token = Auth::attempt($credentials)) {
+                return response()->json(['message' => 'Incorrect Email or Password'], 401);
+            }
+            
+            $user_data = User::where('user_id', Auth::user()->user_id)->first();
+
+            $user_data['profile'] = $user_data->profile;
+
+            return $this->respondWithToken($user_data,$token);
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Login failed! Please try again.'], 409);
         }
-        
-        $user_data = User::where('user_id', Auth::user()->user_id)->first();
-
-        $user_data['profile'] = $user_data->profile;
-
-        return $this->respondWithToken($user_data,$token);
     }
 }

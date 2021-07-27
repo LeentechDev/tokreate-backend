@@ -60,7 +60,7 @@ class UserController extends Controller
             ];
             return response()->json($response, 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'user not found!'], 404);
+            return response()->json(['message' => 'User not found.'], 409);
         }
 
     }
@@ -77,7 +77,7 @@ class UserController extends Controller
             
             return $randomString;
         }
-        // try {
+        try {
             $user_details = User_profile::where('user_id', Auth::user()->user_id);
             if($user_details){
                 $user_details->update($request->all());
@@ -101,8 +101,8 @@ class UserController extends Controller
             }else{
                 return response()->json(['message' => 'Account update failed!'], 409);
             }
-        // }catch (\Exception $e) {
-        //     return response()->json(['message' => 'Account update failed!'], 409);
-        // }
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Account update failed!'], 409);
+        }
     }
 }
