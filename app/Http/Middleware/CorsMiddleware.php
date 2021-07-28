@@ -16,7 +16,7 @@ class CorsMiddleware
     public function handle($request, Closure $next)
     {
         $headers = [
-            
+            'Access-Control-Allow-Headers'     => 'Content-Type, Authorization, X-Requested-With'
         ];
 
         if ($request->isMethod('OPTIONS'))
