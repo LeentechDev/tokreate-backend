@@ -20,16 +20,16 @@ class UserController extends Controller
     }
 
     public function profile(){
-        $user=DB::select("SELECT * FROM `users`
-            LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id` 
-            LEFT JOIN `wallets` ON `users`.`user_id`=`wallets`.`user_id`
-            WHERE `users`.`user_id`='".Auth::user()->user_id."' and `users`.`user_role_id`='1'");
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $user,
-                ]
-            ];
+        $user = User::where('user_id', Auth::user()->user_id)->first();
+        $user['wallet'] = $user->wallet;
+        $user['profile'] = $user->profile;
+        $user['tokens'] = $user->tokens;
+        $response=(object)[
+            "success" => true,  
+            "result" => [
+                "datas" => $user,
+            ]
+        ];
         return response()->json($response, 200);
     }
 
@@ -77,9 +77,11 @@ class UserController extends Controller
             
             return $randomString;
         }
-        try {
+        // try {
             $user_details = User_profile::where('user_id', Auth::user()->user_id);
             if($user_details){
+                unset($request['user_name']);
+                unset($request['user_email']);
                 $user_details->update($request->all());
                 if($request->hasFile('user_profile_avatar')){
                     $user_file      = $request->file('user_profile_avatar');
@@ -101,8 +103,8 @@ class UserController extends Controller
             }else{
                 return response()->json(['message' => 'Account update failed!'], 409);
             }
-        }catch (\Exception $e) {
-            return response()->json(['message' => 'Account update failed!'], 409);
-        }
+        // }catch (\Exception $e) {
+        //     return response()->json(['message' => 'Account update failed!'], 409);
+        // }
     }
 }
