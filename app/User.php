@@ -54,6 +54,6 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     }
 
     public function tokens(){
-        return $this->belongsTo(Token::class, 'user_id', 'user_id');
+        return $this->hasMany(Token::class, 'user_id', 'user_id');
     }
 }
