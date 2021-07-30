@@ -234,12 +234,12 @@ class TokenController extends Controller{
             return response()->json($response, 200);
         }else{
             $response=(object)[
-                "success" => false,
+                "success" => true,
                 "result" => [
                     "message" => "Token not found.",
                 ]
             ];
-            return response()->json(['message' => 'Token not found.'], 409);
+            return response()->json($response, 200);
         }
     }
     public function collection(Request $request){

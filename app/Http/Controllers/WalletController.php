@@ -153,7 +153,8 @@ class WalletController extends Controller{
     public function walletList(Request $request){
         $search="";
         if($request->has('search_keyword')){
-            $search=" AND (`user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%')";
+            // $search=" AND (`user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%')";
+            $search="WHERE `user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%'";
         }
         $wallets= DB::select("SELECT COUNT(*) as total_wallet FROM wallets
         LEFT JOIN `user_profiles` ON `wallets`.`user_id`=`user_profiles`.`user_id` ".$search);

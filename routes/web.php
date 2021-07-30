@@ -43,5 +43,5 @@ $router->group(['prefix' => 'api/wallet'], function () use ($router) {
     $router->post('create-wallet', 'WalletController@createWallet');
     $router->post('request-wallet', 'WalletController@requestWallet');
     $router->post('decrypt-seed-phrase', 'WalletController@decryptSeedPhrase');
-    $router->post('wallet_list', 'WalletController@walletList');
+    $router->get('wallet_list', 'WalletController@walletList');
 });
