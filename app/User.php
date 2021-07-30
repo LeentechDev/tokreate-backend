@@ -10,7 +10,8 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\User_profile;
-
+use App\Wallet;
+use App\Token;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
@@ -46,5 +47,13 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     public function profile(){
         return $this->belongsTo(User_profile::class, 'user_id', 'user_id');
+    }
+
+    public function wallet(){
+        return $this->belongsTo(Wallet::class, 'user_id', 'user_id');
+    }
+
+    public function tokens(){
+        return $this->hasMany(Token::class, 'user_id', 'user_id');
     }
 }

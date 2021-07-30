@@ -20,16 +20,21 @@ class UserController extends Controller
     }
 
     public function profile(){
-        $user=DB::select("SELECT * FROM `users`
-            LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id` 
-            LEFT JOIN `wallets` ON `users`.`user_id`=`wallets`.`user_id`
-            WHERE `users`.`user_id`='".Auth::user()->user_id."' and `users`.`user_role_id`='1'");
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $user,
-                ]
-            ];
+        $user = User::where('user_id', Auth::user()->user_id)->first();
+        $user['wallet'] = $user->wallet;
+
+        if(!$user->profile->user_profile_avatar){
+            $user->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+        }
+
+        $user['profile'] = $user->profile;
+        $user['tokens'] = $user->tokens;
+        $response=(object)[
+            "success" => true,  
+            "result" => [
+                "datas" => $user,
+            ]
+        ];
         return response()->json($response, 200);
     }
 
@@ -80,7 +85,13 @@ class UserController extends Controller
         try {
             $user_details = User_profile::where('user_id', Auth::user()->user_id);
             if($user_details){
-                $user_details->update($request->all());
+                $request_data = $request->all();
+                
+                unset($request_data['user_name']);
+                unset($request_data['user_email']);
+                unset($request_data['user_profile_avatar']);
+                
+                $user_details->update($request_data);
                 if($request->hasFile('user_profile_avatar')){
                     $user_file      = $request->file('user_profile_avatar');
                     $user_filename  = $user_file->getClientOriginalName();
@@ -88,8 +99,10 @@ class UserController extends Controller
                     $user_picture   = date('His').'-'.getRandomString(8);
                     $user_avatar    = $user_picture.'.'.$user_extension;
                     $destination_path = 'app/images/user_avatar';
-                    $user_file->move($destination_path, $user_avatar);
-                    DB::statement("UPDATE `user_profiles` set `user_profile_avatar` = '".$user_avatar."' Where `user_id` = '".Auth::user()->user_id."'");
+                    if($user_file->move($destination_path, $user_avatar)){
+                        $profile_path = url($destination_path.'/'.$user_avatar);
+                        DB::statement("UPDATE `user_profiles` set `user_profile_avatar` = '".$profile_path."' Where `user_id` = '".Auth::user()->user_id."'");
+                    }
                 }
                 $response=(object)[
                     "success" => true,
