@@ -181,7 +181,7 @@ class TokenController extends Controller{
     public function mintingList(Request $request){
         $search="";
         if($request->has('search_keyword')){
-            $search=" AND (`tokens`.`token_title` LIKE '%".$request->search_keyword."%')";
+            $search="WHERE `tokens`.`token_title` LIKE '%".$request->search_keyword."%'";
         }
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search);
