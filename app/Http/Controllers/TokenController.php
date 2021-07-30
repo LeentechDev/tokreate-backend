@@ -181,7 +181,10 @@ class TokenController extends Controller{
     public function mintingList(Request $request){
         $search="";
         if($request->has('search_keyword')){
-            $search=" AND (`tokens`.`token_title` LIKE '%".$request->search_keyword."%')";
+            $search="WHERE `tokens`.`token_title` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_description` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_id` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_urgency` LIKE '%".$request->search_keyword."%'";
         }
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search);
@@ -205,7 +208,13 @@ class TokenController extends Controller{
             ];
             return response()->json($response, 200);
         }else{
-            return response()->json(['message' => 'There are no available artwork for sale.'], 409);
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "message" => "There are no available artwork for sale",
+                ]
+            ];
+            return response()->json($response, 200);
         }    
     }
 
@@ -231,6 +240,34 @@ class TokenController extends Controller{
                 ]
             ];
             return response()->json(['message' => 'Token not found.'], 409);
+        }
+    }
+    public function collection(Request $request){
+        $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
+        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
+        WHERE `tokens`.`user_id`='".Auth::user()->user_id."' and `tokens`.`token_status`='5'");
+        $total_token=$token[0]->{'total_token'};
+        $total_pages=ceil($total_token / $request->input('limit'));
+        $offset = ($request->page-1) * $request->limit;
+        $token_list= DB::select("SELECT * FROM `tokens` 
+        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
+        LEFT JOIN `transactions` ON `transactions`.`transaction_token_id`=`tokens`.`token_id` 
+        WHERE `tokens`.`user_id`='".Auth::user()->user_id."' and `tokens`.`token_status`='5'
+        LIMIT ".$offset.", ". $request->limit);
+        if($token_list){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $token_list,
+                    "total_pages" => $total_pages,
+                    "page" => $request->page,
+                    "total" => $total_token,
+                    "limit" => $request->limit
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            return response()->json(['message' => 'There are no available artwork for sale.'], 409);
         }
     }
 }
