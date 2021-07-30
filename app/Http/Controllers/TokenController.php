@@ -182,6 +182,9 @@ class TokenController extends Controller{
         $search="";
         if($request->has('search_keyword')){
             $search="WHERE `tokens`.`token_title` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_description` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_id` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_urgency` LIKE '%".$request->search_keyword."%'";
         }
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search);
