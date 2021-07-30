@@ -38,6 +38,33 @@ class UserController extends Controller
         return response()->json($response, 200);
     }
 
+    public function getUserTokens(Request $req){
+        $user = User::where('user_id', $req->user_id)->first();
+        $tokens = $user->tokens()->paginate(10);
+
+        if($tokens->total()){
+            $response=(object)[
+                "success" => false,  
+                "result" => [
+                    "datas" => $tokens,
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,  
+                "result" => [
+                    "datas" => null,
+                    "message" => 'No artworks found.',
+                ]
+            ];
+        }
+        
+
+        $response = response()->json($response, 200);
+
+        return $response;
+    }
+
     public function allUsers(){
         $user=DB::select("SELECT * FROM `users`
             LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id`
