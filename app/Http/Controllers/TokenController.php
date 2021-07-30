@@ -205,7 +205,13 @@ class TokenController extends Controller{
             ];
             return response()->json($response, 200);
         }else{
-            return response()->json(['message' => 'There are no available artwork for sale.'], 409);
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "message" => "There are no available artwork for sale",
+                ]
+            ];
+            return response()->json($response, 200);
         }    
     }
 
