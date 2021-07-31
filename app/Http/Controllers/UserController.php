@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use  App\User;
 use  App\User_profile;
+use  App\Constants;
 use DB;
 
 class UserController extends Controller
@@ -40,7 +41,19 @@ class UserController extends Controller
 
     public function getUserTokens(Request $req){
         $user = User::where('user_id', $req->user_id)->first();
-        $tokens = $user->tokens()->paginate(10);
+
+        $page = $req->page;
+        $limit = $req->limit;
+        $tokens = $user->tokens();
+
+        if($req->collection){
+            /* if the token is not put on market */
+            $tokens = $tokens->where('token_status', Constants::COLLECTION);
+        }else{
+            $tokens = $tokens->where('token_status', Constants::FORSALE);
+        }
+
+        $tokens = $tokens->paginate($limit);
 
         if($tokens->total()){
             $response=(object)[
