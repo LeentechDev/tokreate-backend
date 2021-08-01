@@ -219,10 +219,12 @@ class TokenController extends Controller{
     }
 
     public function specificToken($id){
-        $token_details= DB::select("SELECT * FROM `tokens` 
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
-        LEFT JOIN `transactions` ON `tokens`.`token_id`=`transactions`.`transaction_token_id` 
-        WHERE `tokens`.`token_id`='".$id."'");
+
+        $token_details = Token::find($id);
+        $token_details['owner'] = $token_details->owner;
+        $token_details['creator'] = $token_details->creator;
+        $token_details['transaction'] = $token_details->transaction;
+
         if($token_details){
             $response=(object)[
                 "success" => true,  
@@ -239,9 +241,10 @@ class TokenController extends Controller{
                     "message" => "Token not found.",
                 ]
             ];
-            return response()->json(['message' => 'Token not found.'], 409);
+            return response()->json($response, 409);
         }
     }
+    
     public function collection(Request $request){
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 

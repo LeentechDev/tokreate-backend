@@ -40,7 +40,7 @@ class UserController extends Controller
     }
 
     public function getUserTokens(Request $req){
-        $user = User::where('user_id', $req->user_id)->first();
+        $user = User::find($req->user_id);
 
         $page = $req->page;
         $limit = $req->limit;
