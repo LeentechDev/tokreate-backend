@@ -10,7 +10,7 @@ use App\User_profile;
 use App\Token;
 use App\Transaction;
 use DB;
-
+use App\Constants;
 class TokenController extends Controller{
     /**
      * Store a new user.
@@ -186,9 +186,6 @@ class TokenController extends Controller{
         $search="";
         if($request->has('search_keyword')){
             $search="WHERE `tokens`.`token_title` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_description` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_id` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_urgency` LIKE '%".$request->search_keyword."%'";
         }
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search);
@@ -222,12 +219,14 @@ class TokenController extends Controller{
         }    
     }
 
-    public function specificToken($id){
+    
 
+    public function specificToken($id){
+        
         $token_details = Token::find($id);
         $token_details['owner'] = $token_details->owner;
         $token_details['creator'] = $token_details->creator;
-        $token_details['transaction'] = $token_details->transaction;
+        $token_details['minting_transactions'] = $token_details->transactions()->WHERE('transaction_type', Constants::TRANSACTION_MINTING)->first();
 
         if($token_details){
             $response=(object)[
@@ -240,12 +239,12 @@ class TokenController extends Controller{
             return response()->json($response, 200);
         }else{
             $response=(object)[
-                "success" => false,
+                "success" => true,
                 "result" => [
                     "message" => "Token not found.",
                 ]
             ];
-            return response()->json($response, 409);
+            return response()->json($response, 200);
         }
     }
     

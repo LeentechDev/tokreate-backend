@@ -153,7 +153,8 @@ class WalletController extends Controller{
     public function walletList(Request $request){
         $search="";
         if($request->has('search_keyword')){
-            $search=" AND (`user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%')";
+            // $search=" AND (`user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%')";
+            $search="WHERE `user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%'";
         }
         $wallets= DB::select("SELECT COUNT(*) as total_wallet FROM wallets
         LEFT JOIN `user_profiles` ON `wallets`.`user_id`=`user_profiles`.`user_id` ".$search);
@@ -184,5 +185,34 @@ class WalletController extends Controller{
             ];
         }
         return response()->json($response, 200);
+    }
+
+    public function specificWallet($id){
+        $wallet_details = Wallet::find($id);
+        $wallet_details['profile'] = $wallet_details->profile;
+        $wallet_details['user'] = $wallet_details->user;
+
+        if(!$wallet_details->profile->user_profile_avatar){
+            $wallet_details->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+        }
+
+        if($wallet_details){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $wallet_details,
+                    "message" => "Here are the details of wallet.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Wallet not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
     }
 }
