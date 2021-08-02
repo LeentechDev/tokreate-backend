@@ -30,6 +30,11 @@ class UserController extends Controller
 
         $user['profile'] = $user->profile;
         $user['tokens'] = $user->tokens;
+
+        foreach ($user['tokens'] as $key => $value) {
+           $user['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
+        }
+
         $response=(object)[
             "success" => true,  
             "result" => [
@@ -48,12 +53,16 @@ class UserController extends Controller
 
         if($req->collection){
             /* if the token is not put on market */
-            $tokens = $tokens->where('token_status', Constants::COLLECTION);
+            $tokens = $tokens->where('token_on_market', !Constants::TOKEN_ON_MARKET);
         }else{
-            $tokens = $tokens->where('token_status', Constants::FORSALE);
+            $tokens = $tokens->where('token_on_market', Constants::TOKEN_ON_MARKET);
         }
 
         $tokens = $tokens->paginate($limit);
+
+        foreach ($tokens as $key => $value) {
+            $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
+        }
 
         if($tokens->total()){
             $response=(object)[

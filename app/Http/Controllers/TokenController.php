@@ -10,7 +10,7 @@ use App\User_profile;
 use App\Token;
 use App\Transaction;
 use DB;
-use App\Constants;
+
 class TokenController extends Controller{
     /**
      * Store a new user.
@@ -68,12 +68,14 @@ class TokenController extends Controller{
                 $token->token_description = $request->input('token_description');
                 $token->token_starting_price = $request->input('token_starting_price');
                 $token->token_royalty = $request->input('token_royalty');
-                $token->token_file = $generated_token;
+                $token->token_properties = $request->input('token_properties') ? json_encode($request->input('token_properties')) : '' ;
+                $token->token_file = url('app/images/tokens/'.$generated_token);
                 $token->token_saletype = $request->input('token_saletype');
                 $token->token_filetype = $request->input('token_filetype');
                 $token->token_status = 1;
                 $token->token_owner = Auth::user()->user_id;
                 $token->token_creator = Auth::user()->user_id;
+                $token->token_on_market = $request->input('put_on_market');
 
                 $token->save();
                 $token_id = $token->token_id;
@@ -82,17 +84,33 @@ class TokenController extends Controller{
                         "user_id" =>  Auth::user()->user_id,
                         "transaction_token_id" => $token_id,
                         "transaction_type" => 1,
-                        "transaction_payment_method" =>  $request->input('transaction_payment_method'),
+                        "transaction_payment_method" =>  1,
+                        "transaction_details" =>  1,
+                        "transaction_service_fee" =>  1,
+                        "transaction_urgency"   => 1,
+                        "transaction_gas_fee" =>  1,
+                        "transaction_allowance_fee" =>  1,
+                        "transaction_grand_total" => 1,
+                        /* "transaction_payment_method" =>  $request->input('transaction_payment_method'),
                         "transaction_details" =>  $request->input('transaction_details'),
                         "transaction_service_fee" =>  $request->input('transaction_service_fee'),
-                        // "transaction_urgency"   => $request->input('token_urgency'),
+                        "transaction_urgency"   => $request->input('token_urgency'),
                         "transaction_gas_fee" =>  $request->input('transaction_gas_fee'),
                         "transaction_allowance_fee" =>  $request->input('transaction_allowance_fee'),
-                        "transaction_grand_total" =>  $request->input('transaction_grand_total'),
+                        "transaction_grand_total" =>  $request->input('transaction_grand_total'), */
                         "transaction_status" =>  1,
                     ]
                 );
-                return response()->json(['user' => $token, 'message' => 'Your artwork has been successfully request for minting'], 201);
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "token" => $token,
+                        "message" => "Your artwork has been successfully request for minting."
+                    ]
+                ];
+                return response()->json($response, 200);
+
+                return response()->json([ 'message' => ''], 201);
             /* }catch (\Exception $e) {
                 return response()->json(['message' => 'Request for Minting Failed!'], 409);
             } */
@@ -186,6 +204,9 @@ class TokenController extends Controller{
         $search="";
         if($request->has('search_keyword')){
             $search="WHERE `tokens`.`token_title` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_description` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_id` LIKE '%".$request->search_keyword."%'";
+            $search="WHERE `tokens`.`token_urgency` LIKE '%".$request->search_keyword."%'";
         }
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search);
@@ -219,14 +240,13 @@ class TokenController extends Controller{
         }    
     }
 
-    
-
     public function specificToken($id){
-        
+
         $token_details = Token::find($id);
         $token_details['owner'] = $token_details->owner;
         $token_details['creator'] = $token_details->creator;
-        $token_details['minting_transactions'] = $token_details->transactions()->WHERE('transaction_type', Constants::TRANSACTION_MINTING)->first();
+        $token_details['transaction'] = $token_details->transaction;
+        $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
 
         if($token_details){
             $response=(object)[
@@ -239,12 +259,12 @@ class TokenController extends Controller{
             return response()->json($response, 200);
         }else{
             $response=(object)[
-                "success" => true,
+                "success" => false,
                 "result" => [
                     "message" => "Token not found.",
                 ]
             ];
-            return response()->json($response, 200);
+            return response()->json($response, 409);
         }
     }
     

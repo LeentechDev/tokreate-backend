@@ -37,6 +37,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $hidden = [
         'password',
     ];
+
+    protected $with = ['profile'];
     
     public function getJWTIdentifier(){
         return $this->getKey();
@@ -54,6 +56,6 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     }
 
     public function tokens(){
-        return $this->hasMany(Token::class, 'user_id', 'user_id');
+        return $this->hasMany(Token::class, 'token_owner', 'user_id');
     }
 }
