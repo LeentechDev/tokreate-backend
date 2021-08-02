@@ -25,7 +25,7 @@ class Token extends Model implements AuthenticatableContract, AuthorizableContra
     const UPDATED_AT = 'token_updated_at';
     protected $primaryKey = 'token_id';
     protected $fillable = [
-        'user_id', 'token_collectible','token_collectible_count','token_title','token_description','token_starting_price','token_royalty','token_property','token_property_value','token_filename','token_saletype','token_status'
+        'user_id', 'token_collectible','token_collectible_count','token_title','token_description','token_starting_price','token_royalty','token_properties','token_filename','token_saletype','token_status', 'token_owner', 'token_creator'
     ];
 
     protected $with = ['owner','creator'];

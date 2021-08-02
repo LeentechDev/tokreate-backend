@@ -24,16 +24,16 @@ class TokenController extends Controller{
 
     public function mintRequest(Request $request){
         $this->validate($request, [
-            'user_id' => 'required|string',
+            /* 'user_id' => 'required|string', */
             'token_collectible' => 'required|integer',
             'token_collectible_count' => 'required|integer',
             'token_title' => 'required|string',
             'token_description' => 'required|string',
-            'token_starting_price' => 'required|string',
             'token_royalty' => 'required|int',
             'token_filename' => 'required',
+            'token_filetype' => 'required',
             'token_saletype' => 'required|string',
-            'token_status' => 'required|string',
+            /* 'token_status' => 'required|string', */
         ]);
         function getRandomString($n) {
             $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -46,9 +46,9 @@ class TokenController extends Controller{
             
             return $randomString;
         }
-        $wallet_details = DB::select("SELECT * from wallets WHERE user_id='".$request->input('user_id')."' and wallet_status=1");
-        if($wallet_details){
-            try {
+        /* $wallet_details = DB::select("SELECT * from wallets WHERE user_id='".$request->input('user_id')."' and wallet_status=1");
+        if($wallet_details){ */
+            // try {
                 $token = new Token;
                 $token_file             = $request->file('token_filename');
                 $token_original_name    = $token_file->getClientOriginalName();
@@ -61,17 +61,20 @@ class TokenController extends Controller{
                 $token_file->move($token_destination_path, $generated_token);
                 
 
-                $token->user_id = $request->input('user_id');
+                $token->user_id = Auth::user()->user_id;
                 $token->token_collectible = $request->input('token_collectible');
                 $token->token_collectible_count = $request->input('token_collectible_count');
                 $token->token_title = $request->input('token_title');
                 $token->token_description = $request->input('token_description');
                 $token->token_starting_price = $request->input('token_starting_price');
                 $token->token_royalty = $request->input('token_royalty');
-                $token->token_filename = $generated_token;
+                $token->token_file = $generated_token;
                 $token->token_saletype = $request->input('token_saletype');
-                $token->token_urgency = $request->input('token_urgency');
-                $token->token_status = $request->input('token_status');
+                $token->token_filetype = $request->input('token_filetype');
+                $token->token_status = 1;
+                $token->token_owner = Auth::user()->user_id;
+                $token->token_creator = Auth::user()->user_id;
+
                 $token->save();
                 $token_id = $token->token_id;
                 $transaction = Transaction::create(
@@ -82,6 +85,7 @@ class TokenController extends Controller{
                         "transaction_payment_method" =>  $request->input('transaction_payment_method'),
                         "transaction_details" =>  $request->input('transaction_details'),
                         "transaction_service_fee" =>  $request->input('transaction_service_fee'),
+                        // "transaction_urgency"   => $request->input('token_urgency'),
                         "transaction_gas_fee" =>  $request->input('transaction_gas_fee'),
                         "transaction_allowance_fee" =>  $request->input('transaction_allowance_fee'),
                         "transaction_grand_total" =>  $request->input('transaction_grand_total'),
@@ -89,12 +93,12 @@ class TokenController extends Controller{
                     ]
                 );
                 return response()->json(['user' => $token, 'message' => 'Your artwork has been successfully request for minting'], 201);
-            }catch (\Exception $e) {
+            /* }catch (\Exception $e) {
                 return response()->json(['message' => 'Request for Minting Failed!'], 409);
-            }
-        }else{
+            } */
+        /* }else{
             return response()->json(['message' => 'Please set up your wallet first'], 409);
-        }
+        } */
     }
 
     public function portfolio(Request $request){
