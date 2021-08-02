@@ -21,6 +21,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('users/{user_id}', 'UserController@singleUser');
     $router->get('users', 'UserController@allUsers');
     $router->post('update-account', 'UserController@updateAccount');
+    $router->get('user/tokens', 'UserController@getUserTokens');
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {
@@ -44,4 +45,5 @@ $router->group(['prefix' => 'api/wallet'], function () use ($router) {
     $router->post('request-wallet', 'WalletController@requestWallet');
     $router->post('decrypt-seed-phrase', 'WalletController@decryptSeedPhrase');
     $router->get('wallet_list', 'WalletController@walletList');
+    $router->get('specific-wallet/{wallet_id}', 'WalletController@specificWallet');
 });

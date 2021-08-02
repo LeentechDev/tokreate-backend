@@ -10,7 +10,7 @@ use App\User_profile;
 use App\Token;
 use App\Transaction;
 use DB;
-
+use App\Constants;
 class TokenController extends Controller{
     /**
      * Store a new user.
@@ -182,9 +182,6 @@ class TokenController extends Controller{
         $search="";
         if($request->has('search_keyword')){
             $search="WHERE `tokens`.`token_title` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_description` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_id` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_urgency` LIKE '%".$request->search_keyword."%'";
         }
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search);
@@ -218,11 +215,15 @@ class TokenController extends Controller{
         }    
     }
 
+    
+
     public function specificToken($id){
-        $token_details= DB::select("SELECT * FROM `tokens` 
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
-        LEFT JOIN `transactions` ON `tokens`.`token_id`=`transactions`.`transaction_token_id` 
-        WHERE `tokens`.`token_id`='".$id."'");
+        
+        $token_details = Token::find($id);
+        $token_details['owner'] = $token_details->owner;
+        $token_details['creator'] = $token_details->creator;
+        $token_details['minting_transactions'] = $token_details->transactions()->WHERE('transaction_type', Constants::TRANSACTION_MINTING)->first();
+
         if($token_details){
             $response=(object)[
                 "success" => true,  
@@ -242,6 +243,7 @@ class TokenController extends Controller{
             return response()->json($response, 200);
         }
     }
+    
     public function collection(Request $request){
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 

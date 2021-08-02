@@ -186,4 +186,33 @@ class WalletController extends Controller{
         }
         return response()->json($response, 200);
     }
+
+    public function specificWallet($id){
+        $wallet_details = Wallet::find($id);
+        $wallet_details['profile'] = $wallet_details->profile;
+        $wallet_details['user'] = $wallet_details->user;
+
+        if(!$wallet_details->profile->user_profile_avatar){
+            $wallet_details->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+        }
+
+        if($wallet_details){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $wallet_details,
+                    "message" => "Here are the details of wallet.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Wallet not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
 }

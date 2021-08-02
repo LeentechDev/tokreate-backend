@@ -50,7 +50,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     }
 
     public function wallet(){
-        return $this->belongsTo(Wallet::class, 'user_id', 'user_id');
+        return $this->hasOne(Wallet::class, 'user_id', 'user_id');
     }
 
     public function tokens(){

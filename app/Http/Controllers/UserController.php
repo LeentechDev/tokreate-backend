@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use  App\User;
 use  App\User_profile;
+use  App\Constants;
 use DB;
 
 class UserController extends Controller
@@ -36,6 +37,45 @@ class UserController extends Controller
             ]
         ];
         return response()->json($response, 200);
+    }
+
+    public function getUserTokens(Request $req){
+        $user = User::find($req->user_id);
+
+        $page = $req->page;
+        $limit = $req->limit;
+        $tokens = $user->tokens();
+
+        if($req->collection){
+            /* if the token is not put on market */
+            $tokens = $tokens->where('token_status', Constants::COLLECTION);
+        }else{
+            $tokens = $tokens->where('token_status', Constants::FORSALE);
+        }
+
+        $tokens = $tokens->paginate($limit);
+
+        if($tokens->total()){
+            $response=(object)[
+                "success" => false,  
+                "result" => [
+                    "datas" => $tokens,
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,  
+                "result" => [
+                    "datas" => null,
+                    "message" => 'No artworks found.',
+                ]
+            ];
+        }
+        
+
+        $response = response()->json($response, 200);
+
+        return $response;
     }
 
     public function allUsers(){
