@@ -10,6 +10,7 @@ use App\User_profile;
 use App\Wallet;
 use App\Transaction;
 use DB;
+use App\Constants;
 
 class WalletController extends Controller{
     /**
@@ -42,13 +43,13 @@ class WalletController extends Controller{
             $wallet = new Wallet;
             $wallet->user_id = Auth::user()->user_id;
             $wallet->wallet_address = $request->input('wallet_address');
-            $wallet->wallet_status = 1;
+            $wallet->wallet_status = Constants::WALLET_DONE;
             $wallet->save();
 
             $response=(object)[
                 "success" => true,
                 "result" => [
-                    "datas" => $email_content,
+                    "datas" => $wallet,
                     "message" => 'Congratulation, your wallet has been successfully connected',
                 ]
             ];
@@ -98,9 +99,9 @@ class WalletController extends Controller{
         try {
             $wallet = new Wallet;
             $wallet->user_id = Auth::user()->user_id;
-            $wallet->wallet_status = 0;
+            $wallet->wallet_status = Constants::WALLET_REQUEST;
             $wallet->save();
-            $transaction = Transaction::create(
+            /* $transaction = Transaction::create(
                 [
                     "user_id" =>  Auth::user()->user_id,
                     "transaction_type" => 3,
@@ -110,7 +111,7 @@ class WalletController extends Controller{
                     "transaction_grand_total" =>  $request->input('transaction_grand_total'),
                     "transaction_status" =>  1,
                 ]
-            );
+            ); */
             $response=(object)[
                 "success" => true,
                 "result" => [

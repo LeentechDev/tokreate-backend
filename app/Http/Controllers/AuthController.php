@@ -69,6 +69,8 @@ class AuthController extends Controller{
             $user_data = User::where('user_id', Auth::user()->user_id)->first();
 
             $user_data['profile'] = $user_data->profile;
+            $user_data['tokens'] = $user_data->tokens;
+            $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
 
             return $this->respondWithToken($user_data,$token);
         }catch (\Exception $e) {

@@ -22,7 +22,7 @@ class UserController extends Controller
 
     public function profile(){
         $user = User::where('user_id', Auth::user()->user_id)->first();
-        $user['wallet'] = $user->wallet;
+        $user['wallet'] = $user->wallet()->orderBy('wallet_id', 'DESC')->first();
 
         if(!$user->profile->user_profile_avatar){
             $user->profile->user_profile_avatar = url('app/images/default_avatar.jpg');

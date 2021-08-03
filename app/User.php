@@ -37,8 +37,6 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $hidden = [
         'password',
     ];
-
-    protected $with = ['profile'];
     
     public function getJWTIdentifier(){
         return $this->getKey();

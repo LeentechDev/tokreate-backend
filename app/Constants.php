@@ -14,4 +14,8 @@ class Constants {
     const TRANSACTION_MINTING = 1;
     const TRANSACTION_TRANNSFER = 2;
     const TRANSACTION_SETUP_WALLET = 3;
+
+    const WALLET_REQUEST = 0;
+    const WALLET_SETUP = 1;
+    const WALLET_DONE = 2;
 }
