@@ -22,6 +22,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('users', 'UserController@allUsers');
     $router->post('update-account', 'UserController@updateAccount');
     $router->get('user/tokens', 'UserController@getUserTokens');
+    $router->get('tokens', 'TokenController@getTokens');
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {

@@ -9,6 +9,8 @@ use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
+use App\Token;
+
 class Transaction extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
     use Authenticatable, Authorizable;
@@ -38,5 +40,9 @@ class Transaction extends Model implements AuthenticatableContract, Authorizable
     }
     public function getJWTCustomClaims(){
         return [];
+    }
+
+    public function token(){
+        return $this->belongsTo(Token::class, 'transaction_token_id', 'token_id'); 
     }
 }

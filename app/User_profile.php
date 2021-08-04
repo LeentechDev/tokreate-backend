@@ -23,7 +23,7 @@ class User_profile extends Model implements
     const UPDATED_AT = 'user_profile_updated_at';
     protected $primaryKey = 'user_profile_id';
     protected $fillable = [
-        'user_id', 'user_profile_full_name', 'user_profile_birthday','user_profile_contactno','user_profile_address','user_profile_avatar', 'user_notification_settings'
+        'user_id', 'user_profile_full_name', 'user_profile_birthday','user_profile_contactno','user_profile_address','user_profile_avatar', 'user_notification_settings', 'user_profile_completed'
     ];
 
     /**

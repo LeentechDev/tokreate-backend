@@ -59,11 +59,13 @@ class UserController extends Controller
             $tokens = $tokens->where('token_on_market', Constants::TOKEN_ON_MARKET);
         }
 
-        $tokens = $tokens->paginate($limit);
+        $tokens = $tokens->with(['transactions' => function ($q) {
+            $q->orderBy('transaction_id', 'DESC');
+        }])->paginate($limit);
 
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
-            $tokens[$key]->transactions = $value->transactions()->orderBy('transaction_id','DESC')->get();
+            // $tokens[$key]->transactions = $value->transactions()->orderBy('transaction_id','DESC')->get();
         }
         
 
@@ -142,7 +144,7 @@ class UserController extends Controller
                 unset($request_data['user_name']);
                 unset($request_data['user_email']);
                 unset($request_data['user_profile_avatar']);
-                
+                $request_data['user_profile_completed'] = 1;
                 $user_details->update($request_data);
                 if($request->hasFile('user_profile_avatar')){
                     $user_file      = $request->file('user_profile_avatar');
