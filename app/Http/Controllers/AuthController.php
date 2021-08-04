@@ -70,6 +70,7 @@ class AuthController extends Controller{
 
             $user_data['profile'] = $user_data->profile;
             $user_data['tokens'] = $user_data->tokens;
+            $user_data['transactions'] = $user_data->tokens()->transactions()->orderBy('transaction_id', 'DESC')->get();
             $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
             
             if(!$user_data->profile->user_profile_avatar){

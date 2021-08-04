@@ -10,6 +10,7 @@ use App\User_profile;
 use App\Token;
 use App\Transaction;
 use DB;
+use App\Constants;
 
 class TokenController extends Controller{
     /**
@@ -54,6 +55,57 @@ class TokenController extends Controller{
             ];
             return response()->json($response, 409);
         }
+    }
+
+    public function specificToken($id){
+
+        $token_details = Token::find($id);
+        if($token_details){
+            $token_details['owner'] = $token_details->owner;
+            $token_details['creator'] = $token_details->creator;
+            $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
+            $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
+
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $token_details,
+                    "message" => "Here are the details of the token.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{   
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "Token not found.",
+                ]
+            ];
+            return response()->json($response, 409);
+        }
+    }
+
+    public function addToMarket(Request $request){
+        $tokens = Token::where('token_id',$request->token_id)->where('token_on_market', !Constants::TOKEN_ON_MARKET)->where('token_owner', Auth::user()->user_id)->first();
+        if($tokens){
+            $tokens->token_on_market = Constants::TOKEN_ON_MARKET;
+            $tokens->token_starting_price = $request->price;
+            $updated = $tokens->update();
+            if($updated){
+                $response=(object)[
+                    "success" => true,  
+                    "result" => [
+                        "datas" => $updated,
+                        "message" => "Artwork successfully put on marketplace",
+                    ]
+                ];
+                return response()->json($response, 200);
+            }
+        }
+        $response=(object)[
+            "message" => "Artwork ".$request->token_id." not found in your collection.",
+        ];
+        return response()->json($response, 409);
     }
 
     public function mintRequest(Request $request){
@@ -274,34 +326,6 @@ class TokenController extends Controller{
         }    
     }
 
-    public function specificToken($id){
-
-        $token_details = Token::find($id);
-        $token_details['owner'] = $token_details->owner;
-        $token_details['creator'] = $token_details->creator;
-        $token_details['transaction'] = $token_details->transaction;
-        $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
-
-        if($token_details){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $token_details,
-                    "message" => "Here are the details of the token.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => false,
-                "result" => [
-                    "message" => "Token not found.",
-                ]
-            ];
-            return response()->json($response, 409);
-        }
-    }
-    
     public function collection(Request $request){
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
