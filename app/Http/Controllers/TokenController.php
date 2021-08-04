@@ -26,12 +26,12 @@ class TokenController extends Controller{
         $tokens = new Token();
         $searchTerm = $request->search_key;
         if($searchTerm){
-            $tokens->whereLike(['token_title', 'token_description'], $searchTerm);
+            $tokens = $tokens->where('token_title', 'like', '%' . $searchTerm. '%')->orWhere('token_description', 'like', '%' . $searchTerm. '%');
         }
-        $tokens->orderBy('token_id','DESC');
+
         $tokens = $tokens->with(['transactions' => function ($q) {
             $q->orderBy('transaction_id', 'DESC');
-        }])->paginate($request->limit);
+        }])->orderBy('token_id','DESC')->paginate($request->limit);
         
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
