@@ -17,75 +17,38 @@ class HomeController extends Controller{
      * @return Response
      */
 
-    public function browseToken(Request $request){
-        $search="";
-        if($request->has('search_keyword')){
-            $search=" AND (`user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%'
-            OR `tokens`.`token_title` LIKE '%".$request->search_keyword."%')";
+    public function getTokens(Request $request){
+        $tokens = new Token();
+        $searchTerm = $request->search_key;
+        if($searchTerm){
+            $tokens = $tokens->where('token_title', 'like', '%' . $searchTerm. '%')->orWhere('token_description', 'like', '%' . $searchTerm. '%');
         }
-        $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
-        WHERE `token_status`='3' ".$search);
-        $total_token=$token[0]->{'total_token'};
-        $total_pages=ceil($total_token / $request->input('limit'));
-        $offset = ($request->page-1) * $request->limit;
-        $token_list= DB::select("SELECT * FROM `tokens` 
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
-        WHERE `token_status`='3' ".$search."
-        LIMIT ".$offset.", ". $request->limit);
-        if($token_list){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $token_list,
-                    "total_pages" => $total_pages,
-                    "page" => $request->page,
-                    "total" => $total_token,
-                    "limit" => $request->limit,
-                    "message" => "Here are the list of token available for sale",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            return response()->json(['message' => 'There are no available artwork for sale'], 409);
-        }
+
+        $tokens = $tokens->with(['transactions' => function ($q) {
+            $q->orderBy('transaction_id', 'DESC');
+        }])->orderBy('token_id','DESC')->paginate($request->limit);
         
-    }
-    public function homeToken(){
-        $token_list= DB::select("SELECT * FROM `tokens` 
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
-        WHERE `tokens`.`token_status`='3' ORDER BY `tokens`.`token_id` DESC LIMIT 12");
-        if($token_list){
+        foreach ($tokens as $key => $value) {
+            $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
+        }
+
+        if($tokens){
             $response=(object)[
                 "success" => true,  
                 "result" => [
-                    "datas" => $token_list,
-                    "message" => "Here are the list of token available for sale",
+                    "datas" => $tokens
                 ]
             ];
             return response()->json($response, 200);
         }else{
-            return response()->json(['message' => 'There are no available artwork for sale'], 409);
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "No artworks found.",
+                ]
+            ];
+            return response()->json($response, 409);
         }
-        return response()->json($response, 200);
     }
 
-    public function specificToken($id){
-        $token_details= DB::select("SELECT * FROM `tokens` 
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
-        WHERE `tokens`.`token_id`='".$id."'");
-        if($token_details){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $token_details,
-                    "message" => "Here are the details of the token.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            return response()->json(['message' => 'Token not found.'], 409);
-        }
-        
-    }
 }

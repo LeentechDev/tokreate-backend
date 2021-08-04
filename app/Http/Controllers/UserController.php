@@ -46,7 +46,12 @@ class UserController extends Controller
     }
 
     public function getUserTokens(Request $req){
-        $user = User::find($req->user_id);
+        $user_id = Auth::user()->user_id;
+        if($req->user_id){
+            $user_id = $req->user_id;
+        }
+
+        $user = User::find($user_id);
 
         $page = $req->page;
         $limit = $req->limit;

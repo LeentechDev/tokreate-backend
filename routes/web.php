@@ -22,7 +22,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('users', 'UserController@allUsers');
     $router->post('update-account', 'UserController@updateAccount');
     $router->get('user/tokens', 'UserController@getUserTokens');
-    $router->get('tokens', 'TokenController@getTokens');
+    $router->get('tokens', 'HomeController@getTokens');
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {
@@ -32,12 +32,6 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->post('update-status', 'TokenController@updateTokenStatus');
     $router->get('minting-list', 'TokenController@mintingList');
     $router->get('specific-token/{token_id}', 'TokenController@specificToken');
-});
-
-$router->group(['prefix' => 'api/home'], function () use ($router) {
-    $router->post('browse-token', 'HomeController@browseToken');
-    $router->get('token', 'HomeController@homeToken');
-    $router->get('specific-token/{token_id}', 'HomeController@specificToken');
 });
 
 $router->group(['prefix' => 'api/wallet'], function () use ($router) {
