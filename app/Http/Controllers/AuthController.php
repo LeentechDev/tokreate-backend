@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
+use App\Transaction;
 use App\User_profile;
+use App\Constants;
 
 class AuthController extends Controller{
     /**
@@ -66,15 +68,53 @@ class AuthController extends Controller{
                 return response()->json(['message' => 'Incorrect Email or Password'], 401);
             }
             
-            $user_data = User::where('user_id', Auth::user()->user_id)->first();
+            $user_data = User::where('user_id', Auth::user()->user_id)->where('user_role_id', Constants::USER_ARTIST)->first();
 
-            $user_data['profile'] = $user_data->profile;
-            $user_data['tokens'] = $user_data->tokens;
-            $user_data['transactions'] = $user_data->tokens()->transactions()->orderBy('transaction_id', 'DESC')->get();
-            $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
             
-            if(!$user_data->profile->user_profile_avatar){
-                $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+            if($user_data){
+                $user_data['profile'] = $user_data->profile;
+                $user_data['tokens'] = $user_data->tokens;
+                foreach ($user_data['tokens'] as $key => $value) {
+                    $user_data['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
+                    $user_data['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id','DESC')->get();
+                }
+                $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
+                
+                if(!$user_data->profile->user_profile_avatar){
+                    $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+                }
+            }else{
+                return response()->json(['message' => 'Incorrect Email or Password'], 401);
+            }
+
+            return $this->respondWithToken($user_data,$token);
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Login failed! Please try again.'], 409);
+        }
+    }
+
+
+    public function admin_login(Request $request){
+        $this->validate($request, [
+            'user_email' => 'required|string',
+            'password' => 'required|string',
+        ]);
+        try {
+            $credentials = $request->only(['user_email', 'password']);
+            if (! $token = Auth::attempt($credentials)) {
+                return response()->json(['message' => 'Incorrect Email or Password'], 401);
+            }
+            
+            $user_data = User::where('user_id', Auth::user()->user_id)->where('user_role_id', Constants::USER_ADMIN)->first();
+
+            if($user_data){
+                $user_data['profile'] = $user_data->profile;
+                
+                if(!$user_data->profile->user_profile_avatar){
+                    $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+                }
+            }else{
+                return response()->json(['message' => 'Incorrect Email or Password'], 401);
             }
 
             return $this->respondWithToken($user_data,$token);

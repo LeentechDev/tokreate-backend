@@ -33,7 +33,7 @@ class UserController extends Controller
 
         foreach ($user['tokens'] as $key => $value) {
            $user['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
-           $user['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id','ASC')->get();
+           $user['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id','DESC')->get();
         }
 
         $response=(object)[

@@ -17,6 +17,7 @@ $router->get('/', function () use ($router) {
 $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('register', 'AuthController@register');
     $router->post('login', 'AuthController@login');
+    $router->post('admin/login', 'AuthController@admin_login');
     $router->get('profile', 'UserController@profile');
     $router->get('users/{user_id}', 'UserController@singleUser');
     $router->get('users', 'UserController@allUsers');
