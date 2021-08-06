@@ -21,7 +21,7 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
-$app->withFacades();
+// $app->withFacades();
 
 $app->withEloquent();
 
@@ -49,6 +49,7 @@ $app->singleton(
 $app->middleware([
     App\Http\Middleware\CorsMiddleware::class
 ]);
+
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +94,10 @@ $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 | can respond to, as well as the controllers that may handle them.
 |
 */
+$app->register(Illuminate\Mail\MailServiceProvider::class);
+$app->configure(‘mail’);
+$app->withFacades();
+
 
 $app->router->group([
     'namespace' => 'App\Http\Controllers',
