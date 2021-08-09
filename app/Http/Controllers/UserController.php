@@ -47,6 +47,7 @@ class UserController extends Controller
 
     public function getUserTokens(Request $req){
         $user_id = Auth::user()->user_id;
+        // var_dump($user_id );
         if($req->user_id){
             $user_id = $req->user_id;
         }

@@ -95,9 +95,11 @@ $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 |
 */
 $app->register(Illuminate\Mail\MailServiceProvider::class);
-$app->configure(‘mail’);
+$app->configure('mail');
 $app->withFacades();
-
+$app->alias('mailer', Illuminate\Mail\Mailer::class);
+$app->alias('mailer', Illuminate\Contracts\Mail\Mailer::class);
+$app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 
 $app->router->group([
     'namespace' => 'App\Http\Controllers',

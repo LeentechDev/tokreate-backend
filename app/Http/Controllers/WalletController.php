@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 use App\User;
 use App\User_profile;
@@ -66,32 +67,52 @@ class WalletController extends Controller{
             'encryption_key' => 'required|string',
             'initialization_vector' => 'required|string',
         ]);
-        try {
-            $cipher = "aes-256-cbc"; 
-            $seed_phrase = $request->input('seed_phrase');
-            $encryption_key = $request->input('encryption_key');
-            $initialization_vector = $request->input('initialization_vector');
-            $encrypted_data = openssl_encrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector);
-            $email_content=(object)[
-                "encrypted_data" => $encrypted_data,
-                "encryption_key" => $encryption_key,
-                "initialization_vector" => $initialization_vector,
-            ]; 
-            $wallet_details = Wallet::where('wallet_address', $request->input('user_id'));
-            if($wallet_details){
-                DB::statement("UPDATE `wallets` set `wallet_address` = '".$request->input('wallet_address')."',`wallet_status`='1' Where `user_id` = '".$request->input('user_id')."'"); 
-            }
+        try{
+            $user_details = User::find($request->input('user_id'));
 
             $response=(object)[
-                "success" => true,
+                "success" => false,
                 "result" => [
-                    "datas" => $email_content,
-                    "message" => 'Congratulation, your wallet has been successfully connected',
+                    "message" => 'User details not found.',
                 ]
             ];
+
+            if($user_details){
+                $cipher = "aes-256-cbc"; 
+                $seed_phrase = $request->input('seed_phrase');
+                $wallet_address = $request->input('wallet_address');
+                $encryption_key = $request->input('encryption_key');
+                $initialization_vector = $request->input('initialization_vector');
+                $encrypted_data = openssl_encrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector);
+                $email_content= (object)[
+                    "encrypted_data" => $encrypted_data,
+                    "encryption_key" => $encryption_key,
+                    "wallet_address" => $wallet_address,
+                    "initialization_vector" => $initialization_vector,
+                ]; 
+
+                Mail::send('mail.wallet-setup', [ 'email_content' => $email_content, 'user_details' => $user_details], function($message) use ( $user_details) {
+                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
+                    $message->from('support@tokreate.com','Tokreate');
+                });
+
+                if($user_details->wallet){
+                    $user_details->wallet->wallet_status = Constants::WALLET_DONE;
+                    $user_details->wallet->wallet_address = $wallet_address;
+                    $user_details->wallet->update();
+                }
+
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "datas" => $email_content,
+                        "message" => 'Congratulation, your wallet has been successfully connected',
+                    ]
+                ];
+            }
             return response()->json($response, 201);
         }catch (\Exception $e) {
-            return response()->json(['message' => 'Wallet connection failed!'], 409);
+            return response()->json(['message' => 'Wallet connection failed. Invalid initialization vector'], 409);
         }
     }
 
@@ -133,47 +154,55 @@ class WalletController extends Controller{
             $initialization_vector = $request->input('initialization_vector');
 
             $decrypted_data = openssl_decrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector); 
-            $email_content=(object)[
-                "seed_phrase" => $decrypted_data,
-                "encryption_key" => $encryption_key,
-                "initialization_vector" => $initialization_vector,
-            ];
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $email_content,
-                    "message" => 'Congratulation, your have successfully decrypted your Seed Phrase.',
-                ]
-            ];
-            return response()->json($response, 201);
+            // var_dump($seed_phrase);
+            if($decrypted_data){
+                $email_content=(object)[
+                    "seed_phrase" => $decrypted_data,
+                    "encryption_key" => $encryption_key,
+                    "initialization_vector" => $initialization_vector,
+                ];
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "datas" => $email_content,
+                        "message" => 'Congratulation, your have successfully decrypted your Seed Phrase.',
+                    ]
+                ];
+                return response()->json($response, 201);
+            }else{
+                return response()->json(['message' => 'Invalid details. Please check all the given data if correct.'], 409);
+            }
+           
         }catch (\Exception $e) {
-            return response()->json(['message' => 'Wallet request failed!'], 409);
+            return response()->json(['message' => 'Invalid details. Please check all the given data if correct.'], 409);
         }
     }
 
     public function walletList(Request $request){
-        $search="";
-        if($request->has('search_keyword')){
-            // $search=" AND (`user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%')";
-            $search="WHERE `user_profiles`.`user_profile_full_name` LIKE '%".$request->search_keyword."%'";
+        $wallet = new Wallet();
+        $searchTerm = $request->search_keyword;
+        if($searchTerm){
+            $wallet = $wallet->join('user_profiles','wallets.user_id','user_profiles.user_id')->where('wallet_address', 'like', '%' . $searchTerm. '%')->orWhere('user_profile_full_name', 'like', '%' . $searchTerm. '%');
         }
-        $wallets= DB::select("SELECT COUNT(*) as total_wallet FROM wallets
-        LEFT JOIN `user_profiles` ON `wallets`.`user_id`=`user_profiles`.`user_id` ".$search);
-        $total_wallet=$wallets[0]->{'total_wallet'};
-        $total_pages=ceil($total_wallet / $request->input('limit'));
-        $offset = ($request->page-1) * $request->limit;
-        $wallet_list= DB::select("SELECT * FROM `wallets` 
-        LEFT JOIN `user_profiles` ON `wallets`.`user_id`=`user_profiles`.`user_id` ".$search. "
-        LIMIT ".$offset.", ". $request->limit);
-        if($wallet_list){
+
+        if($request->filter_status !== ""){
+            // var_dump('asdasd');
+            $wallet = $wallet->where('wallet_status', $request->filter_status);
+        }
+
+        $wallets = $wallet->with(['profile'])->paginate($request->limit);
+
+        foreach ($wallets as $key => $value) {
+            if(!$value->profile->user_profile_avatar){
+                $value->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+            }
+        }
+        
+        if($wallets->total()){
             $response=(object)[
                 "success" => true,  
                 "result" => [
-                    "datas" => $wallet_list,
-                    "total_pages" => $total_pages,
-                    "page" => $request->page,
-                    "total" => $total_wallet,
-                    "limit" => $request->limit,
+                    "datas" => $wallets,
                     "message" => "Here are the list of wallets",
                 ]
             ];

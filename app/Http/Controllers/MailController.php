@@ -6,7 +6,7 @@ class MailController extends Controller
 {
 public function mail() {
     $data = array('name'=>"Ronald");
-    Mail::send('mail/mail', $data, function($message) {
+    Mail::send('mail.email', $data, function($message) {
         $message->to('ronaldcomendador20@gmail.com', 'Ronald')->subject('Test Mail from Ronald');
         $message->from('ronaldcomendador20@gmail.com','Ronald');
     });
