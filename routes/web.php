@@ -45,3 +45,11 @@ $router->group(['prefix' => 'api/wallet'], function () use ($router) {
     $router->get('wallet_list', 'WalletController@walletList');
     $router->get('specific-wallet/{wallet_id}', 'WalletController@specificWallet');
 });
+
+
+$router->group(['prefix' => 'api/cms'], function () use ($router) {
+    $router->post('add-faqs', 'FaqsController@addFaqs');
+    $router->post('update-faqs', 'FaqsController@updateFaqs');
+    $router->get('specific-faqs/{id}', 'FaqsController@specificFaqs');
+    $router->get('faqs_list', 'FaqsController@faqsList');
+});
