@@ -21,4 +21,9 @@ class Constants {
 
     const WALLET_REQUEST = 0;
     const WALLET_DONE = 1;
+
+    const NOTIF_WALLET_RES = 1;
+    const NOTIF_MINTING_RES = 2;
+    const NOTIF_WALLET_REQ = 3;
+    const NOTIF_MINTING_REQ = 4;
 }

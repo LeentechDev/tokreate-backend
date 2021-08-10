@@ -9,8 +9,10 @@ use App\User;
 use App\User_profile;
 use App\Token;
 use App\Transaction;
+use App\Notifications;
 use DB;
 use App\Constants;
+use Illuminate\Support\Facades\Mail;
 
 class TokenController extends Controller{
     /**
@@ -283,6 +285,36 @@ class TokenController extends Controller{
                         "message" => "Token status has been successfully updated."
                     ]
                 ];
+                $token_details =$token_details->first();
+                $user_details = User::where('user_id', $token_details->token_owner)->first();
+                $msg = "";
+                /* email and notification */
+                switch ($request->token_status) {
+                    case 1:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your artwork minting request for "<b>'.$token_details->token_title.'</b>" is now processing.</p>';
+                        break;
+                    case 2:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your artwork minting request for "<b>'.$token_details->token_title.'</b>" is failed.</p>';
+                        break;
+                    case 3:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your artwork "<b>'.$token_details->token_title.'</b>" is now ready.</p>';
+                        break;
+                    default:
+                        # code...
+                        break;
+                }
+
+                Mail::send('mail.minting-status', [ 'msg' => $msg], function($message) use ( $user_details) {
+                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Miting Status Update');
+                    $message->from('support@tokreate.com','Tokreate');
+                });
+
+                Notifications::create([
+                    'notification_message' => $msg,
+                    'notification_to' => $user_details->user_id,
+                    'notification_type' => Constants::NOTIF_MINTING_RES,
+                ]);
+
                 return response()->json($response, 200);
             }else{
                 return response()->json(['message' => 'Token status update failed!'], 409);

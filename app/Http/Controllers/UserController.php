@@ -21,15 +21,21 @@ class UserController extends Controller
     }
 
     public function profile(){
-        $user = User::where('user_id', Auth::user()->user_id)->first();
-        $user['wallet'] = $user->wallet()->orderBy('wallet_id', 'DESC')->first();
+        $user = User::where('user_id', Auth::user()->user_id)
+        ->with([
+            'profile',
+            'tokens',
+            'wallet' => function ($q) {
+                $q->orderBy('wallet_id', 'DESC')->first();
+            },
+            'notifications' => function ($q) {
+                $q->orderBy('id', 'DESC')->paginate(10);
+            }
+        ])->first();
 
         if(!$user->profile->user_profile_avatar){
             $user->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
         }
-
-        $user['profile'] = $user->profile;
-        $user['tokens'] = $user->tokens;
 
         foreach ($user['tokens'] as $key => $value) {
            $user['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));

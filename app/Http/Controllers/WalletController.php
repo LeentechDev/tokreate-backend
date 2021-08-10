@@ -91,15 +91,21 @@ class WalletController extends Controller{
                     "initialization_vector" => $initialization_vector,
                 ]; 
 
-                Mail::send('mail.wallet-setup', [ 'email_content' => $email_content, 'user_details' => $user_details], function($message) use ( $user_details) {
-                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
-                    $message->from('support@tokreate.com','Tokreate');
-                });
-
                 if($user_details->wallet){
                     $user_details->wallet->wallet_status = Constants::WALLET_DONE;
                     $user_details->wallet->wallet_address = $wallet_address;
                     $user_details->wallet->update();
+
+                    Mail::send('mail.wallet-setup', [ 'email_content' => $email_content, 'user_details' => $user_details], function($message) use ( $user_details) {
+                        $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
+                        $message->from('support@tokreate.com','Tokreate');
+                    });
+    
+                    Notifications::create([
+                        'notification_message' => 'Your wallet is now ready. Check your email for credentials.',
+                        'notification_to' => $user_details->user_id,
+                        'notification_type' => Constants::NOTIF_WALLET_RES,
+                    ]);
                 }
 
                 $response=(object)[

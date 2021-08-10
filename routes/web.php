@@ -53,3 +53,8 @@ $router->group(['prefix' => 'api/cms'], function () use ($router) {
     $router->get('specific-faqs/{id}', 'FaqsController@specificFaqs');
     $router->get('faqs_list', 'FaqsController@faqsList');
 });
+
+$router->group(['prefix' => 'api/notification'], function () use ($router) {
+    $router->get('read', 'NotificationController@read');
+    $router->get('list', 'NotificationController@list');
+});
