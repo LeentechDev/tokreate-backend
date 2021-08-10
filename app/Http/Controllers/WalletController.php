@@ -181,8 +181,9 @@ class WalletController extends Controller{
     public function walletList(Request $request){
         $wallet = new Wallet();
         $searchTerm = $request->search_keyword;
+        $wallet = $wallet->join('user_profiles','wallets.user_id','user_profiles.user_id');
         if($searchTerm){
-            $wallet = $wallet->join('user_profiles','wallets.user_id','user_profiles.user_id')->where('wallet_address', 'like', '%' . $searchTerm. '%')->orWhere('user_profile_full_name', 'like', '%' . $searchTerm. '%');
+            $wallet = $wallet->where('wallet_address', 'like', '%' . $searchTerm. '%')->orWhere('user_profile_full_name', 'like', '%' . $searchTerm. '%');
         }
 
         if($request->filter_status !== ""){
