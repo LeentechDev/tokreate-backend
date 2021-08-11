@@ -25,6 +25,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('update-account', 'UserController@updateAccount');
     $router->get('user/tokens', 'UserController@getUserTokens');
     $router->get('tokens', 'HomeController@getTokens');
+    $router->post('user/change-password', 'UserController@changePassword');
+    $router->put('user/notification-settings', 'UserController@changeNotifSettings');
+    
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {
