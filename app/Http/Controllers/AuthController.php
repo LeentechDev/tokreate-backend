@@ -8,6 +8,7 @@ use App\User;
 use App\Transaction;
 use App\User_profile;
 use App\Constants;
+use App\Notifications;
 
 class AuthController extends Controller{
     /**
@@ -76,6 +77,7 @@ class AuthController extends Controller{
                     $q->orderBy('wallet_id', 'DESC')->first();
                 },
                 'notifications' => function ($q) {
+                    $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
                     $q->orderBy('id', 'DESC')->paginate(10);
                 }
             ])
@@ -115,16 +117,12 @@ class AuthController extends Controller{
             }
             
             $user_data = User::where('user_id', Auth::user()->user_id)
-            ->with([
-                'profile',
-                'notifications' => function ($q) {
-                    $q->where('notification_to', 0)->orderBy('id', 'DESC')->paginate(10);
-                }
-            ])
             ->where('user_role_id', Constants::USER_ADMIN)->first();
 
             if($user_data){
                 $user_data['profile'] = $user_data->profile;
+                $notificationC = new Notifications;
+                $user_data['notificaitons'] = $notificationC->adminNotifications();
                 
                 if(!$user_data->profile->user_profile_avatar){
                     $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');

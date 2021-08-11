@@ -20,7 +20,7 @@ class NotificationController extends Controller
     }
 
     public function read(Request $req){
-        var_dump($req->post('notif_id'));
+        /* var_dump($req->post('notif_id')); */
         $notif = Notifications::find($req->notif_id);
         $notif->notification_read_by = 1;
         $notif->update();
@@ -33,13 +33,21 @@ class NotificationController extends Controller
 
     public function list(Request $request){
         $page = $request->page;
-        $notifications = Notifications::paginate(10);
+        if(Auth::user()->user_role_id === Constants::USER_ADMIN){
+            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', 0)->paginate(10);
+        }else{
+            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', Auth::user()->user_id)->paginate(10);
+        }
+        
 
         if($notifications){
             $response=(object)[
                 "success" => true,
                 "result" => [
-                    "message" => "Token status has been successfully updated."
+                    "datas" => $notifications,
+                    "message" => "List of notifications"
                 ]
             ];
             return response()->json($response, 200);

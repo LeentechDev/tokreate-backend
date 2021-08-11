@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use  App\User;
 use  App\User_profile;
 use  App\Constants;
+use App\Notifications;
 use DB;
 
 class UserController extends Controller
@@ -27,15 +28,22 @@ class UserController extends Controller
             'tokens',
             'wallet' => function ($q) {
                 $q->orderBy('wallet_id', 'DESC')->first();
-            },
-            'notifications' => function ($q) {
-                $q->orderBy('id', 'DESC')->paginate(10);
             }
         ])->first();
 
         if(!$user->profile->user_profile_avatar){
             $user->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
         }
+
+        if(Auth::user()->user_role_id === Constants::USER_ADMIN){
+            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', 0)->limit(10)->get();
+        }else{
+            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', Auth::user()->user_id)->limit(10)->get();
+        }
+
+        $user['notifications'] = $notifications;
 
         foreach ($user['tokens'] as $key => $value) {
            $user['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));

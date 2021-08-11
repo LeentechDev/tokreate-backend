@@ -20,7 +20,7 @@ class Notifications extends Model implements AuthenticatableContract, Authorizab
      */
     protected $primaryKey = 'id';
     protected $fillable = [
-        'notification_message', 'notification_to', 'notification_from', 'notification_read_by', 'notification_source', 'notification_type'
+        'notification_message', 'notification_to', 'notification_from', 'notification_read_by', 'notification_source', 'notification_type', 'notification_item'
     ];
     protected $table = 'notification';
 
@@ -37,6 +37,11 @@ class Notifications extends Model implements AuthenticatableContract, Authorizab
     }
     public function getJWTCustomClaims(){
         return [];
+    }
+
+    public function adminNotifications(){
+        return Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+        ->where('notification_to', 0)->orderBy('id', 'DESC')->limit(10)->get();
     }
 
    

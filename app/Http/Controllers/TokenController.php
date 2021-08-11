@@ -197,6 +197,17 @@ class TokenController extends Controller{
                         "transaction_status" =>  1,
                     ]
                 );
+
+                if($token){
+                    
+                    Notifications::create([
+                        'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
+                        'notification_to' => 0,
+                        'notification_from' => Auth::user()->user_id,
+                        'notification_type' => Constants::NOTIF_MINTING_REQ,
+                    ]);
+                }
+
                 $response=(object)[
                     "success" => true,
                     "result" => [
@@ -312,6 +323,7 @@ class TokenController extends Controller{
                 Notifications::create([
                     'notification_message' => $msg,
                     'notification_to' => $user_details->user_id,
+                    'notification_from' => Auth::user()->user_id,
                     'notification_type' => Constants::NOTIF_MINTING_RES,
                 ]);
 
