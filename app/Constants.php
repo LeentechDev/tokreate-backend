@@ -7,6 +7,9 @@ class Constants {
     const USER_ARTIST = 2;
     const USER_COLLECTOR = 3;
 
+    const USER_STATUS_INACTIVE = 0;
+    const USER_STATUS_ACTIVE = 1;
+
     const PENDING = 0;
     const PROCESSING = 1;
     const FAILED = 2;

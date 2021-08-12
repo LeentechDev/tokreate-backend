@@ -30,8 +30,8 @@ class AuthController extends Controller{
             $user->user_email = $request->input('user_email');
             $plainPassword = $request->input('password');
             $user->password = app('hash')->make($plainPassword);
-            $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : 1;
-            $user->user_status = $request->input('user_status')? $request->input('user_status') : 1;
+            $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : Constants::USER_ARTIST;
+            $user->user_status = $request->input('user_status')? $request->input('user_status') : Constants::USER_STATUS_ACTIVE;
             $user->save();
             $user->id;
             $user_id = $user->user_id;
