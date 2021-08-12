@@ -27,7 +27,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('tokens', 'HomeController@getTokens');
     $router->post('user/change-password', 'UserController@changePassword');
     $router->put('user/notification-settings', 'UserController@changeNotifSettings');
-    
+    $router->post('reset-password', 'AuthController@resetPassword');
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {

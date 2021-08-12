@@ -9,6 +9,7 @@ use App\Transaction;
 use App\User_profile;
 use App\Constants;
 use App\Notifications;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller{
     /**
@@ -110,7 +111,7 @@ class AuthController extends Controller{
             'user_email' => 'required|string',
             'password' => 'required|string',
         ]);
-        /* try { */
+        try {
             $credentials = $request->only(['user_email', 'password']);
             if (! $token = Auth::attempt($credentials)) {
                 return response()->json(['message' => 'Incorrect Email or Password'], 401);
@@ -132,8 +133,35 @@ class AuthController extends Controller{
             }
 
             return $this->respondWithToken($user_data,$token);
-        /* }catch (\Exception $e) {
+        }catch (\Exception $e) {
             return response()->json(['message' => 'Login failed! Please try again.'], 409);
-        } */
+        }
+    }
+
+    public function resetPassword(Request $request){
+
+        try{
+            $user_details = User::where('user_email', $request->user_email)->first();
+
+            $token = 'test';
+
+            if($user_details){
+                Mail::send('mail.reset-password', [ 'token' => $token], function($message) use ( $user_details) {
+                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Reset Password');
+                    $message->from('support@tokreate.com','Tokreate');
+                });
+            }
+
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => 'Thank you! Please check your email for reset password instruction.',
+                ]
+            ];
+            return response()->json($response, 200);
+            
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Unable to send email right now.'], 409);
+        }
     }
 }
