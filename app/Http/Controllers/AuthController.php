@@ -122,7 +122,7 @@ class AuthController extends Controller{
             if($user_data){
                 $user_data['profile'] = $user_data->profile;
                 $notificationC = new Notifications;
-                $user_data['notificaitons'] = $notificationC->adminNotifications();
+                $user_data['notifications'] = $notificationC->adminNotifications();
                 
                 if(!$user_data->profile->user_profile_avatar){
                     $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');

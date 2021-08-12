@@ -153,7 +153,7 @@ class WalletController extends Controller{
                 "success" => true,
                 "result" => [
                     "datas" => $wallet,
-                    "message" => 'Congratulation, your have successfully submited a request for wallet.',
+                    "message" => 'Congratulation, you have successfully submitted a request for wallet.',
                 ]
             ];
 
