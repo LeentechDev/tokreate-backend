@@ -28,6 +28,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('user/change-password', 'UserController@changePassword');
     $router->put('user/notification-settings', 'UserController@changeNotifSettings');
     $router->post('reset-password', 'AuthController@resetPassword');
+    $router->post('change-password', 'AuthController@changePassword');
+    $router->get('validate-token', 'AuthController@validateTokenRP');
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {

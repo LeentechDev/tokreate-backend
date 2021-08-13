@@ -9,6 +9,7 @@ use App\Transaction;
 use App\User_profile;
 use App\Constants;
 use App\Notifications;
+use App\ResetPassword;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller{
@@ -140,12 +141,19 @@ class AuthController extends Controller{
 
     public function resetPassword(Request $request){
 
-        try{
+        /* try{ */
             $user_details = User::where('user_email', $request->user_email)->first();
 
-            $token = 'test';
+            $token = str_random(60);
+            $validity = '1 day';
 
             if($user_details){
+                ResetPassword::create([
+                    'email_address' => $request->user_email,
+                    'token' => $token,
+                    'validity' => $validity,
+                ]);
+
                 Mail::send('mail.reset-password', [ 'token' => $token], function($message) use ( $user_details) {
                     $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Reset Password');
                     $message->from('support@tokreate.com','Tokreate');
@@ -160,8 +168,51 @@ class AuthController extends Controller{
             ];
             return response()->json($response, 200);
             
-        }catch (\Exception $e) {
+        /* }catch (\Exception $e) {
             return response()->json(['message' => 'Unable to send email right now.'], 409);
+        } */
+    }
+
+    public function validateTokenRP(Request $req){
+        
+        try{
+            $details = ResetPassword::where('token', $req->token)->first();
+
+            $date_exp = strtotime($details->created_at ." + ".$details->validity);
+
+            if($date_exp > strtotime("now")){
+                return response()->json(['message' => 'valid', 'email_address' => $details->email_address ], 200);
+            }else{
+                return response()->json(['message' => 'Your password reset link is expired'], 500);
+            }
+            
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Something went wrong.'], 409);
+        }
+        
+    }
+
+    public function changePassword(Request $req){
+        $new_password = $req->password;
+
+        try{
+                $user = User::where('user_email', $req->email_address)->first();
+                $user->password = app('hash')->make($new_password);
+                $user->save();
+                
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "data" => [
+                            'user_role' => $user->user_role_id
+                        ],
+                        "message" => "Your password successfully updated."
+                    ]
+                ];
+                return response()->json($response, 200);
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Password change failed!'], 409);
         }
     }
+    
 }

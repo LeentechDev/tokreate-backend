@@ -215,7 +215,7 @@ class UserController extends Controller
                 $response=(object)[
                     "success" => true,
                     "result" => [
-                        "message" => "You password successfully changed."
+                        "message" => "Your password successfully changed."
                     ]
                 ];
                 return response()->json($response, 200);
