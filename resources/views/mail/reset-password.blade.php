@@ -32,45 +32,15 @@
                                 </tr>
                                 <tr>
                                     <td style="padding:0 50px;">
-                                        <h1 style="color:#1e1e2d; font-weight:600; margin:0;font-size:28px;font-family:'Rubik',sans-serif;">Wallet Access</h1>
+                                        <h1 style="color:#1e1e2d; font-weight:600; margin:0;font-size:28px;font-family:'Rubik',sans-serif;">You have
+                                            requested to reset your password</h1>
                                         <span style="display:inline-block; vertical-align:middle; margin:29px 0 26px; border-bottom:1px solid #cecece;width:100px;"></span>
                                         <p style="color:#455056; font-size:15px;line-height:24px; margin:0;">
-                                        Thank you for requesting a wallet setup. Your wallet is now ready, please check the credential below.
+                                            Use the link below to set up a new password for your account. If you did not request to reset your password, ignore this email and the link will expire after 1 day you received this email.
                                         </p>
-                                        <br>
-                                        <hr>
-                                            <div style="background:#f6f7f8;border-radius:3px; color:#455056;">
-                                                <table>
-                                                    <tr>
-                                                        <td width="200"><strong>Wallet Address: </strong></td>
-                                                        <td> {{$email_content->wallet_address}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>Encrypted Data: </strong></td>
-                                                        <td> {{$email_content->encrypted_data}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>Encryption Key: </strong></td>
-                                                        <td> {{$email_content->encryption_key}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td><strong>Initialization Vector: </strong></td>
-                                                        <td> {{$email_content->initialization_vector}}</td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-                                            <hr>
-                                            <br>
-                                            <p style="color:#455056;"> 
-                                                <strong>Note:</strong> 
-                                                Keep your seedphrase safe, it's your responsibility.
-                                            </p>
-                                            <h4 style="color:#455056;">Tips on storing it safely</h4>
-                                            <ul style="list-style: none; padding: 0px;color:#455056;">
-                                                <li>- Save a backup multiple places.</li>
-                                                <li>- Never share the phrase with anyone</li>
-                                                <li>- Be careful of phishing site.</li>
-                                            </ul>
+                                        <a href="http://dev.tokreate.com:8181/reset-password/<?= $token ?>"
+                                            style="background-color: #C3A156;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:2px;">Reset
+                                            Password</a>
                                     </td>
                                 </tr>
                                 <tr>

