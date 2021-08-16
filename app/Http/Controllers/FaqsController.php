@@ -91,7 +91,7 @@ class FaqsController extends Controller
 
 
         public function faqsList(Request $request){
-            $faqs = DB::table('faqs')->paginate(10);
+            $faqs = DB::table('faqs')->paginate();
 
             if($faqs){
                 $response=(object)[
