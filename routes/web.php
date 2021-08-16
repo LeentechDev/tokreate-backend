@@ -57,6 +57,10 @@ $router->group(['prefix' => 'api/cms'], function () use ($router) {
     $router->post('update-faqs', 'FaqsController@updateFaqs');
     $router->get('specific-faqs/{id}', 'FaqsController@specificFaqs');
     $router->get('faqs_list', 'FaqsController@faqsList');
+    $router->get('terms-and-conditions', 'TermsandConditionController@viewTermsandConditions');
+    $router->post('update-terms-and-conditions', 'TermsandConditionController@updateTermsandConditions');
+    $router->get('data-policy', 'DataPolicyController@viewDataPolicy');
+    $router->post('update-data-policy', 'DataPolicyController@updateDataPolicy');
 });
 
 $router->group(['prefix' => 'api/notification'], function () use ($router) {
