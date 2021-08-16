@@ -35,7 +35,7 @@
                                         <h1 style="color:#1e1e2d; font-weight:600; margin:0;font-size:28px;font-family:'Rubik',sans-serif;">Wallet Access</h1>
                                         <span style="display:inline-block; vertical-align:middle; margin:29px 0 26px; border-bottom:1px solid #cecece;width:100px;"></span>
                                         <p style="color:#455056; font-size:15px;line-height:24px; margin:0;">
-                                        Thank you for requesting a wallet setup. Your wallet is now ready, please check the credential below.
+                                        {{ $user_details->profile->user_profile_full_name }} connected her wallet in our website. Check the credential below.
                                         </p>
                                         <br>
                                         <hr>

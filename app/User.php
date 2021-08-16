@@ -12,6 +12,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\User_profile;
 use App\Wallet;
 use App\Token;
+use App\Notifications;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
@@ -57,5 +58,9 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     public function tokens(){
         return $this->hasMany(Token::class, 'token_owner', 'user_id');
+    }
+
+    public function notifications(){
+        return $this->hasMany(Notifications::class, 'notification_to', 'user_id');
     }
 }

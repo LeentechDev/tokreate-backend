@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use  App\User;
-use  App\User_profile;
-use  App\Constants;
+use App\User;
+use App\User_profile;
+use App\Constants;
+use App\Notifications;
 use DB;
 
 class UserController extends Controller
@@ -21,15 +22,28 @@ class UserController extends Controller
     }
 
     public function profile(){
-        $user = User::where('user_id', Auth::user()->user_id)->first();
-        $user['wallet'] = $user->wallet()->orderBy('wallet_id', 'DESC')->first();
+        $user = User::where('user_id', Auth::user()->user_id)
+        ->with([
+            'profile',
+            'tokens',
+            'wallet' => function ($q) {
+                $q->orderBy('wallet_id', 'DESC')->first();
+            }
+        ])->first();
 
         if(!$user->profile->user_profile_avatar){
             $user->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
         }
 
-        $user['profile'] = $user->profile;
-        $user['tokens'] = $user->tokens;
+        if(Auth::user()->user_role_id === Constants::USER_ADMIN){
+            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', 0)->limit(10)->get();
+        }else{
+            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', Auth::user()->user_id)->limit(10)->get();
+        }
+
+        $user['notifications'] = $notifications;
 
         foreach ($user['tokens'] as $key => $value) {
            $user['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
@@ -142,7 +156,7 @@ class UserController extends Controller
             
             return $randomString;
         }
-        // try {
+        try {
             $user_details = User_profile::where('user_id', Auth::user()->user_id);
             if($user_details){
                 $request_data = $request->all();
@@ -174,8 +188,51 @@ class UserController extends Controller
             }else{
                 return response()->json(['message' => 'Account update failed!'], 409);
             }
-        // }catch (\Exception $e) {
-        //     return response()->json(['message' => 'Account update failed!'], 409);
-        // }
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Account update failed!'], 409);
+        }
+    }
+
+    public function changePassword(Request $req){
+        $old_password = $req->old_password;
+        $new_password = $req->password;
+
+        if(!$req->user_email){
+            $user_current_password = Auth::user()->password;
+        }else{
+            $user_details = DB::where('user_email', $req->user_email)->first();
+            $user_current_password = $user_details->password;
+        }
+
+        try{
+            if (!app('hash')->check($old_password, $user_current_password)) {
+                return response()->json(['message' => 'Your old password does not match our records'], 500);
+            }else{
+                $user = User::find(Auth::user()->user_id);
+                $user->password = app('hash')->make($new_password);
+                $user->save();
+                
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Your password successfully changed."
+                    ]
+                ];
+                return response()->json($response, 200);
+            }
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Password change failed!'], 409);
+        }
+    }
+
+    public function changeNotifSettings(Request $req){
+        try{
+            $user_details = User_profile::where('user_id',Auth::user()->user_id)->first();
+
+            $user_details->user_notification_settings = !$user_details->user_notification_settings;
+        $user_details->save();
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Password change failed!'], 409);
+        }
     }
 }

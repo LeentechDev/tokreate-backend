@@ -7,6 +7,9 @@ class Constants {
     const USER_ARTIST = 2;
     const USER_COLLECTOR = 3;
 
+    const USER_STATUS_INACTIVE = 0;
+    const USER_STATUS_ACTIVE = 1;
+
     const PENDING = 0;
     const PROCESSING = 1;
     const FAILED = 2;
@@ -21,4 +24,9 @@ class Constants {
 
     const WALLET_REQUEST = 0;
     const WALLET_DONE = 1;
+
+    const NOTIF_WALLET_RES = 1;
+    const NOTIF_MINTING_RES = 2;
+    const NOTIF_WALLET_REQ = 3;
+    const NOTIF_MINTING_REQ = 4;
 }

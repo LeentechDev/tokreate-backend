@@ -9,8 +9,10 @@ use App\User;
 use App\User_profile;
 use App\Token;
 use App\Transaction;
+use App\Notifications;
 use DB;
 use App\Constants;
+use Illuminate\Support\Facades\Mail;
 
 class TokenController extends Controller{
     /**
@@ -61,10 +63,18 @@ class TokenController extends Controller{
 
         $token_details = Token::find($id);
         if($token_details){
-            $token_details['owner'] = $token_details->owner;
-            $token_details['creator'] = $token_details->creator;
+            /* $token_details['owner'] = $token_details->owner;
+            $token_details['creator'] = $token_details->creator; */
             $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
             $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
+
+          
+            if(!$token_details->owner->profile->user_profile_avatar){
+                $token_details->owner->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+            }
+            if(!$token_details->creator->profile->user_profile_avatar){
+                $token_details->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+            }
 
             $response=(object)[
                 "success" => true,  
@@ -114,7 +124,7 @@ class TokenController extends Controller{
             'token_collectible' => 'required|integer',
             'token_collectible_count' => 'required|integer',
             'token_title' => 'required|string',
-            'token_description' => 'required|string',
+            /* 'token_description' => 'required|string', */
             'token_royalty' => 'required|int',
             'token_filename' => 'required',
             'token_filetype' => 'required',
@@ -187,6 +197,20 @@ class TokenController extends Controller{
                         "transaction_status" =>  1,
                     ]
                 );
+
+                if($token){
+
+                    $user_details = User::find(Auth::user()->user_id);
+                    
+                    Notifications::create([
+                        'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
+                        'notification_to' => 0,
+                        'notification_from' => Auth::user()->user_id,
+                        'notification_item' => $token_id,
+                        'notification_type' => Constants::NOTIF_MINTING_REQ,
+                    ]);
+                }
+
                 $response=(object)[
                     "success" => true,
                     "result" => [
@@ -195,8 +219,6 @@ class TokenController extends Controller{
                     ]
                 ];
                 return response()->json($response, 200);
-
-                return response()->json([ 'message' => ''], 201);
             /* }catch (\Exception $e) {
                 return response()->json(['message' => 'Request for Minting Failed!'], 409);
             } */
@@ -234,7 +256,7 @@ class TokenController extends Controller{
         }
     }
 
-    public function browseToken(Request $request){
+    /* public function browseToken(Request $request){
         $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
         LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` 
         WHERE `token_status`='3'");
@@ -260,7 +282,7 @@ class TokenController extends Controller{
         }else{
             return response()->json(['message' => 'There are no available artwork for sale.'], 409);
         }   
-    }
+    } */
 
     public function updateTokenStatus(Request $request){
         $this->validate($request, [
@@ -277,7 +299,38 @@ class TokenController extends Controller{
                         "message" => "Token status has been successfully updated."
                     ]
                 ];
-                return response()->json($response, 201);
+                $token_details =$token_details->first();
+                $user_details = User::where('user_id', $token_details->token_owner)->first();
+                $msg = "";
+                /* email and notification */
+                switch ($request->token_status) {
+                    case 1:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your artwork minting request for "<b>'.$token_details->token_title.'</b>" is now processing.</p>';
+                        break;
+                    case 2:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your artwork minting request for "<b>'.$token_details->token_title.'</b>" is failed.</p>';
+                        break;
+                    case 3:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your artwork "<b>'.$token_details->token_title.'</b>" is now ready.</p>';
+                        break;
+                    default:
+                        # code...
+                        break;
+                }
+
+                Mail::send('mail.minting-status', [ 'msg' => $msg], function($message) use ( $user_details) {
+                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Miting Status Update');
+                    $message->from('support@tokreate.com','Tokreate');
+                });
+
+                Notifications::create([
+                    'notification_message' => $msg,
+                    'notification_to' => $user_details->user_id,
+                    'notification_from' => Auth::user()->user_id,
+                    'notification_type' => Constants::NOTIF_MINTING_RES,
+                ]);
+
+                return response()->json($response, 200);
             }else{
                 return response()->json(['message' => 'Token status update failed!'], 409);
             }
@@ -287,30 +340,33 @@ class TokenController extends Controller{
     }
 
     public function mintingList(Request $request){
-        $search="";
-        if($request->has('search_keyword')){
-            $search="WHERE `tokens`.`token_title` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_description` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_id` LIKE '%".$request->search_keyword."%'";
-            $search="WHERE `tokens`.`token_urgency` LIKE '%".$request->search_keyword."%'";
+        $tokens = new Token();
+        $searchTerm = $request->search_key;
+        $tokens = $tokens->join('transactions','transactions.transaction_token_id','tokens.token_id');
+        if($searchTerm){
+            $tokens->where('token_title', 'like', '%' . $searchTerm. '%')
+            ->orWhere('token_description', 'like', '%' . $searchTerm. '%');
         }
-        $token= DB::select("SELECT COUNT(*) as total_token FROM tokens
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search);
-        $total_token=$token[0]->{'total_token'};
-        $total_pages=ceil($total_token / $request->input('limit'));
-        $offset = ($request->page-1) * $request->limit;
-        $token_list= DB::select("SELECT * FROM `tokens` 
-        LEFT JOIN `user_profiles` ON `tokens`.`user_id`=`user_profiles`.`user_id` ".$search."
-        LIMIT ".$offset.", ". $request->limit);
-        if($token_list){
+        if($request->filter_urgency !== ""){
+            $tokens = $tokens->where('transaction_urgency', $request->filter_urgency);
+        }
+        $token_list = $tokens->with(['owner'])->orderBy('token_status', 'ASC')->paginate($request->limit);
+
+        foreach ($token_list as $key => $token) {
+            if(!$token->owner->profile->user_profile_avatar){
+                $token->owner->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+            }
+            if(!$token->creator->profile->user_profile_avatar){
+                $token->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+            }
+        }
+        
+
+        if($token_list->total()){
             $response=(object)[
                 "success" => true,  
                 "result" => [
                     "datas" => $token_list,
-                    "total_pages" => $total_pages,
-                    "page" => $request->page,
-                    "total" => $total_token,
-                    "limit" => $request->limit,
                     "message" => "Here are the list of token",
                 ]
             ];
