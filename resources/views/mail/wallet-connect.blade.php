@@ -13,7 +13,7 @@
         style="@import url(https://fonts.googleapis.com/css?family=Rubik:300,400,500,700|Open+Sans:300,400,600,700); font-family: 'Open Sans', sans-serif;">
         <tr>
             <a href="https://rakeshmandal.com" title="logo" target="_blank">
-              <img style="margin: 0 auto; display: block; margin-bottom: 25px;" width="60"  src="<?= url('logo.png') ?>" title="logo" alt="logo">
+              <img style="margin: 0 auto; display: block;" width="120"  src="<?= url('logo.png') ?>" title="logo" alt="logo">
           </a>
         </tr>
         <tr>
