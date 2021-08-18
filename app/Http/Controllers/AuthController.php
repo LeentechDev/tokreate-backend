@@ -130,7 +130,7 @@ class AuthController extends Controller{
                     $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
                 }
             }else{
-                return response()->json(['message' => 'Incorrect Email or Password'], 401);
+                return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
             }
 
             return $this->respondWithToken($user_data,$token);
