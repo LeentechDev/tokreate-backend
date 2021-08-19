@@ -24,10 +24,12 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('users', 'UserController@allUsers');
     $router->post('update-account', 'UserController@updateAccount');
     $router->get('user/tokens', 'UserController@getUserTokens');
+    $router->post('payment', 'TokenController@payment');
+    $router->post('dragonpay-webhook', 'TokenController@webhook');
+    $router->get('gas-fee', 'HomeController@getGasFees');
     $router->get('tokens', 'HomeController@getTokens');
     $router->post('user/change-password', 'UserController@changePassword');
     $router->put('user/notification-settings', 'UserController@changeNotifSettings');
-    
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {

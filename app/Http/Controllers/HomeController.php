@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
 use App\User_profile;
-use  App\Token;
+use App\Token;
+use App\Gas_fee;
 use DB;
 
 class HomeController extends Controller{
@@ -49,6 +50,28 @@ class HomeController extends Controller{
             ];
             return response()->json($response, 409);
         }
+    }
+    public function getGasFees(){
+        // $gas_fees = new Gas_fee();
+        $gas_fees = DB::select('SELECT * FROM `gas_fees`');
+        // dd($gas_fees);
+        if($gas_fees){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $gas_fees,
+                    "message" => "Here are the list of gas fees",
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available gas fees",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
     }
 
 }

@@ -21,6 +21,11 @@ class TokenController extends Controller{
      * @param  Request  $request
      * @return Response
      */
+    protected CONST MERCHANT_ID = 'LEENTECH';
+    protected CONST MERCHANT_PASS = 'Da5qgHfEw3zN';
+    protected CONST MERCHANT_API_KEY = 'bec973b72e20e653ddc54c0b37cbf18a254b6928';
+    protected CONST MODE = 'development';
+    
     public function __construct(){
         $this->middleware('auth');
     }
@@ -124,7 +129,7 @@ class TokenController extends Controller{
             'token_collectible' => 'required|integer',
             'token_collectible_count' => 'required|integer',
             'token_title' => 'required|string',
-            'token_description' => 'required|string',
+            'token_description' => 'string',
             'token_royalty' => 'required|int',
             'token_filename' => 'required',
             'token_filetype' => 'required',
@@ -200,18 +205,18 @@ class TokenController extends Controller{
 
                 if($token){
                     
-                    Notifications::create([
-                        'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
-                        'notification_to' => 0,
-                        'notification_from' => Auth::user()->user_id,
-                        'notification_type' => Constants::NOTIF_MINTING_REQ,
-                    ]);
+                    // Notifications::create([
+                    //     'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
+                    //     'notification_to' => 0,
+                    //     'notification_from' => Auth::user()->user_id,
+                    //     'notification_type' => Constants::NOTIF_MINTING_REQ,
+                    // ]);
                 }
 
                 $response=(object)[
                     "success" => true,
                     "result" => [
-                        "token" => $token,
+                        "token" => $token_id,
                         "message" => "Your artwork has been successfully request for minting."
                     ]
                 ];
@@ -405,6 +410,73 @@ class TokenController extends Controller{
             return response()->json($response, 200);
         }else{
             return response()->json(['message' => 'There are no available artwork for sale.'], 409);
+        }
+    }
+
+    private function getHost() {
+        if(SELF::MODE == 'development') {
+            return 'test.dragonpay.ph';
+        } else {
+            return 'gw.dragonpay.ph';
+        }
+    }
+
+    private function getBaseUrl() {
+        if(SELF::MODE == 'development') {
+            return 'https://test.dragonpay.ph/';
+        } else {
+            return 'https://gw.dragonpay.ph/';
+        }
+    }
+    public function payment(Request $request){
+        $transaction = Transaction::findorfail($request->input('transaction_token_id'));
+
+        if($transaction){
+            $transaction->update($request->all());
+        }
+        $params = array(
+            'merchantid' => SELF::MERCHANT_ID,
+            'txnid' => $request->input('transaction_token_id'),
+            'amount' => $request->transaction_grand_total,
+            'ccy' => 'PHP',
+            'description' => 'test',
+            'email' => 'kaelreyes12@hotmail.com',
+        );
+
+        $params['amount'] = number_format($params['amount'], 2, '.', '');
+        $params['key'] = SELF::MERCHANT_PASS;
+        $digest_string = implode(':', $params);
+        unset($params['key']);
+        $params['digest'] = sha1($digest_string);
+        if($request->proc_id) {
+            $params['procid'] = $request->proc_id;
+        }
+
+        $url = $this->getBaseUrl() . 'Pay.aspx?' . http_build_query($params, '', '&');
+
+       
+        $response=(object)[
+            "result" => [
+                "url" =>  $url,
+                "token_id" => $request->input('transaction_token_id'),
+                "payment_method" => $request->input('transaction_payment_method')
+            ]
+        ];
+        return response()->json($response, 200);
+        // return $url
+    }
+
+    public function webhook(Request $request) {
+        if($request->status == 'S') {
+            try {
+                Transaction::where('token_transaction_id', $request->txnid)->update([
+                    'transaction_status' => 1
+                ]);
+                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                return responseWithMessage(200, "Success", $result);
+            } catch(\Throwable $th) {
+                return $th;
+            }
         }
     }
 }
