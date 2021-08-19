@@ -29,4 +29,7 @@ class Constants {
     const NOTIF_MINTING_RES = 2;
     const NOTIF_WALLET_REQ = 3;
     const NOTIF_MINTING_REQ = 4;
+
+    const TRANSACTION_SUCCESS = 1;
+    const TRANSACTION_FAILED = 0;
 }
