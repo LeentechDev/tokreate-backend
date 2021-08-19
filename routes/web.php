@@ -62,7 +62,10 @@ $router->group(['prefix' => 'api/cms'], function () use ($router) {
     $router->post('update-terms-and-conditions', 'TermsandConditionController@updateTermsandConditions');
     $router->get('data-policy', 'DataPolicyController@viewDataPolicy');
     $router->post('update-data-policy', 'DataPolicyController@updateDataPolicy');
+    $router->post('update-gas-fee', 'GasFeeController@updateGasFee');
+    $router->get('gas-fee', 'GasFeeController@viewGasfee');
 });
+
 
 $router->group(['prefix' => 'api/notification'], function () use ($router) {
     $router->get('read', 'NotificationController@read');
