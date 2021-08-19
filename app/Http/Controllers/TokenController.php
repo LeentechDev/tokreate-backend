@@ -33,13 +33,17 @@ class TokenController extends Controller{
     public function getTokens(Request $request){
         $tokens = new Token();
         $searchTerm = $request->search_key;
-        if($searchTerm){
-            $tokens = $tokens->where('token_title', 'like', '%' . $searchTerm. '%')->orWhere('token_description', 'like', '%' . $searchTerm. '%');
-        }
 
         $tokens = $tokens->with(['transactions' => function ($q) {
             $q->orderBy('transaction_id', 'DESC');
-        }])->orderBy('token_id','DESC')->paginate($request->limit);
+        }])
+        ->orderBy('token_id','DESC')
+        ->where(function ($q) use ($searchTerm) {
+            if ($searchTerm) {
+                $q->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+            }
+        })
+        ->paginate($request->limit);
         
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
@@ -347,15 +351,20 @@ class TokenController extends Controller{
     public function mintingList(Request $request){
         $tokens = new Token();
         $searchTerm = $request->search_key;
-        $tokens = $tokens->join('transactions','transactions.transaction_token_id','tokens.token_id');
-        if($searchTerm){
-            $tokens->where('token_title', 'like', '%' . $searchTerm. '%')
-            ->orWhere('token_description', 'like', '%' . $searchTerm. '%');
-        }
-        if($request->filter_urgency !== ""){
-            $tokens = $tokens->where('transaction_urgency', $request->filter_urgency);
-        }
-        $token_list = $tokens->with(['owner'])->orderBy('token_status', 'ASC')->paginate($request->limit);
+
+        $token_list = $tokens
+                        ->join('transactions','transactions.transaction_token_id','tokens.token_id')
+                        ->with(['owner'])->orderBy('token_status', 'ASC')
+                        ->where(function ($q) use ($searchTerm, $request) {
+                            if ($searchTerm) {
+                                $q->where('token_title', 'like', '%' . $searchTerm . '%')
+                                ->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+                            }
+                            if($request->filter_urgency !== ""){
+                                $q->where('transaction_urgency', $request->filter_urgency);
+                            }
+                        })
+                        ->paginate($request->limit);
 
         foreach ($token_list as $key => $token) {
             if(!$token->owner->profile->user_profile_avatar){

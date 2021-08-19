@@ -203,17 +203,23 @@ class WalletController extends Controller
     {
         $wallet = new Wallet();
         $searchTerm = $request->search_keyword;
-        $wallet = $wallet->join('user_profiles', 'wallets.user_id', 'user_profiles.user_id');
-        if ($searchTerm) {
-            $wallet = $wallet->where('wallet_address', 'like', '%' . $searchTerm . '%')->orWhere('user_profile_full_name', 'like', '%' . $searchTerm . '%');
-        }
 
-        if ($request->filter_status !== "") {
-            // var_dump('asdasd');
-            $wallet = $wallet->where('wallet_status', $request->filter_status);
-        }
+        $wallets = $wallet->join('user_profiles', 'wallets.user_id', 'user_profiles.user_id')
+                    ->with(['profile'])
+                    ->where(function ($q) use ($searchTerm, $request) {
+                        if ($searchTerm) {
+                            $q->where('wallet_address', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                        }
 
-        $wallets = $wallet->with(['profile'])->paginate($request->limit);
+                        if ($request->filter_status !== "") {
+                            $q->where('wallet_status', $request->filter_status);
+                        }
+
+                        /* var_dump($request->sort); */
+                    })
+                    ->orderBy($request->sort, $request->sort_dirc)
+                    ->paginate($request->limit);
 
         foreach ($wallets as $key => $value) {
             if (!$value->profile->user_profile_avatar) {

@@ -156,7 +156,7 @@ class UserController extends Controller
             
             return $randomString;
         }
-        try {
+        // try {
             $user_details = User_profile::where('user_id', Auth::user()->user_id);
             if($user_details){
                 $request_data = $request->all();
@@ -164,6 +164,7 @@ class UserController extends Controller
                 unset($request_data['user_name']);
                 unset($request_data['user_email']);
                 unset($request_data['user_profile_avatar']);
+                $request_data['user_notification_settings'] = 1;
                 $request_data['user_profile_completed'] = 1;
                 $user_details->update($request_data);
                 if($request->hasFile('user_profile_avatar')){
@@ -188,9 +189,9 @@ class UserController extends Controller
             }else{
                 return response()->json(['message' => 'Account update failed!'], 409);
             }
-        }catch (\Exception $e) {
+        /* }catch (\Exception $e) {
             return response()->json(['message' => 'Account update failed!'], 409);
-        }
+        } */
     }
 
     public function changePassword(Request $req){
