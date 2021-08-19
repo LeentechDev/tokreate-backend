@@ -38,7 +38,7 @@
                                         <p style="color:#455056; font-size:15px;line-height:24px; margin:0;">
                                             Use the link below to set up a new password for your account. If you did not request to reset your password, ignore this email and the link will expire after 1 day you received this email.
                                         </p>
-                                        <a href="http://dev.tokreate.com:8181/reset-password/<?= $token ?>"
+                                        <a href="<?= ENV('APP_URL').'reset-password/'.$token ?>"
                                             style="background-color: #C3A156;text-decoration:none !important; font-weight:500; margin-top:35px; color:#fff;text-transform:uppercase; font-size:14px;padding:10px 24px;display:inline-block;border-radius:2px;">Reset
                                             Password</a>
                                     </td>
