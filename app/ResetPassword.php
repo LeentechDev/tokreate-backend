@@ -7,8 +7,12 @@ use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class Gas_fee extends Model implements AuthenticatableContract, AuthorizableContract
+use App\User_profile;
+use App\User;
+
+class ResetPassword extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
     use Authenticatable, Authorizable;
 
@@ -17,14 +21,13 @@ class Gas_fee extends Model implements AuthenticatableContract, AuthorizableCont
      *
      * @var array
      */
-    const CREATED_AT = 'gas_fee_created_at';
-    const UPDATED_AT = 'gas_fee_updated_at';
-    protected $primaryKey = 'gas_fee_id';
-    protected $fillable = [
-        'gas_fee_id', 'gas_fee_name','gas_fee_amount', 'gas_fee_updated_by', 'gas_fee_commission_rate'
-    ];
-    protected $table = 'gas_fees';
 
+    protected $primaryKey = 'wallet_id';
+    protected $fillable = [
+        'token','email_address', 'validity'
+    ];
+
+    protected $table = 'reset_password';
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -33,4 +36,13 @@ class Gas_fee extends Model implements AuthenticatableContract, AuthorizableCont
      */
     protected $hidden = [
     ];
+    
+    public function getJWTIdentifier(){
+        return $this->getKey();
+    }
+    public function getJWTCustomClaims(){
+        return [];
+    }
+
+
 }

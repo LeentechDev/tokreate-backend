@@ -28,8 +28,12 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('dragonpay-webhook', 'TokenController@webhook');
     $router->get('gas-fee', 'HomeController@getGasFees');
     $router->get('tokens', 'HomeController@getTokens');
+    $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
     $router->post('user/change-password', 'UserController@changePassword');
     $router->put('user/notification-settings', 'UserController@changeNotifSettings');
+    $router->post('reset-password', 'AuthController@resetPassword');
+    $router->post('change-password', 'AuthController@changePassword');
+    $router->get('validate-token', 'AuthController@validateTokenRP');
 });
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {
@@ -57,7 +61,14 @@ $router->group(['prefix' => 'api/cms'], function () use ($router) {
     $router->post('update-faqs', 'FaqsController@updateFaqs');
     $router->get('specific-faqs/{id}', 'FaqsController@specificFaqs');
     $router->get('faqs_list', 'FaqsController@faqsList');
+    $router->get('terms-and-conditions', 'TermsandConditionController@viewTermsandConditions');
+    $router->post('update-terms-and-conditions', 'TermsandConditionController@updateTermsandConditions');
+    $router->get('data-policy', 'DataPolicyController@viewDataPolicy');
+    $router->post('update-data-policy', 'DataPolicyController@updateDataPolicy');
+    $router->post('update-gas-fee', 'GasFeeController@updateGasFee');
+    $router->get('gas-fee', 'GasFeeController@viewGasfee');
 });
+
 
 $router->group(['prefix' => 'api/notification'], function () use ($router) {
     $router->get('read', 'NotificationController@read');

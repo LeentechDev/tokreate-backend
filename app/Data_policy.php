@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 
-class Gas_fee extends Model implements AuthenticatableContract, AuthorizableContract
+class Data_policy extends Model implements AuthenticatableContract, AuthorizableContract 
 {
     use Authenticatable, Authorizable;
 
@@ -17,14 +17,12 @@ class Gas_fee extends Model implements AuthenticatableContract, AuthorizableCont
      *
      * @var array
      */
-    const CREATED_AT = 'gas_fee_created_at';
-    const UPDATED_AT = 'gas_fee_updated_at';
-    protected $primaryKey = 'gas_fee_id';
+    protected $primaryKey = 'id';
     protected $fillable = [
-        'gas_fee_id', 'gas_fee_name','gas_fee_amount', 'gas_fee_updated_by', 'gas_fee_commission_rate'
+        'id', 'data_policy_body', 'data_policy_update_by', 'created_at', 'updated_at'
     ];
-    protected $table = 'gas_fees';
 
+    protected $table = 'data_policy';
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -33,4 +31,5 @@ class Gas_fee extends Model implements AuthenticatableContract, AuthorizableCont
      */
     protected $hidden = [
     ];
+    
 }

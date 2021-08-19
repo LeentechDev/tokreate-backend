@@ -10,6 +10,8 @@ use App\Transaction;
 use App\User_profile;
 use App\Constants;
 use App\Notifications;
+use App\ResetPassword;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller{
     /**
@@ -115,7 +117,7 @@ class AuthController extends Controller{
             'user_email' => 'required|string',
             'password' => 'required|string',
         ]);
-        /* try { */
+        try {
             $credentials = $request->only(['user_email', 'password']);
             if (! $token = Auth::attempt($credentials)) {
                 return response()->json(['message' => 'Incorrect Email or Password'], 401);
@@ -127,65 +129,102 @@ class AuthController extends Controller{
             if($user_data){
                 $user_data['profile'] = $user_data->profile;
                 $notificationC = new Notifications;
-                $user_data['notificaitons'] = $notificationC->adminNotifications();
+                $user_data['notifications'] = $notificationC->adminNotifications();
                 
                 if(!$user_data->profile->user_profile_avatar){
                     $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
                 }
             }else{
-                return response()->json(['message' => 'Incorrect Email or Password'], 401);
+                return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
             }
 
             return $this->respondWithToken($user_data,$token);
-        /* }catch (\Exception $e) {
+        }catch (\Exception $e) {
             return response()->json(['message' => 'Login failed! Please try again.'], 409);
+        }
+    }
+
+    public function resetPassword(Request $request){
+
+        /* try{ */
+            $user_details = User::where('user_email', $request->user_email)->first();
+
+            $token = str_random(60);
+            $validity = '1 day';
+
+            if($user_details){
+                ResetPassword::create([
+                    'email_address' => $request->user_email,
+                    'token' => $token,
+                    'validity' => $validity,
+                ]);
+
+                Mail::send('mail.reset-password', [ 'token' => $token], function($message) use ( $user_details) {
+                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Reset Password');
+                    $message->from('support@tokreate.com','Tokreate');
+                });
+            }else{
+                return response()->json(['message' => 'Sorry, the email address provided is not registered in our website.'], 409);
+            }
+
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => 'Thank you! Please check your email for reset password instruction.',
+                ]
+            ];
+            return response()->json($response, 200);
+            
+        /* }catch (\Exception $e) {
+            return response()->json(['message' => 'Unable to send email right now.'], 409);
         } */
     }
-    private function getHost() {
-        if(SELF::MODE == 'development') {
-            return 'test.dragonpay.ph';
-        } else {
-            return 'gw.dragonpay.ph';
+
+    public function validateTokenRP(Request $req){
+        
+        try{
+            $details = ResetPassword::where('token', $req->token)->first();
+
+            $date_exp = strtotime($details->created_at ." + ".$details->validity);
+
+            if($date_exp > strtotime("now")){
+                return response()->json(['message' => 'valid', 'email_address' => $details->email_address ], 200);
+            }else{
+                return response()->json(['message' => 'Your password reset link is expired'], 500);
+            }
+            
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Something went wrong.'], 409);
+        }
+        
+    }
+
+    public function changePassword(Request $req){
+        $new_password = $req->password;
+
+        try{
+                $user = User::where('user_email', $req->email_address)->first();
+                
+                if($user){
+                    $user->password = app('hash')->make($new_password);
+                    $user->save();
+                    
+                    $response=(object)[
+                        "success" => true,
+                        "result" => [
+                            "data" => [
+                                'user_role' => $user->user_role_id
+                            ],
+                            "message" => "Your password successfully updated."
+                        ]
+                    ];
+                    return response()->json($response, 200);
+                }else{
+                    return response()->json(['message' => 'Sorry, the email address provided is not registered in website.'], 409);
+                }
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Password change failed!'], 409);
         }
     }
-
-    private function getBaseUrl() {
-        if(SELF::MODE == 'development') {
-            return 'https://test.dragonpay.ph/';
-        } else {
-            return 'https://gw.dragonpay.ph/';
-        }
-    }
-    public function payment(){
-        // $order = Order::findOrFail(Session::get('order_id'));
-        // $amount = $order->grand_total;
-        
-
-        
-        $params = array(
-            'merchantid' => SELF::MERCHANT_ID,
-            'txnid' => rand(000000,999999),
-            'amount' => 20.00,
-            'ccy' => 'PHP',
-            'description' => 'test',
-            'email' => 'kaelreyes12@hotmail.com',
-        );
-
-        $params['amount'] = number_format($params['amount'], 2, '.', '');
-        $params['key'] = SELF::MERCHANT_PASS;
-        $digest_string = implode(':', $params);
-        unset($params['key']);
-        $params['digest'] = sha1($digest_string);
-        // if($request->proc_id) {
-        //     $params['procid'] = '012345';
-        // }
-
-        $url = $this->getBaseUrl() . 'Pay.aspx?' . http_build_query($params, '', '&');
-
-        // return [
-        //     'url' => $url
-        // ];
-        // return Redirect::to($url);
-        return redirect()->to($url);
-    }
+    
 }

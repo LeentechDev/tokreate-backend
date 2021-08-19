@@ -129,7 +129,7 @@ class TokenController extends Controller{
             'token_collectible' => 'required|integer',
             'token_collectible_count' => 'required|integer',
             'token_title' => 'required|string',
-            'token_description' => 'string',
+            /* 'token_description' => 'required|string', */
             'token_royalty' => 'required|int',
             'token_filename' => 'required',
             'token_filetype' => 'required',
@@ -204,13 +204,16 @@ class TokenController extends Controller{
                 );
 
                 if($token){
+
+                    $user_details = User::find(Auth::user()->user_id);
                     
-                    // Notifications::create([
-                    //     'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
-                    //     'notification_to' => 0,
-                    //     'notification_from' => Auth::user()->user_id,
-                    //     'notification_type' => Constants::NOTIF_MINTING_REQ,
-                    // ]);
+                    Notifications::create([
+                        'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
+                        'notification_to' => 0,
+                        'notification_from' => Auth::user()->user_id,
+                        'notification_item' => $token_id,
+                        'notification_type' => Constants::NOTIF_MINTING_REQ,
+                    ]);
                 }
 
                 $response=(object)[
