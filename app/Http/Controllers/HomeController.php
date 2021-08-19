@@ -23,13 +23,18 @@ class HomeController extends Controller
     {
         $tokens = new Token();
         $searchTerm = $request->search_key;
-        if ($searchTerm) {
-            $tokens = $tokens->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
-        }
 
         $tokens = $tokens->with(['transactions' => function ($q) {
-            $q->orderBy('transaction_id', 'DESC');
-        }])->orderBy('token_id', 'DESC')->whereIn('token_status', [Constants::READY])->paginate($request->limit);
+                        $q->orderBy('transaction_id', 'DESC');
+                    }])
+                    ->orderBy('token_id', 'DESC')
+                    ->whereIn('token_status', [Constants::READY])
+                    ->where(function ($q) use ($searchTerm) {
+                        if ($searchTerm) {
+                            $q->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+                        }
+                    })
+                    ->paginate($request->limit);
 
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
