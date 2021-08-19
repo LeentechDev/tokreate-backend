@@ -473,7 +473,17 @@ class TokenController extends Controller{
         if($request->status == 'S') {
             try {
                 Transaction::where('token_transaction_id', $request->txnid)->update([
-                    'transaction_status' => 1
+                    'transaction_status' => Constants::TRANSACTION_SUCCESS
+                ]);
+                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                return responseWithMessage(200, "Success", $result);
+            } catch(\Throwable $th) {
+                return $th;
+            }
+        }else{
+            try {
+                Transaction::where('token_transaction_id', $request->txnid)->update([
+                    'transaction_status' => Constants::TRANSACTION_FAILED
                 ]);
                 $result = Transaction::where('token_transaction_id', $request->txnid)->first();
                 return responseWithMessage(200, "Success", $result);
