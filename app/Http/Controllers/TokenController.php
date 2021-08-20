@@ -410,4 +410,32 @@ class TokenController extends Controller{
             return response()->json(['message' => 'There are no available artwork for sale.'], 409);
         }
     }
+
+
+    public function userManagementList(Request $request){
+
+        $managementList = DB::table('users')->where('user_role_id', Constants::USER_ARTIST)
+        ->leftJoin('user_profiles', 'users.user_id', '=', 'user_profiles.user_id')
+        ->paginate();
+        
+
+        if($managementList){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $managementList,
+                    "message" => "Here are the list of user management",
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available user management",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
+    }
+
 }

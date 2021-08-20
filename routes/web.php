@@ -41,6 +41,9 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->get('minting-list', 'TokenController@mintingList');
     $router->get('specific-token/{token_id}', 'TokenController@specificToken');
     $router->post('add-to-market', 'TokenController@addToMarket');
+    $router->get('management-list', 'TokenController@userManagementList');
+
+    
 });
 
 $router->group(['prefix' => 'api/wallet'], function () use ($router) {
