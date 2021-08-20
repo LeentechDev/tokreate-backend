@@ -45,6 +45,10 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->get('minting-list', 'TokenController@mintingList');
     $router->get('specific-token/{token_id}', 'TokenController@specificToken');
     $router->post('add-to-market', 'TokenController@addToMarket');
+    $router->get('management-list', 'TokenController@userManagementList');
+    $router->get('user-management/{user_profile_id}', 'TokenController@viewUserProfile');
+    $router->get('artist-specific-request-minting-list/{token_id}', 'TokenController@getUserSpecificMintingList');
+    $router->get('ready-token-list/{token_id}', 'TokenController@getReadyTokens');  
 });
 
 $router->group(['prefix' => 'api/wallet'], function () use ($router) {

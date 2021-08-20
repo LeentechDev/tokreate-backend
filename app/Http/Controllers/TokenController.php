@@ -385,7 +385,6 @@ class TokenController extends Controller{
                 $token->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
             }
         }
-        
 
         if($token_list->total()){
             $response=(object)[
@@ -582,6 +581,119 @@ class TokenController extends Controller{
                     }
                     break;
             }
+        }
+    }
+
+    public function userManagementList(Request $request){
+        $searchTerm = $request->search_keyword;
+        $managementList = User::where('user_role_id', Constants::USER_ARTIST)
+            ->leftJoin('user_profiles', 'users.user_id', '=', 'user_profiles.user_profile_id')
+            ->orderBy('user_status', 'ASC')
+            ->where(function ($q) use ($searchTerm, $request) {
+                if ($searchTerm) {
+                    $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('user_email', 'like', '%' . $searchTerm . '%');
+                }
+            })
+            ->orderBy($request->sort, $request->sort_dirc)
+            ->paginate($request->limit);
+
+        if($managementList->total()){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $managementList,
+                    "message" => "Here are the list of user management",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available user management",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
+    }
+
+    public function viewUserProfile(Request $request, $id){
+
+        $viewUserPortfolio = User::where('users.user_id', $id)
+            ->join('user_profiles', 'users.user_id', 'user_profiles.user_id')
+            ->first();
+
+        if($viewUserPortfolio){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $viewUserPortfolio,
+                    "message" => "Here are the details of user portfolio details.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "User portfolio not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function getUserSpecificMintingList(Request $request, $id){
+
+        $getMintingList = User::where('users.user_id', $id)
+            ->join('tokens', 'users.user_id', 'tokens.user_id')
+            ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
+            ->paginate($request->limit);
+
+        if($getMintingList){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $getMintingList,
+                    "message" => "Here are the details of artist/collector minting list.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Artist/collector not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function getReadyTokens(Request $request, $id){
+
+        $getReadyPortfolio = Token::where('token_status', Constants::READY)
+            ->where('user_id', $id)
+            ->paginate($request->limit);
+
+        if($getReadyPortfolio){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $getReadyPortfolio,
+                    "message" => "Here are the porfolio list of specific users.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Portfolio list not found.",
+                ]
+            ];
+            return response()->json($response, 200);
         }
     }
 }

@@ -63,4 +63,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function notifications(){
         return $this->hasMany(Notifications::class, 'notification_to', 'user_id');
     }
+
+    public function minting_requests(){
+        return $this->hasMany(Token::class, 'token_owner', 'user_id');
+    }
 }

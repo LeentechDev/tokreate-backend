@@ -60,6 +60,7 @@ class HomeController extends Controller
             return response()->json($response, 409);
         }
     }
+    
     public function getGasFees(){
         $config = DB::select('SELECT * FROM `gas_fees`');
         
