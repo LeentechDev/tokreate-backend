@@ -9,6 +9,7 @@ use App\User;
 use App\User_profile;
 use App\Token;
 use App\Gas_fee;
+use App\SiteSettings;
 use DB;
 
 class HomeController extends Controller
@@ -60,9 +61,8 @@ class HomeController extends Controller
         }
     }
     public function getGasFees(){
-        // $gas_fees = new Gas_fee();
-        $gas_fees = DB::select('SELECT * FROM `gas_fees`');
-        // dd($gas_fees);
+        $config = DB::select('SELECT * FROM `gas_fees`');
+        
         if($gas_fees){
             $response=(object)[
                 "success" => true,  
@@ -79,6 +79,32 @@ class HomeController extends Controller
                 ]
             ];
         }
+        return response()->json($response, 200);
+    }
+
+    public function siteSettings(){
+        $allowance = SiteSettings::where('name','allowance_fee')->first();
+        $gas_fees = DB::select('SELECT * FROM `gas_fees`');
+
+        if($gas_fees){
+            $config['allowance_fee'] = $allowance;
+            $config['gas_fees'] = $gas_fees;
+
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "datas" => $config,
+                ]
+            ];
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available gas fees",
+                ]
+            ];
+        }
+
         return response()->json($response, 200);
     }
 

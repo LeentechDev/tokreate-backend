@@ -188,27 +188,19 @@ class TokenController extends Controller{
                     [
                         "user_id" =>  Auth::user()->user_id,
                         "transaction_token_id" => $token_id,
-                        "transaction_type" => 1,
-                        "transaction_payment_method" =>  1,
-                        "transaction_details" =>  1,
-                        "transaction_service_fee" =>  1,
-                        "transaction_urgency"   => 1,
-                        "transaction_gas_fee" =>  1,
-                        "transaction_allowance_fee" =>  1,
-                        "transaction_grand_total" => 1,
-                        /* "transaction_payment_method" =>  $request->input('transaction_payment_method'),
-                        "transaction_details" =>  $request->input('transaction_details'),
-                        "transaction_service_fee" =>  $request->input('transaction_service_fee'),
-                        "transaction_urgency"   => $request->input('token_urgency'),
-                        "transaction_gas_fee" =>  $request->input('transaction_gas_fee'),
-                        "transaction_allowance_fee" =>  $request->input('transaction_allowance_fee'),
-                        "transaction_grand_total" =>  $request->input('transaction_grand_total'), */
-                        "transaction_status" =>  1,
+                        "transaction_type" => Constants::TRANSACTION_MINTING,
+                        "transaction_payment_method" =>  "",
+                        "transaction_details" =>  "",
+                        "transaction_service_fee" =>  0,
+                        "transaction_urgency"   => "",
+                        "transaction_gas_fee" =>  0,
+                        "transaction_allowance_fee" =>  0,
+                        "transaction_grand_total" => 0,
+                        "transaction_status" =>  Constants::TRANSACTION_PENDING,
                     ]
                 );
 
                 if($token){
-
                     $user_details = User::find(Auth::user()->user_id);
                     
                     Notifications::create([
@@ -220,10 +212,25 @@ class TokenController extends Controller{
                     ]);
                 }
 
+
+                $token_details = Token::find($token_id);
+                if($token_details){
+                    $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
+                
+                    if(!$token_details->owner->profile->user_profile_avatar){
+                        $token_details->owner->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+                    }
+                    if(!$token_details->creator->profile->user_profile_avatar){
+                        $token_details->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+                    }
+                }
+                $transaction['token_details'] = $token_details;
+
                 $response=(object)[
                     "success" => true,
                     "result" => [
                         "token" => $token_id,
+                        "transaction" => $transaction,
                         "message" => "Your artwork has been successfully request for minting."
                     ]
                 ];
@@ -445,63 +452,135 @@ class TokenController extends Controller{
         }
     }
     public function payment(Request $request){
-        $transaction = Transaction::findorfail($request->input('transaction_token_id'));
+        $transaction = Transaction::find($request->input('transaction_id'));
 
         if($transaction){
-            $transaction->update($request->all());
+            $tnxid = $request->input('transaction_token_id')."-".$request->input('transaction_id')."-".strtotime('now');
+            $request['transaction_payment_tnxid'] = $tnxid;
+
+            if($transaction){
+                $transaction->update($request->all());
+            }
+
+            $user_details = User::find(Auth::user()->user_id);
+
+            $params = array(
+                'merchantid' => SELF::MERCHANT_ID,
+                'txnid' => $tnxid,
+                'amount' => $request->transaction_grand_total,
+                'ccy' => 'PHP',
+                'description' => 'test',
+                'email' => $user_details->user_email,
+            );
+
+            $params['amount'] = number_format($params['amount'], 2, '.', '');
+            $params['key'] = SELF::MERCHANT_PASS;
+            $digest_string = implode(':', $params);
+            unset($params['key']);
+            $params['digest'] = sha1($digest_string);
+            if($request->proc_id) {
+                $params['procid'] = $request->proc_id;
+            }
+
+            $url = $this->getBaseUrl() . 'Pay.aspx?' . http_build_query($params, '', '&');
+
+            
+            $token_details = Token::find($transaction->transaction_token_id);
+            if($token_details){
+                $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
+            
+                if(!$token_details->owner->profile->user_profile_avatar){
+                    $token_details->owner->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+                }
+                if(!$token_details->creator->profile->user_profile_avatar){
+                    $token_details->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
+                }
+            }
+            $transaction['token_details'] = $token_details;
+
+            $response=(object)[
+                "result" => [
+                    "url" =>  $url,
+                    "token_id" => $request->input('transaction_token_id'),
+                    "transaction" => $transaction,
+                    "payment_method" => $request->input('transaction_payment_method')
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            return response()->json(['message' => 'Invalid transaction.'], 500);
         }
-        $params = array(
-            'merchantid' => SELF::MERCHANT_ID,
-            'txnid' => $request->input('transaction_token_id'),
-            'amount' => $request->transaction_grand_total,
-            'ccy' => 'PHP',
-            'description' => 'test',
-            'email' => 'kaelreyes12@hotmail.com',
-        );
-
-        $params['amount'] = number_format($params['amount'], 2, '.', '');
-        $params['key'] = SELF::MERCHANT_PASS;
-        $digest_string = implode(':', $params);
-        unset($params['key']);
-        $params['digest'] = sha1($digest_string);
-        if($request->proc_id) {
-            $params['procid'] = $request->proc_id;
-        }
-
-        $url = $this->getBaseUrl() . 'Pay.aspx?' . http_build_query($params, '', '&');
-
-       
-        $response=(object)[
-            "result" => [
-                "url" =>  $url,
-                "token_id" => $request->input('transaction_token_id'),
-                "payment_method" => $request->input('transaction_payment_method')
-            ]
-        ];
-        return response()->json($response, 200);
         // return $url
     }
 
     public function webhook(Request $request) {
-        if($request->status == 'S') {
-            try {
-                Transaction::where('token_transaction_id', $request->txnid)->update([
-                    'transaction_status' => Constants::TRANSACTION_SUCCESS
-                ]);
-                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
-                return responseWithMessage(200, "Success", $result);
-            } catch(\Throwable $th) {
-                return $th;
-            }
-        }else{
-            try {
-                Transaction::where('token_transaction_id', $request->txnid)->update([
-                    'transaction_status' => Constants::TRANSACTION_FAILED
-                ]);
-                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
-                return responseWithMessage(200, "Success", $result);
-            } catch(\Throwable $th) {
-                return $th;
+        
+        $validateRequest = [
+            $request->txnid,
+            $request->refno,
+            $request->status,
+            $request->message,
+            SELF::MERCHANT_PASS
+        ];
+        $validateDigest = sha1(implode(':', $validateRequest));
+
+        if(strval($request->digest) == $validateDigest) {
+            switch ($request->status) {
+                case 'S':
+                    try {
+                        Transaction::where('token_transaction_id', $request->txnid)->update([
+                            'transaction_status' => Constants::TRANSACTION_SUCCESS
+                        ]);
+                        $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                        return responseWithMessage(200, "Success", $result);
+                    } catch(\Throwable $th) {
+                        return $th;
+                    }
+                    break;
+                case 'P':
+                        try {
+                            Transaction::where('token_transaction_id', $request->txnid)->update([
+                                'transaction_status' => Constants::TRANSACTION_PENDING
+                            ]);
+                            $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                            return responseWithMessage(200, "Success", $result);
+                        } catch(\Throwable $th) {
+                            return $th;
+                        }
+                        break;
+                case 'F':
+                            try {
+                                Transaction::where('token_transaction_id', $request->txnid)->update([
+                                    'transaction_status' => Constants::TRANSACTION_FAILED
+                                ]);
+                                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                                return responseWithMessage(200, "Success", $result);
+                            } catch(\Throwable $th) {
+                                return $th;
+                            }
+                            break;
+                case 'V':
+                            try {
+                                Transaction::where('token_transaction_id', $request->txnid)->update([
+                                    'transaction_status' => Constants::TRANSACTION_CANCEL
+                                ]);
+                                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                                return responseWithMessage(200, "Success", $result);
+                            } catch(\Throwable $th) {
+                                return $th;
+                            }
+                            break;
+                default:
+                    try {
+                        Transaction::where('token_transaction_id', $request->txnid)->update([
+                            'transaction_status' => Constants::TRANSACTION_FAILED
+                        ]);
+                        $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                        return responseWithMessage(200, "Success", $result);
+                    } catch(\Throwable $th) {
+                        return $th;
+                    }
+                    break;
             }
         }
     }

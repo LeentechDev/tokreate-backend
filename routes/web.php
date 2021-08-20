@@ -27,6 +27,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('payment', 'TokenController@payment');
     $router->post('dragonpay-webhook', 'TokenController@webhook');
     $router->get('gas-fee', 'HomeController@getGasFees');
+    $router->get('site-settings', 'HomeController@siteSettings');
     $router->get('tokens', 'HomeController@getTokens');
     $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
     $router->post('user/change-password', 'UserController@changePassword');
