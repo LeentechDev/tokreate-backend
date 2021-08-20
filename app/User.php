@@ -30,7 +30,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'user_name', 'user_bio', 'user_email','user_role_id','user_last_login','user_status','user_notification_settings'
     ];
 
-    protected $with = ['profile'];
+    // protected $with = ['profile'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -62,5 +62,9 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     public function notifications(){
         return $this->hasMany(Notifications::class, 'notification_to', 'user_id');
+    }
+
+    public function minting_requests(){
+        return $this->hasMany(Token::class, 'token_owner', 'user_id');
     }
 }

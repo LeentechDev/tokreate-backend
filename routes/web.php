@@ -24,6 +24,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('users', 'UserController@allUsers');
     $router->post('update-account', 'UserController@updateAccount');
     $router->get('user/tokens', 'UserController@getUserTokens');
+    $router->post('payment', 'TokenController@payment');
+    $router->post('dragonpay-webhook', 'TokenController@webhook');
+    $router->get('gas-fee', 'HomeController@getGasFees');
     $router->get('tokens', 'HomeController@getTokens');
     $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
     $router->post('user/change-password', 'UserController@changePassword');
@@ -42,8 +45,9 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->get('specific-token/{token_id}', 'TokenController@specificToken');
     $router->post('add-to-market', 'TokenController@addToMarket');
     $router->get('management-list', 'TokenController@userManagementList');
-
-    
+    $router->get('user-management/{user_profile_id}', 'TokenController@viewUserProfile');
+    $router->get('artist-specific-request-minting-list/{token_id}', 'TokenController@getUserSpecificMintingList');
+    $router->get('ready-token-list/{token_id}', 'TokenController@getReadyTokens');  
 });
 
 $router->group(['prefix' => 'api/wallet'], function () use ($router) {

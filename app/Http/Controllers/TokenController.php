@@ -21,6 +21,11 @@ class TokenController extends Controller{
      * @param  Request  $request
      * @return Response
      */
+    protected CONST MERCHANT_ID = 'LEENTECH';
+    protected CONST MERCHANT_PASS = 'Da5qgHfEw3zN';
+    protected CONST MERCHANT_API_KEY = 'bec973b72e20e653ddc54c0b37cbf18a254b6928';
+    protected CONST MODE = 'development';
+    
     public function __construct(){
         $this->middleware('auth');
     }
@@ -28,13 +33,17 @@ class TokenController extends Controller{
     public function getTokens(Request $request){
         $tokens = new Token();
         $searchTerm = $request->search_key;
-        if($searchTerm){
-            $tokens = $tokens->where('token_title', 'like', '%' . $searchTerm. '%')->orWhere('token_description', 'like', '%' . $searchTerm. '%');
-        }
 
         $tokens = $tokens->with(['transactions' => function ($q) {
             $q->orderBy('transaction_id', 'DESC');
-        }])->orderBy('token_id','DESC')->paginate($request->limit);
+        }])
+        ->orderBy('token_id','DESC')
+        ->where(function ($q) use ($searchTerm) {
+            if ($searchTerm) {
+                $q->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+            }
+        })
+        ->paginate($request->limit);
         
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
@@ -214,7 +223,7 @@ class TokenController extends Controller{
                 $response=(object)[
                     "success" => true,
                     "result" => [
-                        "token" => $token,
+                        "token" => $token_id,
                         "message" => "Your artwork has been successfully request for minting."
                     ]
                 ];
@@ -318,17 +327,21 @@ class TokenController extends Controller{
                         break;
                 }
 
+                
+
                 Mail::send('mail.minting-status', [ 'msg' => $msg], function($message) use ( $user_details) {
                     $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Miting Status Update');
                     $message->from('support@tokreate.com','Tokreate');
                 });
 
-                Notifications::create([
-                    'notification_message' => $msg,
-                    'notification_to' => $user_details->user_id,
-                    'notification_from' => Auth::user()->user_id,
-                    'notification_type' => Constants::NOTIF_MINTING_RES,
-                ]);
+                if($user_details->user_notification_settings == 1){
+                    Notifications::create([
+                        'notification_message' => $msg,
+                        'notification_to' => $user_details->user_id,
+                        'notification_from' => Auth::user()->user_id,
+                        'notification_type' => Constants::NOTIF_MINTING_RES,
+                    ]);
+                }
 
                 return response()->json($response, 200);
             }else{
@@ -342,15 +355,20 @@ class TokenController extends Controller{
     public function mintingList(Request $request){
         $tokens = new Token();
         $searchTerm = $request->search_key;
-        $tokens = $tokens->join('transactions','transactions.transaction_token_id','tokens.token_id');
-        if($searchTerm){
-            $tokens->where('token_title', 'like', '%' . $searchTerm. '%')
-            ->orWhere('token_description', 'like', '%' . $searchTerm. '%');
-        }
-        if($request->filter_urgency !== ""){
-            $tokens = $tokens->where('transaction_urgency', $request->filter_urgency);
-        }
-        $token_list = $tokens->with(['owner'])->orderBy('token_status', 'ASC')->paginate($request->limit);
+
+        $token_list = $tokens
+                        ->join('transactions','transactions.transaction_token_id','tokens.token_id')
+                        ->with(['owner'])->orderBy('token_status', 'ASC')
+                        ->where(function ($q) use ($searchTerm, $request) {
+                            if ($searchTerm) {
+                                $q->where('token_title', 'like', '%' . $searchTerm . '%')
+                                ->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+                            }
+                            if($request->filter_urgency !== ""){
+                                $q->where('transaction_urgency', $request->filter_urgency);
+                            }
+                        })
+                        ->paginate($request->limit);
 
         foreach ($token_list as $key => $token) {
             if(!$token->owner->profile->user_profile_avatar){
@@ -360,7 +378,6 @@ class TokenController extends Controller{
                 $token->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
             }
         }
-        
 
         if($token_list->total()){
             $response=(object)[
@@ -411,15 +428,98 @@ class TokenController extends Controller{
         }
     }
 
+    private function getHost() {
+        if(SELF::MODE == 'development') {
+            return 'test.dragonpay.ph';
+        } else {
+            return 'gw.dragonpay.ph';
+        }
+    }
+
+    private function getBaseUrl() {
+        if(SELF::MODE == 'development') {
+            return 'https://test.dragonpay.ph/';
+        } else {
+            return 'https://gw.dragonpay.ph/';
+        }
+    }
+    public function payment(Request $request){
+        $transaction = Transaction::findorfail($request->input('transaction_token_id'));
+
+        if($transaction){
+            $transaction->update($request->all());
+        }
+        $params = array(
+            'merchantid' => SELF::MERCHANT_ID,
+            'txnid' => $request->input('transaction_token_id'),
+            'amount' => $request->transaction_grand_total,
+            'ccy' => 'PHP',
+            'description' => 'test',
+            'email' => 'kaelreyes12@hotmail.com',
+        );
+
+        $params['amount'] = number_format($params['amount'], 2, '.', '');
+        $params['key'] = SELF::MERCHANT_PASS;
+        $digest_string = implode(':', $params);
+        unset($params['key']);
+        $params['digest'] = sha1($digest_string);
+        if($request->proc_id) {
+            $params['procid'] = $request->proc_id;
+        }
+
+        $url = $this->getBaseUrl() . 'Pay.aspx?' . http_build_query($params, '', '&');
+
+       
+        $response=(object)[
+            "result" => [
+                "url" =>  $url,
+                "token_id" => $request->input('transaction_token_id'),
+                "payment_method" => $request->input('transaction_payment_method')
+            ]
+        ];
+        return response()->json($response, 200);
+        // return $url
+    }
+
+    public function webhook(Request $request) {
+        if($request->status == 'S') {
+            try {
+                Transaction::where('token_transaction_id', $request->txnid)->update([
+                    'transaction_status' => Constants::TRANSACTION_SUCCESS
+                ]);
+                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                return responseWithMessage(200, "Success", $result);
+            } catch(\Throwable $th) {
+                return $th;
+            }
+        }else{
+            try {
+                Transaction::where('token_transaction_id', $request->txnid)->update([
+                    'transaction_status' => Constants::TRANSACTION_FAILED
+                ]);
+                $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                return responseWithMessage(200, "Success", $result);
+            } catch(\Throwable $th) {
+                return $th;
+            }
+        }
+    }
 
     public function userManagementList(Request $request){
+        $searchTerm = $request->search_keyword;
+        $managementList = User::where('user_role_id', Constants::USER_ARTIST)
+            ->leftJoin('user_profiles', 'users.user_id', '=', 'user_profiles.user_profile_id')
+            ->orderBy('user_status', 'ASC')
+            ->where(function ($q) use ($searchTerm, $request) {
+                if ($searchTerm) {
+                    $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('user_email', 'like', '%' . $searchTerm . '%');
+                }
+            })
+            ->orderBy($request->sort, $request->sort_dirc)
+            ->paginate($request->limit);
 
-        $managementList = DB::table('users')->where('user_role_id', Constants::USER_ARTIST)
-        ->leftJoin('user_profiles', 'users.user_id', '=', 'user_profiles.user_id')
-        ->paginate();
-        
-
-        if($managementList){
+        if($managementList->total()){
             $response=(object)[
                 "success" => true,  
                 "result" => [
@@ -427,6 +527,7 @@ class TokenController extends Controller{
                     "message" => "Here are the list of user management",
                 ]
             ];
+            return response()->json($response, 200);
         }else{
             $response=(object)[
                 "success" => false,
@@ -438,4 +539,82 @@ class TokenController extends Controller{
         return response()->json($response, 200);
     }
 
+    public function viewUserProfile(Request $request, $id){
+
+        $viewUserPortfolio = User::where('users.user_id', $id)
+            ->join('user_profiles', 'users.user_id', 'user_profiles.user_id')
+            ->first();
+
+        if($viewUserPortfolio){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $viewUserPortfolio,
+                    "message" => "Here are the details of user portfolio details.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "User portfolio not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function getUserSpecificMintingList(Request $request, $id){
+
+        $getMintingList = User::where('users.user_id', $id)
+            ->join('tokens', 'users.user_id', 'tokens.user_id')
+            ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
+            ->paginate($request->limit);
+
+        if($getMintingList){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $getMintingList,
+                    "message" => "Here are the details of artist/collector minting list.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Artist/collector not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function getReadyTokens(Request $request, $id){
+
+        $getReadyPortfolio = Token::where('token_status', Constants::READY)
+            ->where('user_id', $id)
+            ->paginate($request->limit);
+
+        if($getReadyPortfolio){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $getReadyPortfolio,
+                    "message" => "Here are the porfolio list of specific users.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Portfolio list not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
 }

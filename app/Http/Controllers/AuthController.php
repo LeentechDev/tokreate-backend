@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use App\User;
 use App\Transaction;
 use App\User_profile;
@@ -19,6 +20,10 @@ class AuthController extends Controller{
      * @param  Request  $request
      * @return Response
      */
+    protected CONST MERCHANT_ID = 'LEENTECH';
+    protected CONST MERCHANT_PASS = 'Da5qgHfEw3zN';
+    protected CONST MERCHANT_API_KEY = 'bec973b72e20e653ddc54c0b37cbf18a254b6928';
+    protected CONST MODE = 'development';
     public function register(Request $request){
         $this->validate($request, [
             'user_name' => 'required|string',
@@ -158,6 +163,8 @@ class AuthController extends Controller{
                     $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Reset Password');
                     $message->from('support@tokreate.com','Tokreate');
                 });
+            }else{
+                return response()->json(['message' => 'Sorry, the email address provided is not registered in our website.'], 409);
             }
 
             $response=(object)[
@@ -197,19 +204,24 @@ class AuthController extends Controller{
 
         try{
                 $user = User::where('user_email', $req->email_address)->first();
-                $user->password = app('hash')->make($new_password);
-                $user->save();
                 
-                $response=(object)[
-                    "success" => true,
-                    "result" => [
-                        "data" => [
-                            'user_role' => $user->user_role_id
-                        ],
-                        "message" => "Your password successfully updated."
-                    ]
-                ];
-                return response()->json($response, 200);
+                if($user){
+                    $user->password = app('hash')->make($new_password);
+                    $user->save();
+                    
+                    $response=(object)[
+                        "success" => true,
+                        "result" => [
+                            "data" => [
+                                'user_role' => $user->user_role_id
+                            ],
+                            "message" => "Your password successfully updated."
+                        ]
+                    ];
+                    return response()->json($response, 200);
+                }else{
+                    return response()->json(['message' => 'Sorry, the email address provided is not registered in website.'], 409);
+                }
         }catch (\Exception $e) {
             return response()->json(['message' => 'Password change failed!'], 409);
         }

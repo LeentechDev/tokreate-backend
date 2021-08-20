@@ -33,5 +33,4 @@ class Gas_fee extends Model implements AuthenticatableContract, AuthorizableCont
      */
     protected $hidden = [
     ];
-
 }
