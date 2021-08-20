@@ -47,11 +47,19 @@ class WalletController extends Controller
             "initialization_vector" => $initialization_vector,
         ];
 
-        $wallet = new Wallet;
-        $wallet->user_id = Auth::user()->user_id;
-        $wallet->wallet_address = $wallet_address;
-        $wallet->wallet_status = Constants::WALLET_DONE;
-        $wallet->save();
+        $wallet = Wallet::where('user_id', Auth::user()->user_id)->first();
+
+        if(!$wallet){
+            $wallet = new Wallet;
+            $wallet->user_id = Auth::user()->user_id;
+            $wallet->wallet_address = $wallet_address;
+            $wallet->wallet_status = Constants::WALLET_DONE;
+            $wallet->save();
+        }else{
+            $wallet->wallet_address = $wallet_address;
+            $wallet->wallet_status = Constants::WALLET_DONE;
+            $wallet->save();
+        }
 
         $user_details = User::find(Auth::user()->user_id);
 
@@ -109,17 +117,20 @@ class WalletController extends Controller
                 $user_details->wallet->wallet_address = $wallet_address;
                 $user_details->wallet->update();
 
-                Mail::send('mail.wallet-setup', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
-                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
-                    $message->from('support@tokreate.com', 'Tokreate');
-                });
+                if($user_details->user_notification_settings == 1){
+                    Mail::send('mail.wallet-setup', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
+                        $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
+                        $message->from('support@tokreate.com', 'Tokreate');
+                    });
 
-                Notifications::create([
-                    'notification_message' => 'Your wallet is now ready. Check your email for credentials.',
-                    'notification_to' => $user_details->user_id,
-                    'notification_from' => Auth::user()->user_id,
-                    'notification_type' => Constants::NOTIF_WALLET_RES,
-                ]);
+                
+                    Notifications::create([
+                        'notification_message' => 'Your wallet is now ready. Check your email for credentials.',
+                        'notification_to' => $user_details->user_id,
+                        'notification_from' => Auth::user()->user_id,
+                        'notification_type' => Constants::NOTIF_WALLET_RES,
+                    ]);
+                }
             }
 
             $response = (object)[
@@ -138,34 +149,41 @@ class WalletController extends Controller
 
     public function requestWallet(Request $request)
     {
-        // try {
-        $wallet = Wallet::create([
-            'user_id' => Auth::user()->user_id,
-            'wallet_status' =>  Constants::WALLET_REQUEST,
-        ]);
+        try {
+            $wallet = Wallet::where('user_id', Auth::user()->user_id)->first();
+            if(!$wallet){
+                $wallet = Wallet::create([
+                    'user_id' => Auth::user()->user_id,
+                    'wallet_status' =>  Constants::WALLET_REQUEST,
+                ]);
+            }else{
+                $wallet->wallet_address = '';
+                $wallet->wallet_status = Constants::WALLET_REQUEST;
+                $wallet->save();
+            }
 
-        $user_details = User::find(Auth::user()->user_id);
+            $user_details = User::find(Auth::user()->user_id);
 
-        Notifications::create([
-            'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . ' </b> request for wallet setup.</p>',
-            'notification_to' => 0,
-            'notification_item' => $wallet->wallet_id,
-            'notification_from' => Auth::user()->user_id,
-            'notification_type' => Constants::NOTIF_WALLET_REQ,
-        ]);
+            Notifications::create([
+                'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . ' </b> request for wallet setup.</p>',
+                'notification_to' => 0,
+                'notification_item' => $wallet->wallet_id,
+                'notification_from' => Auth::user()->user_id,
+                'notification_type' => Constants::NOTIF_WALLET_REQ,
+            ]);
 
-        $response = (object)[
-            "success" => true,
-            "result" => [
-                "datas" => $wallet,
-                "message" => 'Congratulation, you have successfully submitted a request for wallet.',
-            ]
-        ];
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $wallet,
+                    "message" => 'Congratulation, you have successfully submitted a request for wallet.',
+                ]
+            ];
 
-        return response()->json($response, 201);
-        // }catch (\Exception $e) {
-        //     return response()->json(['message' => 'Wallet request failed!'], 409);
-        // }
+            return response()->json($response, 201);
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Wallet request failed!'], 409);
+        }
     }
     public function decryptSeedPhrase(Request $request)
     {

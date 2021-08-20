@@ -327,17 +327,21 @@ class TokenController extends Controller{
                         break;
                 }
 
+                
+
                 Mail::send('mail.minting-status', [ 'msg' => $msg], function($message) use ( $user_details) {
                     $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Miting Status Update');
                     $message->from('support@tokreate.com','Tokreate');
                 });
 
-                Notifications::create([
-                    'notification_message' => $msg,
-                    'notification_to' => $user_details->user_id,
-                    'notification_from' => Auth::user()->user_id,
-                    'notification_type' => Constants::NOTIF_MINTING_RES,
-                ]);
+                if($user_details->user_notification_settings == 1){
+                    Notifications::create([
+                        'notification_message' => $msg,
+                        'notification_to' => $user_details->user_id,
+                        'notification_from' => Auth::user()->user_id,
+                        'notification_type' => Constants::NOTIF_MINTING_RES,
+                    ]);
+                }
 
                 return response()->json($response, 200);
             }else{
