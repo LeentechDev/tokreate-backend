@@ -14,7 +14,8 @@ class UpdateTransactionTable2 extends Migration
     public function up()
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->string('transaction_status')->comment('1 = paid, 0 = pending, 2 = failed, 3 = cancel')->change();
+            $table->string('transaction_status')->comment('1 = processing, 0 = pending, 2 = failed, 3 = ready')->change();
+            $table->string('transaction_payment_status')->comment('1 = paid, 0 = pending, 2 = failed, 3 = cancel')->nullable();
             $table->string('transaction_payment_tnxid')->nullable();
             $table->string('transaction_computed_commission')->nullable();
         });
