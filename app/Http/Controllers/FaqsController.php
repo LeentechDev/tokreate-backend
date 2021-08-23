@@ -63,54 +63,54 @@ class FaqsController extends Controller
                 ];
             } 
             return response()->json($response, 200);
-        }
+    }
 
+    public function specificFaqs($id){
+        $faqs_details = Faqs::find($id);
 
-        public function specificFaqs($id){
-            $faqs_details = Faqs::find($id);
-
-            if($faqs_details){
-                $response=(object)[
-                    "success" => true,  
-                    "result" => [
-                        "datas" => $faqs_details,
-                        "message" => "Here are the details of faqs.",
-                    ]
-                ];
-                return response()->json($response, 200);
-            }else{
-                $response=(object)[
-                    "success" => true,
-                    "result" => [
-                        "message" => "Faqs not found.",
-                    ]
-                ];
-                return response()->json($response, 200);
-            }
-        }
-
-
-        public function faqsList(Request $request){
-            $faqs = DB::table('faqs')->paginate($request->limit);
-
-            if($faqs){
-                $response=(object)[
-                    "success" => true,  
-                    "result" => [
-                        "datas" => $faqs,
-                        "message" => "Here are the list of faqs",
-                    ]
-                ];
-            }else{
-                $response=(object)[
-                    "success" => false,
-                    "result" => [
-                        "message" => "There are no available faqs",
-                    ]
-                ];
-            }
+        if($faqs_details){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $faqs_details,
+                    "message" => "Here are the details of faqs.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Faqs not found.",
+                ]
+            ];
             return response()->json($response, 200);
         }
+    }
+
+
+    public function faqsList(Request $request){
+        $faqs = DB::table('faqs')->paginate($request->limit);
+
+        if($faqs->total()){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $faqs,
+                    "message" => "Here are the list of faqs",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available faqs",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
+    }
 }
 
 

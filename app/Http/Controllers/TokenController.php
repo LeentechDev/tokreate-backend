@@ -572,7 +572,7 @@ class TokenController extends Controller{
             ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
             ->paginate($request->limit);
 
-        if($getMintingList){
+        if($getMintingList->total()){
             $response=(object)[
                 "success" => true,  
                 "result" => [
@@ -598,7 +598,7 @@ class TokenController extends Controller{
             ->where('user_id', $id)
             ->paginate($request->limit);
 
-        if($getReadyPortfolio){
+        if($getReadyPortfolio->total()){
             $response=(object)[
                 "success" => true,  
                 "result" => [
@@ -612,6 +612,56 @@ class TokenController extends Controller{
                 "success" => true,
                 "result" => [
                     "message" => "Portfolio list not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function viewSpecificPortfolio(Request $request, $id){
+        $viewSpecificPortfolio = Token::where('tokens.token_id', $id)
+        ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
+        ->first();
+
+        if($viewSpecificPortfolio){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $viewSpecificPortfolio,
+                    "message" => "Here are the details of specific portfolio details.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Specific portfolio snot found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function getSpecificRequestMintingDetailsArtist(Request $request, $id){
+        $viewSpecificRequestMinting = Token::where('tokens.token_id', $id)
+        ->join('transactions', 'tokens.user_id', 'transactions.transaction_token_id')
+        ->first();
+
+        if($viewSpecificRequestMinting){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $viewSpecificRequestMinting,
+                    "message" => "Here are the details of specific request minting details.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Specific request minting snot found.",
                 ]
             ];
             return response()->json($response, 200);
