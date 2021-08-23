@@ -53,6 +53,8 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->get('user-management/{user_profile_id}', 'TokenController@viewUserProfile');
     $router->get('artist-specific-request-minting-list/{token_id}', 'TokenController@getUserSpecificMintingList');
     $router->get('ready-token-list/{token_id}', 'TokenController@getReadyTokens');  
+    $router->get('specific-portfolio/{token_id}', 'TokenController@viewSpecificPortfolio');
+    $router->get('artist-specific-request-minting-details/{token_id}', 'TokenController@getSpecificRequestMintingDetailsArtist');
 });
 
 $router->group(['prefix' => 'api/wallet'], function () use ($router) {
