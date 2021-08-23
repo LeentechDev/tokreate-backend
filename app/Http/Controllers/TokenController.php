@@ -175,7 +175,7 @@ class TokenController extends Controller{
                 $token->token_file = url('app/images/tokens/'.$generated_token);
                 $token->token_saletype = $request->input('token_saletype');
                 $token->token_filetype = $request->input('token_filetype');
-                $token->token_status = 1;
+                $token->token_status = Constants::PENDING;
                 $token->token_owner = Auth::user()->user_id;
                 $token->token_creator = Auth::user()->user_id;
                 $token->token_on_market = $request->input('put_on_market');
