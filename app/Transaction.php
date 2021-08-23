@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\Token;
+use App\User_profile;
 
 class Transaction extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
@@ -24,7 +25,7 @@ class Transaction extends Model implements AuthenticatableContract, Authorizable
     const UPDATED_AT = 'transaction_updated_at';
     protected $primaryKey = 'transaction_id';
     protected $fillable = [
-        'user_id','transaction_token_id', 'transaction_type','transaction_payment_method', 'transaction_details','transaction_service_fee', 'transaction_gas_fee', 'transaction_allowance_fee', 'transaction_token_price', 'transaction_grand_total', 'transaction_status', 'transaction_urgency'
+        'user_id','transaction_token_id', 'transaction_type','transaction_payment_method', 'transaction_details','transaction_service_fee', 'transaction_gas_fee', 'transaction_allowance_fee', 'transaction_token_price', 'transaction_grand_total', 'transaction_status', 'transaction_payment_status', 'transaction_urgency', 'transaction_payment_tnxid', 'transcation_computed_commission'
     ];
 
     /**
@@ -44,5 +45,9 @@ class Transaction extends Model implements AuthenticatableContract, Authorizable
 
     public function token(){
         return $this->belongsTo(Token::class, 'transaction_token_id', 'token_id'); 
+    }
+
+    public function collector(){
+        return $this->belongsTo(User_profile::class, 'user_id', 'user_id'); 
     }
 }

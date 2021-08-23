@@ -15,6 +15,7 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 $router->get('/mail', 'MailController@mail');
+
 $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('register', 'AuthController@register');
     $router->post('login', 'AuthController@login');
@@ -24,9 +25,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('users', 'UserController@allUsers');
     $router->post('update-account', 'UserController@updateAccount');
     $router->get('user/tokens', 'UserController@getUserTokens');
-    $router->post('payment', 'TokenController@payment');
-    $router->post('dragonpay-webhook', 'TokenController@webhook');
+    $router->post('payment', 'DragonpayController@payment');
+    $router->post('dragonpay-webhook', 'DragonpayController@webhook');
+    $router->get('dragonpay-webhook', 'DragonpayController@webhook');
     $router->get('gas-fee', 'HomeController@getGasFees');
+    $router->get('site-settings', 'HomeController@siteSettings');
     $router->get('tokens', 'HomeController@getTokens');
     $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
     $router->post('user/change-password', 'UserController@changePassword');
@@ -79,4 +82,8 @@ $router->group(['prefix' => 'api/cms'], function () use ($router) {
 $router->group(['prefix' => 'api/notification'], function () use ($router) {
     $router->get('read', 'NotificationController@read');
     $router->get('list', 'NotificationController@list');
+});
+
+$router->group(['prefix' => 'api/transaction'], function () use ($router) {
+    $router->get('transfer-ownership', 'TransactionController@transferOwnership');
 });

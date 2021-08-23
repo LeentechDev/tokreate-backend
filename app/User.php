@@ -41,6 +41,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'password',
     ];
     
+    protected $with = [
+        'profile'
+    ];
+
     public function getJWTIdentifier(){
         return $this->getKey();
     }

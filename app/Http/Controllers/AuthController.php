@@ -46,6 +46,7 @@ class AuthController extends Controller{
             $user_data = User_profile::create(
                 [
                     "user_id" =>  $user_id,
+                    "user_profile_avatar" => url('app/images/default_avatar.jpg'),
                     "user_profile_full_name" => $request->input('user_profile_full_name'),
                     "user_notification_settings" => "1",
                 ]

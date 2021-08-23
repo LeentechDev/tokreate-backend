@@ -31,10 +31,6 @@ class UserController extends Controller
             }
         ])->first();
 
-        if(!$user->profile->user_profile_avatar){
-            $user->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
-        }
-
         if(Auth::user()->user_role_id === Constants::USER_ADMIN){
             $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
             ->where('notification_to', 0)->limit(10)->get();
@@ -163,7 +159,8 @@ class UserController extends Controller
                 
                 unset($request_data['user_name']);
                 unset($request_data['user_email']);
-                unset($request_data['user_profile_avatar']);
+                
+                $request_data['user_profile_avatar'] = url('app/images/default_avatar.jpg');
                 $request_data['user_notification_settings'] = 1;
                 $request_data['user_profile_completed'] = 1;
                 $user_details->update($request_data);
