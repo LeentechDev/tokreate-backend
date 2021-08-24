@@ -589,4 +589,48 @@ class TokenController extends Controller{
             return response()->json($response, 200);
         }
     }
+
+    public function deactivateUser(Request $request){
+        $deactivateUser = User::find($request->user_id);
+
+        if($deactivateUser){
+            $deactivateUser->update($request->all());
+                $response=(object)[
+                        "success" => true,
+                        "result" => [
+                        "message" => "This Artist/Collector has been deactivated successfully",
+                    ]
+                ];
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Invalid parameters",
+                ]
+            ];
+        } 
+        return response()->json($response, 200);
+    }
+
+    public function activateUser(Request $request){
+        $activateUser = User::find($request->user_id);
+
+        if($activateUser){
+            $activateUser->update($request->all());
+                $response=(object)[
+                        "success" => true,
+                        "result" => [
+                        "message" => "This Artist/Collector has been activated successfully",
+                    ]
+                ];
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Invalid parameters",
+                ]
+            ];
+        } 
+        return response()->json($response, 200);
+    }
 }
