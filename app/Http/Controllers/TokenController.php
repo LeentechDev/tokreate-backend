@@ -367,6 +367,7 @@ class TokenController extends Controller{
                                 $q->where('transaction_urgency', $request->filter_urgency);
                             }
                         })
+                        ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
                         ->paginate($request->limit);
 
         /* foreach ($token_list as $key => $token) {
@@ -492,6 +493,9 @@ class TokenController extends Controller{
         $getMintingList = User::where('users.user_id', $id)
             ->join('tokens', 'users.user_id', 'tokens.user_id')
             ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
+            ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
+            ->where('transactions.transaction_status', Constants::TRANSACTION_PENDING)
+            ->where('tokens.token_status', Constants::PENDING)
             ->paginate($request->limit);
 
         if($getMintingList->total()){
