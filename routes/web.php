@@ -90,3 +90,8 @@ $router->group(['prefix' => 'api/transaction'], function () use ($router) {
     $router->get('transfer-ownership', 'TransactionController@transferOwnership');
     $router->get('{id}', 'TransactionController@transactionDetails'); 
 });
+
+
+$router->group(['prefix' => 'api/reports'], function () use ($router) {
+    $router->get('dashboard', 'DashboardController@dashboardReports');
+});
