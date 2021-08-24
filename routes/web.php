@@ -30,6 +30,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('dragonpay-webhook', 'DragonpayController@webhook');
     $router->get('gas-fee', 'HomeController@getGasFees');
     $router->get('site-settings', 'HomeController@siteSettings');
+    $router->post('update-site-settings', 'HomeController@updateSiteSettings');
+    
     $router->get('tokens', 'HomeController@getTokens');
     $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
     $router->post('user/change-password', 'UserController@changePassword');
@@ -89,4 +91,5 @@ $router->group(['prefix' => 'api/notification'], function () use ($router) {
 
 $router->group(['prefix' => 'api/transaction'], function () use ($router) {
     $router->get('transfer-ownership', 'TransactionController@transferOwnership');
+    $router->get('{id}', 'TransactionController@transactionDetails'); 
 });

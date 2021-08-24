@@ -50,4 +50,8 @@ class Transaction extends Model implements AuthenticatableContract, Authorizable
     public function collector(){
         return $this->belongsTo(User_profile::class, 'user_id', 'user_id'); 
     }
+
+    public function transaction_owner(){
+        return $this->belongsTo(User_profile::class, 'user_id', 'user_id'); 
+    }
 }

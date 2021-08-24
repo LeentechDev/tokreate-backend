@@ -83,12 +83,34 @@ class HomeController extends Controller
         return response()->json($response, 200);
     }
 
+    public function updateSiteSettings(Request $r){
+        try {
+            DB::table('gas_fees')->where('gas_fee_name', 'slow')->update(['gas_fee_amount' => $r->slow]);
+            DB::table('gas_fees')->where('gas_fee_name', 'medium')->update(['gas_fee_amount' => $r->medium]);
+            DB::table('gas_fees')->where('gas_fee_name', 'fast')->update(['gas_fee_amount' => $r->fast]);
+            DB::table('gas_fees')->where('gas_fee_name', 'superfast')->update(['gas_fee_amount' => $r->superfast]);
+            SiteSettings::where('name', 'commission_percentage')->update(['value' => $r->commision_rate]);
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "message" => "Successfully update rates",
+                ]
+            ];
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Unable to update '], 200);
+        }
+        
+    }
+
     public function siteSettings(){
         $allowance = SiteSettings::where('name','allowance_fee')->first();
+        $commission_rate = SiteSettings::where('name','commission_percentage')->first();
         $gas_fees = DB::select('SELECT * FROM `gas_fees`');
 
         if($gas_fees){
             $config['allowance_fee'] = $allowance;
+            $config['commission_rate'] = $commission_rate;
             $config['gas_fees'] = $gas_fees;
 
             $response=(object)[
