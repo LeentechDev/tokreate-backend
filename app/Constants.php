@@ -40,4 +40,8 @@ class Constants {
     const TRANSACTION_PAYMENT_SUCCESS = 1;
     const TRANSACTION_PAYMENT_FAILED = 2;
     const TRANSACTION_PAYMENT_CANCEL = 3;
+
+    const TOKEN_HISTORY_MINT = 1;
+    const TOKEN_HISTORY_BUY = 2;
+    const TOKEN_HISTORY_SALE = 3;
 }

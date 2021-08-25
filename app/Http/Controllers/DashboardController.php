@@ -52,6 +52,14 @@ class DashboardController extends Controller
                 ->orderBy('totalSales', 'DESC')
                 ->paginate(10);
 
+            $reports['top_tokens'] = Token::select('tokens.*', DB::raw("max(token_history.price) as averageSale "), DB::raw("count(token_history.id) as salesNo"))
+                ->join('editions', 'editions.token_id', 'tokens.token_id')
+                ->join('token_history', 'editions.edition_id', 'token_history.edition_id')
+                ->where('token_history.type', Constants::TOKEN_HISTORY_BUY)
+                ->groupBy('token_history.token_id')
+                ->orderBy('averageSale', 'DESC')
+                ->paginate(10);
+
             $response = (object)[
                 "success" => true,
                 "result" => [
