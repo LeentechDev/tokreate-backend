@@ -160,7 +160,7 @@ class UserController extends Controller
                 unset($request_data['user_name']);
                 unset($request_data['user_email']);
                 
-                $request_data['user_profile_avatar'] = url('app/images/default_avatar.jpg');
+                // $request_data['user_profile_avatar'] = url('app/images/default_avatar.jpg');
                 $request_data['user_notification_settings'] = 1;
                 $request_data['user_profile_completed'] = 1;
                 $user_details->update($request_data);

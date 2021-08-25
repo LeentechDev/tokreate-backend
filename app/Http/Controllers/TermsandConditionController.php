@@ -43,10 +43,10 @@ class TermsandConditionController  extends Controller
     }
 
 
-    public function updateTermsandConditions(Request $request)
-    {
-        $terms = Terms_and_conditions::findOrFail($request->id);
-        
+    public function updateTermsandConditions(Request $request){
+
+        $terms = Terms_and_conditions::find($request->id);
+
         if($terms){
             $terms->update($request->all());
             $response=(object)[
@@ -55,6 +55,7 @@ class TermsandConditionController  extends Controller
                     "message" => "Terms and condition has been successfully updated",
                 ]
             ];
+            return response()->json($response, 200);
         }else{
             $response=(object)[
                 "success" => false,

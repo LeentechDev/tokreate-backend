@@ -329,7 +329,7 @@ class TokenController extends Controller{
                 
 
                 Mail::send('mail.minting-status', [ 'msg' => $msg], function($message) use ( $user_details) {
-                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Miting Status Update');
+                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Minting Status Update');
                     $message->from('support@tokreate.com','Tokreate');
                 });
 
