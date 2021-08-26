@@ -75,6 +75,7 @@ class TokenController extends Controller{
             /* $token_details['owner'] = $token_details->owner;
             $token_details['creator'] = $token_details->creator; */
             $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
+            $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
             $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
 
           
