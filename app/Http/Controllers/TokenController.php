@@ -151,7 +151,7 @@ class TokenController extends Controller{
         $wallet_details = Wallet::where('user_id', Auth::user()->user_id)->where('wallet_status', Constants::WALLET_DONE)->first();
 
         if($wallet_details){
-            try {
+            // try {
                 $token = new Token;
                 $token_file             = $request->file('token_filename');
                 $token_original_name    = $token_file->getClientOriginalName();
@@ -227,9 +227,9 @@ class TokenController extends Controller{
                     ]
                 ];
                 return response()->json($response, 200);
-            }catch (\Exception $e) {
-                return response()->json(['message' => 'Request for Minting Failed!'], 409);
-            }
+            // }catch (\Exception $e) {
+            //     return response()->json(['message' => 'Request for Minting Failed!'], 409);
+            // }
         }else{
             return response()->json(['message' => 'Please set up your wallet first'], 409);
         }

@@ -63,6 +63,7 @@ class HomeController extends Controller
     
     public function getGasFees(){
         $config = DB::select('SELECT * FROM `gas_fees`');
+
         
         if($gas_fees){
             $response=(object)[
@@ -89,6 +90,9 @@ class HomeController extends Controller
             DB::table('gas_fees')->where('gas_fee_name', 'medium')->update(['gas_fee_amount' => $r->medium]);
             DB::table('gas_fees')->where('gas_fee_name', 'fast')->update(['gas_fee_amount' => $r->fast]);
             DB::table('gas_fees')->where('gas_fee_name', 'superfast')->update(['gas_fee_amount' => $r->superfast]);
+            DB::table('gas_fees')->where('gas_fee_name', 'gas_fee_updated_by')->update(['gas_fee_updated_by' => $r->gas_fee_updated_by]);
+            DB::table('gas_fees')->where('gas_fee_name', 'gas_fee_updated_at')->update(['gas_fee_updated_at' => $r->gas_fee_updated_at]);
+            
             SiteSettings::where('name', 'commission_percentage')->update(['value' => $r->commision_rate]);
             $response=(object)[
                 "success" => true,  
@@ -106,7 +110,9 @@ class HomeController extends Controller
     public function siteSettings(){
         $allowance = SiteSettings::where('name','allowance_fee')->first();
         $commission_rate = SiteSettings::where('name','commission_percentage')->first();
-        $gas_fees = DB::select('SELECT * FROM `gas_fees`');
+        $gas_fees = DB::select("SELECT * FROM `gas_fees` 
+        LEFT JOIN `user_profiles` ON `user_profiles`.`user_id` = `gas_fees`.`gas_fee_updated_by`");
+        
 
         if($gas_fees){
             $config['allowance_fee'] = $allowance;

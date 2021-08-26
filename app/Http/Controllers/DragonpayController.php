@@ -45,12 +45,13 @@ class DragonpayController extends Controller
             $params = array(
                 'merchantid' => SELF::MERCHANT_ID,
                 'txnid' => $tnxid,
-                'amount' => $request->transaction_grand_total,
+                'amount' => $request['transaction_grand_total'],
                 'ccy' => 'PHP',
                 'description' => 'test',
                 'email' => $user_details->user_email,
+            
             );
-
+            
             $params['amount'] = number_format($params['amount'], 2, '.', '');
             $params['key'] = SELF::MERCHANT_PASS;
             $digest_string = implode(':', $params);
