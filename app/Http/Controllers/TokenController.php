@@ -46,6 +46,7 @@ class TokenController extends Controller{
         ->paginate($request->limit);
         
         foreach ($tokens as $key => $value) {
+            $tokens[$key]->mint_transactions = $value->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
         }
 
