@@ -31,7 +31,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('gas-fee', 'HomeController@getGasFees');
     $router->get('site-settings', 'HomeController@siteSettings');
     $router->post('update-site-settings', 'HomeController@updateSiteSettings');
-    
+
     $router->get('tokens', 'HomeController@getTokens');
     $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
     $router->post('user/change-password', 'UserController@changePassword');
@@ -52,12 +52,11 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->get('management-list', 'TokenController@userManagementList');
     $router->get('user-management/{user_profile_id}', 'TokenController@viewUserProfile');
     $router->get('artist-specific-request-minting-list/{token_id}', 'TokenController@getUserSpecificMintingList');
-    $router->get('ready-token-list/{token_id}', 'TokenController@getReadyTokens');  
+    $router->get('ready-token-list/{token_id}', 'TokenController@getReadyTokens');
     $router->get('specific-portfolio/{token_id}', 'TokenController@viewSpecificPortfolio');
     $router->get('artist-specific-request-minting-details/{token_id}', 'TokenController@getSpecificRequestMintingDetailsArtist');
     $router->post('deactivate-artist-collector', 'TokenController@deactivateUser');
     $router->post('activate-artist-collector', 'TokenController@activateUser');
-    
 });
 
 $router->group(['prefix' => 'api/wallet'], function () use ($router) {
@@ -91,10 +90,12 @@ $router->group(['prefix' => 'api/notification'], function () use ($router) {
 
 $router->group(['prefix' => 'api/transaction'], function () use ($router) {
     $router->get('transfer-ownership', 'TransactionController@transferOwnership');
-    $router->get('{id}', 'TransactionController@transactionDetails'); 
+    $router->get('{id}', 'TransactionController@transactionDetails');
 });
 
 
 $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('dashboard', 'DashboardController@dashboardReports');
+    $router->get('pending-transaction', 'DashboardController@pendingTransactions');
+    $router->get('success-transaction', 'DashboardController@successTransactions');
 });
