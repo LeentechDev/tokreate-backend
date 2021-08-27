@@ -11,8 +11,11 @@ use App\Token;
 use App\Wallet;
 use App\Transaction;
 use App\Notifications;
-use DB;
 use App\Constants;
+use App\Edition;
+use App\TokenHistory;
+use App\SiteSettings;
+use DB;
 use Illuminate\Support\Facades\Mail;
 
 class TokenController extends Controller{
@@ -72,6 +75,7 @@ class TokenController extends Controller{
             /* $token_details['owner'] = $token_details->owner;
             $token_details['creator'] = $token_details->creator; */
             $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
+            $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
             $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
 
           
@@ -151,7 +155,7 @@ class TokenController extends Controller{
         $wallet_details = Wallet::where('user_id', Auth::user()->user_id)->where('wallet_status', Constants::WALLET_DONE)->first();
 
         if($wallet_details){
-            // try {
+            /* try { */
                 $token = new Token;
                 $token_file             = $request->file('token_filename');
                 $token_original_name    = $token_file->getClientOriginalName();
@@ -179,9 +183,12 @@ class TokenController extends Controller{
                 $token->token_owner = Auth::user()->user_id;
                 $token->token_creator = Auth::user()->user_id;
                 $token->token_on_market = $request->input('put_on_market');
-
                 $token->save();
+
                 $token_id = $token->token_id;
+
+                $commission = SiteSettings::where('name', 'commission_percentage')->first();
+
                 $transaction = Transaction::create(
                     [
                         "user_id" =>  Auth::user()->user_id,
@@ -196,10 +203,31 @@ class TokenController extends Controller{
                         "transaction_grand_total" => 0,
                         "transaction_payment_status" => Constants::TRANSACTION_PAYMENT_PENDING,
                         "transaction_status" =>  0,
+                        "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100,
                     ]
                 );
 
                 if($token){
+                    $no_of_edition = $request->input('token_collectible_count');
+                    for($i = 0; $no_of_edition > $i; $i++){
+                        /* create new edition */
+                        $edition = new Edition;
+                        $edition->token_id = $token_id;
+                        $edition->owner_id = Auth::user()->user_id;
+                        $edition->current_price = $request->input('token_starting_price');
+                        $edition->edition_no = $i+1;
+                        $edition->save();
+                        /* create token/history logs */
+                        if($edition){
+                            $history = new TokenHistory;
+                            $history->token_id = $token_id;
+                            $history->edition_id = $edition->edition_id;
+                            $history->price = $request->input('token_starting_price');
+                            $history->type = Constants::TOKEN_HISTORY_MINT;
+                            $history = $history->save();
+                        }
+                    }
+
                     $user_details = User::find(Auth::user()->user_id);
                     
                     Notifications::create([
@@ -227,9 +255,9 @@ class TokenController extends Controller{
                     ]
                 ];
                 return response()->json($response, 200);
-            // }catch (\Exception $e) {
-            //     return response()->json(['message' => 'Request for Minting Failed!'], 409);
-            // }
+            /* }catch (\Exception $e) {
+                return response()->json(['message' => 'Request for Minting Failed!'], 409);
+            } */
         }else{
             return response()->json(['message' => 'Please set up your wallet first'], 409);
         }
@@ -369,15 +397,6 @@ class TokenController extends Controller{
                         })
                         ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
                         ->paginate($request->limit);
-
-        /* foreach ($token_list as $key => $token) {
-            if(!$token->owner->profile->user_profile_avatar){
-                $token->owner->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
-            }
-            if(!$token->creator->profile->user_profile_avatar){
-                $token->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
-            }
-        } */
 
         if($token_list->total()){
             $response=(object)[

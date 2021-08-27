@@ -123,11 +123,14 @@ class DashboardController extends Controller
                 'transactions.*',
                 'tokens.*',
                 'owner.user_profile_full_name as owner_fullname',
-                'collector.user_profile_full_name as collector_fullname'
+                'collector.user_profile_full_name as collector_fullname',
+                'editions.*'
             )
                 ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
                 ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
+                ->join('editions', 'transactions.edition_id', 'editions.edition_id')
+
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
                 ->where('transaction_status', Constants::TRANSACTION_PENDING)
                 ->where(function ($q) use ($searchTerm, $request) {

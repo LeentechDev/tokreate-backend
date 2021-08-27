@@ -12,6 +12,7 @@ use App\Wallet;
 use App\Transaction;
 use App\Token;
 use App\Constants;
+use App\SiteSettings;
 use DB;
 
 class DragonpayController extends Controller
@@ -31,10 +32,25 @@ class DragonpayController extends Controller
 
     public function payment(Request $request){
         $transaction = Transaction::find($request->input('transaction_id'));
-
+        $allowance_fee = SiteSettings::where('name', 'allowance_fee')->first();
         if($transaction){
+            $allowance_percentage = $allowance_fee->value;
+
             $tnxid = $request->input('transaction_token_id')."-".$request->input('transaction_id')."-".strtotime('now');
             $request['transaction_payment_tnxid'] = $tnxid;
+            $request['transaction_allowance_fee'] = ($request->transaction_gas_fee * $allowance_percentage)/100;
+
+            $grand_total = 0;
+            if($transaction->transaction_type == Constants::TRANSACTION_MINTING)
+            {
+                $grand_total = $request->transaction_gas_fee + $request['transaction_allowance_fee'] + $transaction->transaction_computed_commission;
+            }
+
+            if($transaction->transaction_type == Constants::TRANSACTION_TRANSFER){
+                $grand_total = $request->transaction_gas_fee + $request['transaction_allowance_fee'] + $transaction->edition->current_price;
+                $request['transaction_token_price'] = $transaction->edition->current_price;
+            }
+            $request['transaction_grand_total'] = $grand_total;
 
             if($transaction){
                 $transaction->update($request->all());

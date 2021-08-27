@@ -11,6 +11,7 @@ use App\User_profile;
 use App\Constants;
 use App\Notifications;
 use App\ResetPassword;
+use App\Fund;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
@@ -32,7 +33,7 @@ class AuthController extends Controller
             'user_email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
-        try {
+        /* try { */
             //registration
             $user = new User;
             $user->user_name = $request->input('user_name');
@@ -54,6 +55,12 @@ class AuthController extends Controller
                 ]
             );
 
+            $fund = Fund::create(
+                [
+                    "user_id" =>  $user_id,
+                ]
+            );
+
             $response = (object)[
                 "success" => true,
                 "result" => [
@@ -63,9 +70,9 @@ class AuthController extends Controller
             ];
 
             return response()->json($response, 201);
-        } catch (\Exception $e) {
+        /* } catch (\Exception $e) {
             return response()->json(['message' => 'User Registration Failed!'], 409);
-        }
+        } */
     }
 
     public function login(Request $request)

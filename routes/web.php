@@ -91,6 +91,8 @@ $router->group(['prefix' => 'api/notification'], function () use ($router) {
 $router->group(['prefix' => 'api/transaction'], function () use ($router) {
     $router->get('transfer-ownership', 'TransactionController@transferOwnership');
     $router->get('{id}', 'TransactionController@transactionDetails');
+    $router->get('withdrawal-list', 'TransactionController@withdrawalList');
+    $router->get('purchase-list', 'TransactionController@purchaseList');
 });
 
 
@@ -98,4 +100,6 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('dashboard', 'DashboardController@dashboardReports');
     $router->get('pending-transaction', 'DashboardController@pendingTransactions');
     $router->get('success-transaction', 'DashboardController@successTransactions');
+    $router->get('transaction-dashboard', 'TransactionController@transactionReports');
+    
 });
