@@ -65,7 +65,12 @@ class UserController extends Controller
             $user_id = $req->user_id;
             
         }else{
-            $tokens = Token::select('tokens.*', DB::raw("count(editions.edition_id) as remainToken"))
+            /* DB::enableQueryLog(); */
+            $tokens = Token::select(
+                                'tokens.*', 
+                                DB::raw("(case when tokens.token_creator = ".$user_id." then count(editions.edition_id) else edition_no end ) as remainToken"),
+                            )
+            ->rightJoin('editions', 'editions.token_id' , 'tokens.token_id')
             ->with(['transactions' => function ($q) {
                 $q->orderBy('transaction_id', 'DESC');
             }])
@@ -76,17 +81,15 @@ class UserController extends Controller
                 }else{
                     $q->where('token_on_market', Constants::TOKEN_ON_MARKET);
                 }
-                $q->where('editions.owner_id', $user_id);
             })
-            ->join('editions', 'editions.token_id' , 'tokens.token_id')
-            // ->groupBy('editions.token_id')
-            /* ->groupBy(
+            ->where('editions.owner_id', $user_id)
+            ->groupBy(
                 DB::raw(
-                    'if (tokens.token_creator = '.$user_id.', editions.token_id)'
+                    '(case when tokens.token_creator = '.$user_id.' then editions.token_id else edition_id end )'
                     )
-              ) */
+              )
             ->paginate($limit);
-
+            /* dd(DB::getQueryLog()); */
         }
 
         foreach ($tokens as $key => $value) {
