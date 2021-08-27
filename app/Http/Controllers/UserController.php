@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
+use App\Token;
 use App\User_profile;
 use App\Constants;
 use App\Notifications;
@@ -57,31 +58,43 @@ class UserController extends Controller
 
     public function getUserTokens(Request $req){
         $user_id = Auth::user()->user_id;
-        // var_dump($user_id );
-        if($req->user_id){
-            $user_id = $req->user_id;
-        }
-
-        $user = User::find($user_id);
-
         $page = $req->page;
         $limit = $req->limit;
-        $tokens = $user->tokens();
 
-        if($req->collection){
-            /* if the token is not put on market */
-            $tokens = $tokens->where('token_on_market', !Constants::TOKEN_ON_MARKET);
+        if($req->user_id){
+            $user_id = $req->user_id;
+            
         }else{
-            $tokens = $tokens->where('token_on_market', Constants::TOKEN_ON_MARKET);
+            /* DB::enableQueryLog(); */
+            $tokens = Token::select(
+                                'tokens.*', 
+                                DB::raw("(case when tokens.token_creator = ".$user_id." then count(editions.edition_id) else edition_no end ) as remainToken"),
+                            )
+            ->rightJoin('editions', 'editions.token_id' , 'tokens.token_id')
+            ->with(['transactions' => function ($q) {
+                $q->orderBy('transaction_id', 'DESC');
+            }])
+            ->where(function ($q) use ($req, $user_id) {
+                if($req->collection){
+                    /* if the token is not put on market */
+                    $q->where('token_on_market', !Constants::TOKEN_ON_MARKET);
+                }else{
+                    $q->where('token_on_market', Constants::TOKEN_ON_MARKET);
+                }
+            })
+            ->where('editions.owner_id', $user_id)
+            ->groupBy(
+                DB::raw(
+                    '(case when tokens.token_creator = '.$user_id.' then editions.token_id else edition_id end )'
+                    )
+              )
+            ->paginate($limit);
+            /* dd(DB::getQueryLog()); */
         }
-
-        $tokens = $tokens->with(['transactions' => function ($q) {
-            $q->orderBy('transaction_id', 'DESC');
-        }])->paginate($limit);
 
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
-            // $tokens[$key]->transactions = $value->transactions()->orderBy('transaction_id','DESC')->get();
+            $tokens[$key]->mint_transactions = $value->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
         }
         
 
