@@ -10,7 +10,8 @@ use App\User;
 use App\User_profile;
 use App\Wallet;
 use App\Transaction;
-use App\Constants;
+use App\Constants;  
+use App\SiteSettings;
 use DB;
 
 class TransactionController extends Controller
@@ -90,6 +91,37 @@ class TransactionController extends Controller
         /* } catch (\Throwable $th) {
             return response()->json(["message" => "Something wen't wrong"], 500);
         } */
+    }
+
+    public function requestTransferOwnership(Request $request){
+        $commission = SiteSettings::where('name', 'commission_percentage')->first();
+        $transaction = Transaction::create(
+            [
+                "user_id" =>  Auth::user()->user_id,
+                "transaction_token_id" => $request->input('token_id'),
+                "transaction_type" => Constants::TRANSACTION_TRANSFER,
+                "transaction_payment_method" =>  "",
+                "transaction_details" =>  "",
+                "transaction_service_fee" =>  0,
+                "transaction_urgency"   => "",
+                "transaction_gas_fee" =>  0,
+                "transaction_allowance_fee" =>  0,
+                "transaction_grand_total" => 0,
+                "transaction_payment_status" => Constants::TRANSACTION_PAYMENT_PENDING,
+                "transaction_status" =>  0,
+                "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100,
+            ]
+        );    
+        if($transaction){
+            $response=(object)[
+                "result" => [
+                    "token" => $request->input('token_id'),
+                    "transaction" => $transaction,
+                    // "message" => "Your artwork has been successfully request for minting."
+                ]
+            ];
+        }   
+        return response()->json($response, 200);
     }
 
 }
