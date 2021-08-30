@@ -11,6 +11,7 @@ use App\User_profile;
 use App\Wallet;
 use App\Transaction;
 use App\Constants;
+use App\Notifications;
 use DB;
 
 class TransactionController extends Controller
@@ -89,6 +90,68 @@ class TransactionController extends Controller
             return response()->json($response, 200);
         /* } catch (\Throwable $th) {
             return response()->json(["message" => "Something wen't wrong"], 500);
+        } */
+    }
+
+    public function updateTransactionStatus(Request $request){
+        $this->validate($request, [
+            'token_id' => 'required|string',
+            'transaction_status' => 'required|string',
+        ]);
+        // try {
+            $transaction = Transaction::where('transaction_token_id', $request->input('token_id'))->where('transaction_id', $request->input('transaction_id'));
+            if($transaction){
+                unset($request['token_id']);
+                $transaction->update($request->all());
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Transaction status has been successfully updated."
+                    ]
+                ];
+                $transaction = $transaction->first();
+                $user_details = User::where('user_id', $transaction->user_id)->first();
+                $msg = "";
+                
+
+                /* email and notification */
+                switch ($request->transaction_status) {
+                    case 1:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your purchase for "<b>'.$transaction->token->token_title.'</b>" is now processing.</p>';
+                        break;
+                    case 2:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your purchase for "<b>'.$transaction->token->token_title.'</b>" is failed.</p>';
+                        break;
+                    case 3:
+                        $msg = '<p>Hi <b>'.$user_details->profile->user_profile_full_name.'</b>, your purchase for "<b>'.$transaction->token->token_title.'</b>" is successfull and transfered the ownership to you wallet.</p>';
+                        break;
+                    default:
+                        # code...
+                        break;
+                }
+
+                if($user_details->profile->user_mail_notification == 1){
+                    Mail::send('mail.transfer-status', [ 'msg' => $msg], function($message) use ( $user_details) {
+                        $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Purshase Token Status');
+                        $message->from('support@tokreate.com','Tokreate');
+                    });
+                }
+
+                if($user_details->profile->user_notification_settings == 1){
+                    Notifications::create([
+                        'notification_message' => $msg,
+                        'notification_to' => $user_details->user_id,
+                        'notification_from' => Auth::user()->user_id,
+                        'notification_type' => Constants::NOTIF_MINTING_RES,
+                    ]);
+                }
+
+                return response()->json($response, 200);
+            }else{
+                return response()->json(['message' => 'Transaction status update failed!'], 409);
+            }
+        /* }catch (\Exception $e) {
+            return response()->json(['message' => 'Token status update failed!'], 409);
         } */
     }
 

@@ -10,6 +10,8 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\Transaction;
+use App\Edition;
+use App\TokenHistory;
 use App\User;
 
 class Token extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
@@ -28,7 +30,7 @@ class Token extends Model implements AuthenticatableContract, AuthorizableContra
         'user_id', 'token_collectible','token_collectible_count','token_title','token_description','token_starting_price','token_royalty','token_properties','token_filename','token_saletype','token_status', 'token_owner', 'token_creator'
     ];
 
-    protected $with = ['owner','creator'];
+    protected $with = ['owner', 'creator', 'editions'];
     /**
      * The attributes excluded from the model's JSON form.
      *
@@ -47,11 +49,20 @@ class Token extends Model implements AuthenticatableContract, AuthorizableContra
         return $this->hasMany(Transaction::class, 'transaction_token_id', 'token_id');   
     }
 
+    public function editions(){
+        return $this->hasMany(Edition::class, 'token_id', 'token_id');
+    }
+
+    public function history(){
+        return $this->hasMany(TokenHistory::class, 'token_id', 'token_id');
+    }
+
+
     public function owner(){
         return $this->belongsTo(User::class, 'token_owner', 'user_id');   
     }
 
     public function creator(){
-        return $this->belongsTo(User::class, 'token_creator', 'user_id');   
+        return $this->belongsTo(User::class, 'user_id', 'user_id');   
     }
 }

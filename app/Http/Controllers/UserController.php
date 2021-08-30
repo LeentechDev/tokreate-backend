@@ -65,38 +65,49 @@ class UserController extends Controller
             $user_id = $req->user_id;
             
         }else{
+            if($req->collection){
+                $on_market = 0;
+            }else{
+                $on_market = 1;
+            }
             /* DB::enableQueryLog(); */
             $tokens = Token::select(
-                                'tokens.*', 
-                                DB::raw("(case when tokens.token_creator = ".$user_id." then count(editions.edition_id) else edition_no end ) as remainToken"),
+                                'tokens.*',
+                                'editions.edition_no',
+                                'editions.on_market',
+                                'editions.edition_id',
+                                DB::raw("(case when tokens.user_id != ".$user_id." then editions.current_price else token_starting_price end ) as current_price"),
+                                DB::raw("(case when tokens.user_id = ".$user_id." then remaining_token else edition_no end ) as remainToken"),
                             )
-            ->rightJoin('editions', 'editions.token_id' , 'tokens.token_id')
-            ->with(['transactions' => function ($q) {
-                $q->orderBy('transaction_id', 'DESC');
-            }])
-            ->where(function ($q) use ($req, $user_id) {
-                if($req->collection){
-                    /* if the token is not put on market */
-                    $q->where('token_on_market', !Constants::TOKEN_ON_MARKET);
-                }else{
-                    $q->where('token_on_market', Constants::TOKEN_ON_MARKET);
-                }
-            })
-            ->where('editions.owner_id', $user_id)
-            ->groupBy(
-                DB::raw(
-                    '(case when tokens.token_creator = '.$user_id.' then editions.token_id else edition_id end )'
-                    )
-              )
-            ->paginate($limit);
-            /* dd(DB::getQueryLog()); */
+                            ->where(
+                                DB::raw("(case when tokens.user_id = ".$user_id." then tokens.token_on_market else editions.on_market end )"),
+                                DB::raw("(case when tokens.user_id = ".$user_id." then ".$on_market." else ".$on_market." end )")
+                            )
+                            ->where(
+                                DB::raw("(case when tokens.user_id = ".$user_id." then tokens.user_id else editions.owner_id end)"),
+                                DB::raw("(case when tokens.user_id = ".$user_id." then ".$user_id." else ".$user_id." end)")
+                            )
+                            ->leftJoin("editions", 'editions.token_id', 'tokens.token_id')
+                            ->with([
+                                'transactions' => function ($q) {
+                                    $q->orderBy('transaction_id', 'DESC');
+                                }, 
+                                'history' => function ($q) {
+                                    $q->orderBy('id', 'DESC');
+                                }, 
+                            ])
+                            ->groupBy(
+                                DB::raw(
+                                    '(case when tokens.user_id = '.$user_id.' then tokens.token_id else editions.edition_id end )'
+                                    )
+                            )
+                            ->paginate($limit);
         }
-
+        /* print_r( DB::getQueryLog()); */
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
             $tokens[$key]->mint_transactions = $value->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
         }
-        
 
         if($tokens->total()){
             $response=(object)[
@@ -121,36 +132,52 @@ class UserController extends Controller
         return $response;
     }
 
-    public function allUsers(){
-        $user=DB::select("SELECT * FROM `users`
-            LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id`
-            LEFT JOIN `wallets` ON `users`.`user_id`=`wallets`.`user_id` 
-            WHERE `users`.`user_role_id`='1'");
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $user,
-                ]
-            ];
-        return response()->json($response, 200);
-    }
-
-    public function singleUser($id){
-        try {
-            $user=DB::select("SELECT * FROM `users`
-            LEFT JOIN `user_profiles` ON `users`.`user_id`=`user_profiles`.`user_id` 
-            WHERE `users`.`user_id`='".$id."' and `users`.`user_role_id`='1'");
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $user,
-                ]
-            ];
-            return response()->json($response, 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'User not found.'], 409);
+    public function specificToken(Request $req){
+        
+        /* if the given user is the creator of token get the details from token table */
+        $token_details = Token::find($req->token_id);
+        $user_id = Auth::user()->user_id;
+        if($req->user_id){
+            $user_id = $req->user_id;
         }
 
+        if($token_details){
+
+            /* if the given user is not the creator of token get the details from token table along with edition details */
+            if($token_details->user_id != Auth::user()->user_id){
+                if($req->edition_id){
+                    $token_details = Token::where('edition_id', $req->edition_id)
+                        ->join('editions', 'editions.token_id', 'tokens.token_id')
+                        ->first();
+                }else{
+                    return response()->json(['message' => 'Invalid Token'], 500);
+                }
+            }
+
+            if($token_details){
+                $token_details->history = $token_details->history()->orderBy('id', 'DESC')->paginate(10);
+                $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->paginate(10);
+                $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
+                $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
+
+                $response=(object)[
+                    "success" => true,  
+                    "result" => [
+                        "datas" => $token_details,
+                        "message" => "Here are the details of the token.",
+                    ]
+                ];
+                return response()->json($response, 200);
+            }
+        }else{   
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "Token not found.",
+                ]
+            ];
+            return response()->json($response, 409);
+        }
     }
 
     public function updateAccount(Request $request){
@@ -173,7 +200,6 @@ class UserController extends Controller
                 unset($request_data['user_name']);
                 unset($request_data['user_email']);
                 
-                $request_data['user_profile_avatar'] = url('app/images/default_avatar.jpg');
                 $request_data['user_notification_settings'] = 1;
                 $request_data['user_profile_completed'] = 1;
                 $user_details->update($request_data);
@@ -186,8 +212,10 @@ class UserController extends Controller
                     $destination_path = 'app/images/user_avatar';
                     if($user_file->move($destination_path, $user_avatar)){
                         $profile_path = url($destination_path.'/'.$user_avatar);
-                        DB::statement("UPDATE `user_profiles` set `user_profile_avatar` = '".$profile_path."' Where `user_id` = '".Auth::user()->user_id."'");
+                    }else{
+                        $profile_path = url('app/images/default_avatar.jpg');
                     }
+                    DB::statement("UPDATE `user_profiles` set `user_profile_avatar` = '".$profile_path."' Where `user_id` = '".Auth::user()->user_id."'");
                 }
                 $response=(object)[
                     "success" => true,
@@ -245,5 +273,256 @@ class UserController extends Controller
         }catch (\Exception $e) {
             return response()->json(['message' => 'Password change failed!'], 409);
         }
+    }
+
+    public function changeEmailNotifSettings(Request $req){
+        try{
+            $user_details = User_profile::where('user_id',Auth::user()->user_id)->first();
+
+            $user_details->user_mail_notification = !$user_details->user_mail_notification;
+            $user_details->save();
+            var_dump($user_details);
+        }catch (\Exception $e) {
+            return response()->json(['message' => 'Password change failed!'], 409);
+        }
+    }
+
+
+
+
+
+    /* ADMIN FUNCTIONS */
+    public function userManagementList(Request $request){
+        $searchTerm = $request->search_keyword;
+        $managementList = User::where('user_role_id', Constants::USER_ARTIST)
+            ->leftJoin('user_profiles', 'users.user_id', '=', 'user_profiles.user_profile_id')
+            ->orderBy('user_status', 'ASC')
+            ->where(function ($q) use ($searchTerm, $request) {
+                if ($searchTerm) {
+                    $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('user_email', 'like', '%' . $searchTerm . '%');
+                }
+            })
+            ->orderBy($request->sort, $request->sort_dirc)
+            ->paginate($request->limit);
+
+        if($managementList->total()){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $managementList,
+                    "message" => "Here are the list of user management",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available user management",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
+    }
+
+    public function viewUserProfile(Request $request, $id){
+
+        $viewUserPortfolio = User::where('users.user_id', $id)
+            ->join('user_profiles', 'users.user_id', 'user_profiles.user_id')
+            ->first();
+
+        if($viewUserPortfolio){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $viewUserPortfolio,
+                    "message" => "Here are the details of user portfolio details.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "User portfolio not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function getUserSpecificMintingList(Request $request, $id){
+
+        $getMintingList = User::where('users.user_id', $id)
+            ->join('tokens', 'users.user_id', 'tokens.user_id')
+            ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
+            ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
+            ->where('transactions.transaction_status', Constants::TRANSACTION_PENDING)
+            ->where('tokens.token_status', Constants::PENDING)
+            ->paginate($request->limit);
+
+        if($getMintingList->total()){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $getMintingList,
+                    "message" => "Here are the details of artist/collector minting list.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Artist/collector not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function getReadyTokens(Request $request, $user_id){
+
+        $getReadyPortfolio = Token::select(
+                'tokens.*',
+                'editions.edition_no',
+                'editions.on_market',
+                'editions.edition_id',
+                DB::raw("(case when tokens.user_id != ".$user_id." then editions.current_price else token_starting_price end ) as current_price"),
+                DB::raw("(case when tokens.user_id = ".$user_id." then remaining_token else edition_no end ) as remainToken"),
+            )
+            ->where(
+                DB::raw("(case when tokens.user_id = ".$user_id." then tokens.user_id else editions.owner_id end)"),
+                DB::raw("(case when tokens.user_id = ".$user_id." then ".$user_id." else ".$user_id." end)")
+            )
+            ->leftJoin("editions", 'editions.token_id', 'tokens.token_id')
+            /* ->with([
+                'transactions' => function ($q) {
+                    $q->orderBy('transaction_id', 'DESC');
+                }, 
+                'history' => function ($q) {
+                    $q->orderBy('id', 'DESC');
+                }, 
+            ]) */
+            ->groupBy(
+                DB::raw(
+                    '(case when tokens.user_id = '.$user_id.' then tokens.token_id else editions.edition_id end )'
+                    )
+            )
+            ->paginate($request->limit);
+
+        if($getReadyPortfolio->total()){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $getReadyPortfolio,
+                    "message" => "Here are the porfolio list of specific users.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Portfolio list not found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    public function viewSpecificPortfolio(Request $request, $id){
+        $viewSpecificPortfolio = Token::where('tokens.token_id', $id)
+        ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
+        ->first();
+
+        if($viewSpecificPortfolio){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $viewSpecificPortfolio,
+                    "message" => "Here are the details of specific portfolio details.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Specific portfolio snot found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    }
+
+    /* public function getSpecificRequestMintingDetailsArtist(Request $request, $id){
+        $viewSpecificRequestMinting = Token::where('tokens.token_id', $id)
+        ->join('transactions', 'tokens.user_id', 'transactions.transaction_token_id')
+        ->first();
+
+        if($viewSpecificRequestMinting){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $viewSpecificRequestMinting,
+                    "message" => "Here are the details of specific request minting details.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Specific request minting snot found.",
+                ]
+            ];
+            return response()->json($response, 200);
+        }
+    } */
+
+    public function deactivateUser(Request $request){
+        $deactivateUser = User::find($request->user_id);
+
+        if($deactivateUser){
+            $deactivateUser->update($request->all());
+                $response=(object)[
+                        "success" => true,
+                        "result" => [
+                        "message" => "This Artist/Collector has been deactivated successfully",
+                    ]
+                ];
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Invalid parameters",
+                ]
+            ];
+        } 
+        return response()->json($response, 200);
+    }
+
+    public function activateUser(Request $request){
+        $activateUser = User::find($request->user_id);
+
+        if($activateUser){
+            $activateUser->update($request->all());
+                $response=(object)[
+                        "success" => true,
+                        "result" => [
+                        "message" => "This Artist/Collector has been activated successfully",
+                    ]
+                ];
+        }else{
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Invalid parameters",
+                ]
+            ];
+        } 
+        return response()->json($response, 200);
     }
 }

@@ -51,7 +51,8 @@ class AuthController extends Controller
                     "user_id" =>  $user_id,
                     "user_profile_avatar" => url('app/images/default_avatar.jpg'),
                     "user_profile_full_name" => $request->input('user_profile_full_name'),
-                    "user_notification_settings" => "1",
+                    "user_notification_settings" => 1,
+                    "user_email_notification" => 1,
                 ]
             );
 
@@ -110,9 +111,9 @@ class AuthController extends Controller
                     }
                     // $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
 
-                    if (!$user_data->profile->user_profile_avatar) {
+                    /* if (!$user_data->profile->user_profile_avatar) {
                         $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
-                    }
+                    } */
                 } else {
                     return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
                 }

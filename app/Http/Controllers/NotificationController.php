@@ -33,26 +33,31 @@ class NotificationController extends Controller
 
     public function list(Request $request){
         $page = $request->page;
-        if(Auth::user()->user_role_id === Constants::USER_ADMIN){
-            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
-            ->where('notification_to', 0)->paginate(10);
-        }else{
-            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
-            ->where('notification_to', Auth::user()->user_id)->paginate(10);
-        }
-        
 
-        if($notifications){
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $notifications,
-                    "message" => "List of notifications"
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            return response()->json(['message' => 'No notifications.'], 409);
+        try {
+            /* if(Auth::user()->user_role_id === Constants::USER_ADMIN){
+                $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+                ->where('notification_to', 0)->paginate(10);
+            }else{ */
+                $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+                ->where('notification_to', Auth::user()->user_id)->paginate(10);
+            /* } */
+            
+    
+            if($notifications){
+                $response=(object)[
+                    "success" => true,
+                    "result" => [
+                        "datas" => $notifications,
+                        "message" => "List of notifications"
+                    ]
+                ];
+                return response()->json($response, 200);
+            }else{
+                return response()->json(['message' => 'No notifications.'], 409);
+            }
+        }catch (\Exception $e) {
+            return response()->json(['message' => "Something wen't wrong"], 409);
         }
        
     }
