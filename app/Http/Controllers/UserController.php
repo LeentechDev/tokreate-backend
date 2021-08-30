@@ -77,7 +77,7 @@ class UserController extends Controller
                                 'editions.on_market',
                                 'editions.edition_id',
                                 DB::raw("(case when tokens.user_id != ".$user_id." then editions.current_price else token_starting_price end ) as current_price"),
-                                DB::raw("(case when tokens.user_id = ".$user_id." then remaining_token else edition_no end ) as remainToken"),
+                                DB::raw("(case when tokens.user_id = ".$user_id." then remaining_token else edition_no end ) as remainToken")
                             )
                             ->where(
                                 DB::raw("(case when tokens.user_id = ".$user_id." then tokens.token_on_market else editions.on_market end )"),
