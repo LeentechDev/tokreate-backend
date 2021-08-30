@@ -12,6 +12,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\User_profile;
 use App\Wallet;
 use App\Token;
+use App\Edition;
 use App\Notifications;
 
 class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
@@ -30,7 +31,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'user_name', 'user_bio', 'user_email','user_role_id','user_last_login','user_status','user_notification_settings'
     ];
 
-    protected $with = ['profile'];
+    // protected $with = ['profile'];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -41,6 +42,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'password',
     ];
     
+    protected $with = [
+        'profile'
+    ];
+
     public function getJWTIdentifier(){
         return $this->getKey();
     }
@@ -60,7 +65,15 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         return $this->hasMany(Token::class, 'token_owner', 'user_id');
     }
 
+    public function token_editions(){
+        return $this->hasMany(Edition::class, 'owner_id', 'user_id');
+    }
+
     public function notifications(){
         return $this->hasMany(Notifications::class, 'notification_to', 'user_id');
+    }
+
+    public function minting_requests(){
+        return $this->hasMany(Token::class, 'token_owner', 'user_id');
     }
 }

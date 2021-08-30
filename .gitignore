@@ -4,3 +4,4 @@ Homestead.json
 Homestead.yaml
 .env
 /public/app/images/user_avatar/*
+public/app/images/tokens/*
