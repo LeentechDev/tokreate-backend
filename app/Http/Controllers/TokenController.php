@@ -30,6 +30,7 @@ class TokenController extends Controller{
         $this->middleware('auth');
     }
 
+    /* use in dashboard - for minting */
     public function getTokens(Request $request){
         $tokens = new Token();
         $searchTerm = $request->search_key;
@@ -69,23 +70,16 @@ class TokenController extends Controller{
         }
     }
 
-    public function specificToken($id){
-
+    public function specificToken(Request $req, $id){
+        
         $token_details = Token::find($id);
+
         if($token_details){
-            /* $token_details['owner'] = $token_details->owner;
-            $token_details['creator'] = $token_details->creator; */
+
+            $token_details->history = $token_details->history()->orderBy('id', 'DESC')->get();
             $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
             $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
             $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
-
-          
-            /* if(!$token_details->owner->profile->user_profile_avatar){
-                $token_details->owner->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
-            }
-            if(!$token_details->creator->profile->user_profile_avatar){
-                $token_details->creator->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
-            } */
 
             $response=(object)[
                 "success" => true,  
@@ -107,12 +101,31 @@ class TokenController extends Controller{
     }
 
     public function addToMarket(Request $request){
-        $tokens = Token::where('token_id',$request->token_id)->where('token_on_market', !Constants::TOKEN_ON_MARKET)->where('token_owner', Auth::user()->user_id)->first();
+        $tokens = Token::where('token_id',$request->token_id)
+                        ->where('user_id', Auth::user()->user_id)->first();
+
+        /* if the token is created by requestor - update all the remaining token edition owned by him*/
         if($tokens){
+            
+            /* $editions = Edition::where('token_id',$request->token_id)->where('owner_id', Auth::user()->user_id)->get();
+
+            foreach ($editions as $key => $edition) {
+                $edition->on_market = Constants::TOKEN_ON_MARKET;
+                $edition->current_price = $request->price;
+                $updated = $edition->update();
+            } */
+
             $tokens->token_on_market = Constants::TOKEN_ON_MARKET;
             $tokens->token_starting_price = $request->price;
             $updated = $tokens->update();
             if($updated){
+
+                TokenHistory::create([
+                    'token_id' => $request->token_id,
+                    'type' => Constants::TOKEN_HISTORY_SALE,
+                    'price' => $request->price,
+                ]);
+
                 $response=(object)[
                     "success" => true,  
                     "result" => [
@@ -121,6 +134,39 @@ class TokenController extends Controller{
                     ]
                 ];
                 return response()->json($response, 200);
+            }
+        }else{
+            /* if he/she is not the creator of token update the specific edition he/she owned */
+            $edition = Edition::find($request->edition_id);
+
+            if($edition){
+                $edition->on_market = Constants::TOKEN_ON_MARKET;
+                $edition->current_price = $request->price;
+
+                $updated = $edition->update();
+                if($updated){
+
+                    TokenHistory::create([
+                        'token_id' => $request->token_id,
+                        'type' => Constants::TOKEN_HISTORY_SALE,
+                        'price' => $request->price,
+                        'edition_id' => $edition->edition_id
+                    ]);
+
+                    $response=(object)[
+                        "success" => true,  
+                        "result" => [
+                            "datas" => $updated,
+                            "message" => "Artwork successfully put on marketplace",
+                        ]
+                    ];
+                    return response()->json($response, 200);
+                }
+            }else{
+                $response=(object)[
+                    "message" => "Artwork not found.",
+                ];
+                return response()->json($response, 409);
             }
         }
         $response=(object)[
@@ -156,7 +202,7 @@ class TokenController extends Controller{
         $wallet_details = Wallet::where('user_id', Auth::user()->user_id)->where('wallet_status', Constants::WALLET_DONE)->first();
 
         if($wallet_details){
-            /* try { */
+            try {
                 $token = new Token;
                 $token_file             = $request->file('token_filename');
                 $token_original_name    = $token_file->getClientOriginalName();
@@ -172,6 +218,7 @@ class TokenController extends Controller{
                 $token->user_id = Auth::user()->user_id;
                 $token->token_collectible = $request->input('token_collectible');
                 $token->token_collectible_count = $request->input('token_collectible_count');
+                $token->remaining_token =  $request->input('token_collectible_count');
                 $token->token_title = $request->input('token_title');
                 $token->token_description = $request->input('token_description');
                 $token->token_starting_price = $request->input('token_starting_price');
@@ -209,35 +256,39 @@ class TokenController extends Controller{
                 );
 
                 if($token){
-                    $no_of_edition = $request->input('token_collectible_count');
-                    for($i = 0; $no_of_edition > $i; $i++){
+                    // $no_of_edition = $request->input('token_collectible_count');
+                    // for($i = 0; $no_of_edition > $i; $i++){
                         /* create new edition */
-                        $edition = new Edition;
-                        $edition->token_id = $token_id;
-                        $edition->owner_id = Auth::user()->user_id;
-                        $edition->current_price = $request->input('token_starting_price');
-                        $edition->edition_no = $i+1;
-                        $edition->save();
+                        // $edition = new Edition;
+                        // $edition->token_id = $token_id;
+                        // $edition->owner_id = Auth::user()->user_id;
+                        // $edition->current_price = $request->input('token_starting_price');
+                        // $edition->edition_no = $i+1;
+                        // $edition->save();
                         /* create token/history logs */
-                        if($edition){
+                        // if($edition){
                             $history = new TokenHistory;
                             $history->token_id = $token_id;
-                            $history->edition_id = $edition->edition_id;
                             $history->price = $request->input('token_starting_price');
                             $history->type = Constants::TOKEN_HISTORY_MINT;
                             $history = $history->save();
-                        }
-                    }
+                        // }
+                    // }
 
                     $user_details = User::find(Auth::user()->user_id);
-                    
-                    Notifications::create([
-                        'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
-                        'notification_to' => 0,
-                        'notification_from' => Auth::user()->user_id,
-                        'notification_item' => $token_id,
-                        'notification_type' => Constants::NOTIF_MINTING_REQ,
-                    ]);
+
+                    $all_admin = User::where('user_role_id', Constants::USER_ADMIN)->get();
+                    foreach ($all_admin as $key => $admin) {
+                        if($admin->profile->user_notification_settings == 1){
+                            Notifications::create([
+                                'notification_message' => '<p><b>'.$user_details->profile->user_profile_full_name.'</b> request for minting.</p>',
+                                'notification_to' => 0,
+                                'notification_from' => Auth::user()->user_id,
+                                'notification_item' => $admin->user_id,
+                                'notification_type' => Constants::NOTIF_MINTING_REQ,
+                            ]);
+                        }
+                    }
                 }
 
 
@@ -256,9 +307,9 @@ class TokenController extends Controller{
                     ]
                 ];
                 return response()->json($response, 200);
-            /* }catch (\Exception $e) {
+            }catch (\Exception $e) {
                 return response()->json(['message' => 'Request for Minting Failed!'], 409);
-            } */
+            }
         }else{
             return response()->json(['message' => 'Please set up your wallet first'], 409);
         }
@@ -339,6 +390,7 @@ class TokenController extends Controller{
                 $token_details =$token_details->first();
                 $user_details = User::where('user_id', $token_details->token_owner)->first();
                 $msg = "";
+
                 /* email and notification */
                 switch ($request->token_status) {
                     case 1:
@@ -356,13 +408,14 @@ class TokenController extends Controller{
                 }
 
                 
+                if($user_details->profile->user_mail_notification == 1){
+                    Mail::send('mail.minting-status', [ 'msg' => $msg], function($message) use ( $user_details) {
+                        $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Miting Status Update');
+                        $message->from('support@tokreate.com','Tokreate');
+                    });
+                }
 
-                Mail::send('mail.minting-status', [ 'msg' => $msg], function($message) use ( $user_details) {
-                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Miting Status Update');
-                    $message->from('support@tokreate.com','Tokreate');
-                });
-
-                if($user_details->user_notification_settings == 1){
+                if($user_details->profile->user_notification_settings == 1){
                     Notifications::create([
                         'notification_message' => $msg,
                         'notification_to' => $user_details->user_id,
@@ -448,213 +501,28 @@ class TokenController extends Controller{
         }
     } */
 
-    public function userManagementList(Request $request){
-        $searchTerm = $request->search_keyword;
-        $managementList = User::where('user_role_id', Constants::USER_ARTIST)
-            ->leftJoin('user_profiles', 'users.user_id', '=', 'user_profiles.user_profile_id')
-            ->orderBy('user_status', 'ASC')
-            ->where(function ($q) use ($searchTerm, $request) {
-                if ($searchTerm) {
-                    $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('user_email', 'like', '%' . $searchTerm . '%');
-                }
-            })
-            ->orderBy($request->sort, $request->sort_dirc)
-            ->paginate($request->limit);
+    public function getTokenHistory(Request $request){
+        $page = $request->page;
 
-        if($managementList->total()){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $managementList,
-                    "message" => "Here are the list of user management",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => false,
-                "result" => [
-                    "message" => "There are no available user management",
-                ]
-            ];
-        }
-        return response()->json($response, 200);
-    }
+        // try {
 
-    public function viewUserProfile(Request $request, $id){
-
-        $viewUserPortfolio = User::where('users.user_id', $id)
-            ->join('user_profiles', 'users.user_id', 'user_profiles.user_id')
-            ->first();
-
-        if($viewUserPortfolio){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $viewUserPortfolio,
-                    "message" => "Here are the details of user portfolio details.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "User portfolio not found.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }
-    }
-
-    public function getUserSpecificMintingList(Request $request, $id){
-
-        $getMintingList = User::where('users.user_id', $id)
-            ->join('tokens', 'users.user_id', 'tokens.user_id')
-            ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
-            ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
-            ->where('transactions.transaction_status', Constants::TRANSACTION_PENDING)
-            ->where('tokens.token_status', Constants::PENDING)
-            ->paginate($request->limit);
-
-        if($getMintingList->total()){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $getMintingList,
-                    "message" => "Here are the details of artist/collector minting list.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Artist/collector not found.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }
-    }
-
-    public function getReadyTokens(Request $request, $id){
-
-        $getReadyPortfolio = Token::where('token_status', Constants::READY)
-            ->where('user_id', $id)
-            ->paginate($request->limit);
-
-        if($getReadyPortfolio->total()){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $getReadyPortfolio,
-                    "message" => "Here are the porfolio list of specific users.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Portfolio list not found.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }
-    }
-
-    public function viewSpecificPortfolio(Request $request, $id){
-        $viewSpecificPortfolio = Token::where('tokens.token_id', $id)
-        ->join('transactions', 'tokens.token_id', 'transactions.transaction_token_id')
-        ->first();
-
-        if($viewSpecificPortfolio){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $viewSpecificPortfolio,
-                    "message" => "Here are the details of specific portfolio details.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Specific portfolio snot found.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }
-    }
-
-    public function getSpecificRequestMintingDetailsArtist(Request $request, $id){
-        $viewSpecificRequestMinting = Token::where('tokens.token_id', $id)
-        ->join('transactions', 'tokens.user_id', 'transactions.transaction_token_id')
-        ->first();
-
-        if($viewSpecificRequestMinting){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $viewSpecificRequestMinting,
-                    "message" => "Here are the details of specific request minting details.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Specific request minting snot found.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }
-    }
-
-    public function deactivateUser(Request $request){
-        $deactivateUser = User::find($request->user_id);
-
-        if($deactivateUser){
-            $deactivateUser->update($request->all());
+            $history = TokenHistory::where('token_id', $request->token_id)->paginate(10);
+            
+            if($history){
                 $response=(object)[
-                        "success" => true,
-                        "result" => [
-                        "message" => "This Artist/Collector has been deactivated successfully",
+                    "success" => true,
+                    "result" => [
+                        "datas" => $history,
+                        "message" => "List of history"
                     ]
                 ];
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Invalid parameters",
-                ]
-            ];
-        } 
-        return response()->json($response, 200);
-    }
-
-    public function activateUser(Request $request){
-        $activateUser = User::find($request->user_id);
-
-        if($activateUser){
-            $activateUser->update($request->all());
-                $response=(object)[
-                        "success" => true,
-                        "result" => [
-                        "message" => "This Artist/Collector has been activated successfully",
-                    ]
-                ];
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Invalid parameters",
-                ]
-            ];
-        } 
-        return response()->json($response, 200);
+                return response()->json($response, 200);
+            }else{
+                return response()->json(['message' => 'No edition history yet.'], 409);
+            }
+        /* }catch (\Exception $e) {
+            return response()->json(['message' => "Something wen't wrong"], 409);
+        } */
+        
     }
 }

@@ -20,26 +20,43 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('register', 'AuthController@register');
     $router->post('login', 'AuthController@login');
     $router->post('admin/login', 'AuthController@admin_login');
-    $router->get('profile', 'UserController@profile');
-    $router->get('users/{user_id}', 'UserController@singleUser');
-    $router->get('users', 'UserController@allUsers');
-    $router->post('update-account', 'UserController@updateAccount');
-    $router->get('user/tokens', 'UserController@getUserTokens');
-    $router->post('payment', 'DragonpayController@payment');
-    $router->post('dragonpay-webhook', 'DragonpayController@webhook');
-    $router->get('dragonpay-webhook', 'DragonpayController@webhook');
-    $router->get('gas-fee', 'HomeController@getGasFees');
-    $router->get('site-settings', 'HomeController@siteSettings');
-    $router->post('update-site-settings', 'HomeController@updateSiteSettings');
-
-    $router->get('tokens', 'HomeController@getTokens');
-    $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
-    $router->post('user/change-password', 'UserController@changePassword');
-    $router->put('user/notification-settings', 'UserController@changeNotifSettings');
     $router->post('reset-password', 'AuthController@resetPassword');
     $router->post('change-password', 'AuthController@changePassword');
     $router->get('validate-token', 'AuthController@validateTokenRP');
+    
+    $router->post('payment', 'DragonpayController@payment');
+    $router->post('dragonpay-webhook', 'DragonpayController@webhook');
+    $router->get('dragonpay-webhook', 'DragonpayController@webhook');
+
+    $router->get('tokens', 'HomeController@getTokens');
+    $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
+    $router->get('gas-fee', 'HomeController@getGasFees');
+    $router->get('site-settings', 'HomeController@siteSettings');
+    $router->post('update-site-settings', 'HomeController@updateSiteSettings');
 });
+
+
+$router->group(['prefix' => 'api/user'], function () use ($router) {
+    $router->get('profile', 'UserController@profile');
+    $router->get('tokens', 'UserController@getUserTokens');
+    $router->get('specific-token', 'UserController@specificToken');
+    $router->post('change-password', 'UserController@changePassword');
+    $router->put('update-web-notif', 'UserController@changeNotifSettings');
+    $router->put('update-mail-notif', 'UserController@changeEmailNotifSettings');
+    $router->post('update-account', 'UserController@updateAccount');
+});
+
+
+$router->group(['prefix' => 'api/users'], function () use ($router) {
+    $router->get('minting-list/{user_id}', 'UserController@getUserSpecificMintingList');
+    $router->get('token-list/{user_id}', 'UserController@getReadyTokens');
+    $router->get('token/{token_id}', 'UserController@viewSpecificPortfolio');
+    $router->post('deactivate', 'UserController@deactivateUser');
+    $router->post('activate', 'UserController@activateUser');
+    $router->get('', 'UserController@userManagementList');
+    $router->get('{user_id}', 'UserController@viewUserProfile');
+});
+
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->post('request-minting', 'TokenController@mintRequest');
@@ -49,15 +66,9 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->get('minting-list', 'TokenController@mintingList');
     $router->get('specific-token/{token_id}', 'TokenController@specificToken');
     $router->post('add-to-market', 'TokenController@addToMarket');
-    $router->get('management-list', 'TokenController@userManagementList');
-    $router->get('user-management/{user_profile_id}', 'TokenController@viewUserProfile');
-    $router->get('artist-specific-request-minting-list/{token_id}', 'TokenController@getUserSpecificMintingList');
-    $router->get('ready-token-list/{token_id}', 'TokenController@getReadyTokens');
-    $router->get('specific-portfolio/{token_id}', 'TokenController@viewSpecificPortfolio');
-    $router->get('artist-specific-request-minting-details/{token_id}', 'TokenController@getSpecificRequestMintingDetailsArtist');
-    $router->post('deactivate-artist-collector', 'TokenController@deactivateUser');
-    $router->post('activate-artist-collector', 'TokenController@activateUser');
+    $router->get('history', 'TokenController@getTokenHistory');
 });
+
 
 $router->group(['prefix' => 'api/wallet'], function () use ($router) {
     $router->post('connect-wallet', 'WalletController@connectWallet');
@@ -90,6 +101,7 @@ $router->group(['prefix' => 'api/notification'], function () use ($router) {
 
 $router->group(['prefix' => 'api/transaction'], function () use ($router) {
     $router->get('transfer-ownership', 'TransactionController@transferOwnership');
+    $router->post('update-status', 'TransactionController@updateTransactionStatus');
     $router->get('{id}', 'TransactionController@transactionDetails');
     $router->post('request-transfer-ownership', 'TransactionController@requestTransferOwnership');
 });
