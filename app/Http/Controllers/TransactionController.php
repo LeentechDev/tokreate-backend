@@ -7,12 +7,13 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 use App\User;
-use App\User_profile;
-use App\Wallet;
+use App\Token;
 use App\Transaction;
 use App\Constants;
+use App\Edition;
 use App\SiteSettings;
 use App\Notifications;
+use App\TokenHistory;
 use DB;
 
 class TransactionController extends Controller
@@ -43,6 +44,7 @@ class TransactionController extends Controller
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
                 ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->where('transaction_status', '<>', Constants::TRANSACTION_DRAFT)
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
@@ -71,32 +73,41 @@ class TransactionController extends Controller
 
     public function transactionDetails($id)
     {
-        /* try {  */
-        $transaction = Transaction::with(['transaction_owner', 'token'])->find($id);
-        if ($transaction) {
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $transaction,
-                ]
-            ];
-        } else {
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Can't find the transaction",
-                ]
-            ];
-        }
-        return response()->json($response, 200);
-        /* } catch (\Throwable $th) {
+        try {
+            $transaction = Transaction::with(['transaction_owner'])->find($id);
+
+            if ($transaction) {
+
+                if (!$transaction->edition_id) {
+                    $transaction->token = Token::select('*', 'token_starting_price as current_price')->where('token_id', $transaction->transaction_token_id)->first();
+                } else {
+                    $transaction->token = Edition::select('*')->join('tokens', 'tokens.token_id', 'edition.token_id')->where('edition_id', $transaction->edition_id)->first();
+                }
+
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "datas" => $transaction,
+                    ]
+                ];
+            } else {
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Can't find the transaction",
+                    ]
+                ];
+            }
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
             return response()->json(["message" => "Something wen't wrong"], 500);
-        } */
+        }
     }
 
     public function requestTransferOwnership(Request $request)
     {
         $commission = SiteSettings::where('name', 'commission_percentage')->first();
+
         $transaction = Transaction::create(
             [
                 "user_id" =>  Auth::user()->user_id,
@@ -110,8 +121,10 @@ class TransactionController extends Controller
                 "transaction_allowance_fee" =>  0,
                 "transaction_grand_total" => 0,
                 "transaction_payment_status" => Constants::TRANSACTION_PAYMENT_PENDING,
-                "transaction_status" =>  0,
-                "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100,
+                "transaction_status" =>  Constants::TRANSACTION_DRAFT,
+                "edition_id" => $request->input('edition_id'),
+                /* "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100, */ /* no commission for every sales yet */
+                "transaction_computed_commission" => 0,
             ]
         );
         if ($transaction) {
@@ -132,18 +145,31 @@ class TransactionController extends Controller
             'token_id' => 'required|string',
             'transaction_status' => 'required|string',
         ]);
-        // try {
-        $transaction = Transaction::where('transaction_token_id', $request->input('token_id'))->where('transaction_id', $request->input('transaction_id'));
-        if ($transaction) {
+        /* try { */
+        $_transaction = Transaction::where('transaction_token_id', $request->input('token_id'))->where('transaction_id', $request->input('transaction_id'));
+        if ($_transaction) {
             unset($request['token_id']);
-            $transaction->update($request->all());
+            $_transaction->update($request->all());
+
+            $transaction_details = $_transaction->first();
+
+            /* var_dump(Constants::TRANSACTION_SUCCESS);
+                var_dump(($request->transaction_status)); */
+            if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
+                if (!$transaction_details->edition_id) {
+                    $this->createEdition($transaction_details);
+                } else {
+                    $this->transferTokenOwnership($transaction_details);
+                }
+            }
+
             $response = (object)[
                 "success" => true,
                 "result" => [
                     "message" => "Transaction status has been successfully updated."
                 ]
             ];
-            $transaction = $transaction->first();
+            $transaction = $_transaction->first();
             $user_details = User::where('user_id', $transaction->user_id)->first();
             $msg = "";
 
@@ -184,8 +210,67 @@ class TransactionController extends Controller
         } else {
             return response()->json(['message' => 'Transaction status update failed!'], 409);
         }
-        /* }catch (\Exception $e) {
+        /* } catch (\Exception $e) {
             return response()->json(['message' => 'Token status update failed!'], 409);
         } */
+    }
+
+    private function createEdition($transaction)
+    {
+
+        $_token = Token::select('*', 'token_starting_price as current_price')->where('token_id', $transaction->transaction_token_id);
+        $token = $_token->first();
+        $total_edition = Edition::where('token_id', $token->token_id)->count();
+
+        /* echo '<pre>';
+        var_dump($transaction->transaction_id);
+        die; */
+        if ($token->remaining_token > 0) {
+
+            /* create edition */
+            $edition_save = Edition::create([
+                'token_id' => $token->token_id,
+                'owner_id' => $transaction->user_id,
+                'current_price' => $token->current_price,
+                'edition_no' => $total_edition + 1,
+                'on_market' => 0,
+            ]);
+
+            TokenHistory::create([
+                'token_id' => $token->token_id,
+                'edition_id' => $edition_save->edition_id,
+                'price' => $token->current_price,
+                'type' => Constants::TOKEN_HISTORY_BUY,
+                'buyer_id' => $transaction->user_id,
+                'seller_id' => $token->user_id,
+            ]);
+
+            $token->remaining_token = $token->remaining_token - 1;
+            $token->save();
+        };
+    }
+
+    private function transferTokenOwnership($transaction)
+    {
+        $_token = Edition::select('*')->where('edition_id', $transaction->edition_id);
+        $token = $_token->first();
+
+        if ($_token) {
+            /* change the owner of token edition */
+            $_token->update([
+                'owner_id' => $transaction->user_id,
+                'on_market' => 0,
+            ]);
+
+
+            TokenHistory::create([
+                'token_id' => $token->token_id,
+                'edition_id' => $token->edition_id,
+                'price' => $token->current_price,
+                'type' => Constants::TOKEN_HISTORY_BUY,
+                'buyer_id' => $transaction->user_id,
+                'seller_id' => $token->user_id,
+            ]);
+        };
     }
 }

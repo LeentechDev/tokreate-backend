@@ -34,43 +34,43 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
         /* try { */
-            //registration
-            $user = new User;
-            $user->user_name = $request->input('user_name');
-            $user->user_email = $request->input('user_email');
-            $plainPassword = $request->input('password');
-            $user->password = app('hash')->make($plainPassword);
-            $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : Constants::USER_ARTIST;
-            $user->user_status = $request->input('user_status') ? $request->input('user_status') : Constants::USER_STATUS_ACTIVE;
-            $user->save();
-            $user->id;
-            $user_id = $user->user_id;
-            //user profile            
-            $user_data = User_profile::create(
-                [
-                    "user_id" =>  $user_id,
-                    "user_profile_avatar" => url('app/images/default_avatar.jpg'),
-                    "user_profile_full_name" => $request->input('user_profile_full_name'),
-                    "user_notification_settings" => 1,
-                    "user_email_notification" => 1,
-                ]
-            );
+        //registration
+        $user = new User;
+        $user->user_name = $request->input('user_name');
+        $user->user_email = $request->input('user_email');
+        $plainPassword = $request->input('password');
+        $user->password = app('hash')->make($plainPassword);
+        $user->user_role_id = $request->input('user_role_id') ? $request->input('user_role_id') : Constants::USER_ARTIST;
+        $user->user_status = $request->input('user_status') ? $request->input('user_status') : Constants::USER_STATUS_ACTIVE;
+        $user->save();
+        $user->id;
+        $user_id = $user->user_id;
+        //user profile            
+        $user_data = User_profile::create(
+            [
+                "user_id" =>  $user_id,
+                "user_profile_avatar" => url('app/images/default_avatar.jpg'),
+                "user_profile_full_name" => $request->input('user_profile_full_name'),
+                "user_notification_settings" => 1,
+                "user_email_notification" => 1,
+            ]
+        );
 
-            $fund = Fund::create(
-                [
-                    "user_id" =>  $user_id,
-                ]
-            );
+        $fund = Fund::create(
+            [
+                "user_id" =>  $user_id,
+            ]
+        );
 
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "user_profile" => $user_data,
-                    "message" => 'Congratulation, your account has been successfully created',
-                ]
-            ];
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "user_profile" => $user_data,
+                "message" => 'Congratulation, your account has been successfully created',
+            ]
+        ];
 
-            return response()->json($response, 201);
+        return response()->json($response, 201);
         /* } catch (\Exception $e) {
             return response()->json(['message' => 'User Registration Failed!'], 409);
         } */
@@ -82,49 +82,49 @@ class AuthController extends Controller
             'user_email' => 'required|string',
             'password' => 'required|string',
         ]);
-        try {
-            $credentials = $request->only(['user_email', 'password']);
-            if (!$token = Auth::attempt($credentials)) {
-                return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
-            }
+        // try {
+        $credentials = $request->only(['user_email', 'password']);
+        if (!$token = Auth::attempt($credentials)) {
+            return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
+        }
 
-            $user_data = User::where('user_id', Auth::user()->user_id)
-                ->with([
-                    'profile',
-                    'tokens',
-                    'wallet' => function ($q) {
-                        $q->orderBy('wallet_id', 'DESC')->first();
-                    },
-                    'notifications' => function ($q) {
-                        $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
-                        $q->orderBy('id', 'DESC')->paginate(10);
-                    }
-                ])
-                ->where('user_role_id', Constants::USER_ARTIST)->with(['profile', 'tokens'])->first();
+        $user_data = User::where('user_id', Auth::user()->user_id)
+            ->with([
+                'profile',
+                'tokens',
+                'wallet' => function ($q) {
+                    $q->orderBy('wallet_id', 'DESC')->first();
+                },
+                'notifications' => function ($q) {
+                    $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
+                    $q->orderBy('id', 'DESC')->paginate(10);
+                }
+            ])
+            ->where('user_role_id', Constants::USER_ARTIST)->with(['profile', 'tokens'])->first();
 
 
-            if ($user_data) {
-                if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
-                    foreach ($user_data['tokens'] as $key => $value) {
-                        $user_data['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
-                        $user_data['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id', 'DESC')->get();
-                    }
-                    // $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
+        if ($user_data) {
+            if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
+                foreach ($user_data['tokens'] as $key => $value) {
+                    $user_data['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
+                    $user_data['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id', 'DESC')->get();
+                }
+                // $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
 
-                    /* if (!$user_data->profile->user_profile_avatar) {
+                /* if (!$user_data->profile->user_profile_avatar) {
                         $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
                     } */
-                } else {
-                    return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
-                }
             } else {
-                return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
+                return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
             }
-
-            return $this->respondWithToken($user_data, $token);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Login failed! Please try again.'], 409);
+        } else {
+            return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
         }
+
+        return $this->respondWithToken($user_data, $token);
+        /* } catch (\Exception $e) {
+            return response()->json(['message' => 'Login failed! Please try again.'], 409);
+        } */
     }
 
 

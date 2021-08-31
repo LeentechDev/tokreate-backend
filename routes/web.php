@@ -111,4 +111,8 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('dashboard', 'DashboardController@dashboardReports');
     $router->get('pending-transaction', 'DashboardController@pendingTransactions');
     $router->get('success-transaction', 'DashboardController@successTransactions');
+    $router->get('user-sales', 'DashboardController@userSales');
+    $router->get('user-purchase', 'DashboardController@userPurchase');
+    $router->get('user-incoming', 'DashboardController@userIncoming');
+    $router->get('user-outgoing', 'DashboardController@userOutgoing');
 });

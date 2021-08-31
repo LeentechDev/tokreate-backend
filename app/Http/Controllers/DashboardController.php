@@ -77,39 +77,39 @@ class DashboardController extends Controller
 
         $transaction = new Transaction();
         $searchTerm = $request->search_keyword;
-        // try {
-        $transactions = $transaction->select(
-            'transactions.*',
-            'tokens.*',
-            'owner.user_profile_full_name as owner_fullname',
-            'collector.user_profile_full_name as collector_fullname'
-        )
-            ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
-            ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
-            ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
-            ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
-            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
-            ->where(function ($q) use ($searchTerm, $request) {
-                if ($searchTerm) {
-                    $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
-                }
-            })
-            ->with(['transaction_owner', 'token'])
-            ->orderBy($request->sort, $request->sort_dirc)
-            ->paginate($request->limit);
+        try {
+            $transactions = $transaction->select(
+                'transactions.*',
+                'tokens.*',
+                'owner.user_profile_full_name as owner_fullname',
+                'collector.user_profile_full_name as collector_fullname'
+            )
+                ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
+                ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+                ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
+                ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+                ->where(function ($q) use ($searchTerm, $request) {
+                    if ($searchTerm) {
+                        $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                    }
+                })
+                ->with(['transaction_owner', 'token'])
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
 
-        $response = (object)[
-            "success" => true,
-            "result" => [
-                "datas" => $transactions,
-            ]
-        ];
-        return response()->json($response, 200);
-        /* } catch (\Throwable $th) {
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $transactions,
+                ]
+            ];
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
             return response()->json(['message' => "Something wen't wrong"], 200);
-        } */
+        }
     }
 
 
@@ -130,6 +130,77 @@ class DashboardController extends Controller
                 ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
                 ->where('transaction_status', Constants::TRANSACTION_PENDING)
+                ->where(function ($q) use ($searchTerm, $request) {
+                    if ($searchTerm) {
+                        $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                    }
+                })
+                ->with(['transaction_owner', 'token'])
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $transactions,
+                ]
+            ];
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Something wen't wrong"], 200);
+        }
+    }
+
+    public function userSales(Request $request)
+    {
+        $transaction = new Transaction();
+        $searchTerm = $request->search_keyword;
+        try {
+            $transactions = $transaction->select(
+                'transactions.*',
+                'tokens.*',
+                'owner.user_profile_full_name as owner_fullname',
+                'collector.user_profile_full_name as collector_fullname'
+            )
+                ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
+                ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+                ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
+                ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->where('transaction_status', Constants::TRANSACTION_PENDING)
+                ->where(function ($q) use ($searchTerm, $request) {
+                    if ($searchTerm) {
+                        $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                    }
+                })
+                ->with(['transaction_owner', 'token'])
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $transactions,
+                ]
+            ];
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Something wen't wrong"], 200);
+        }
+    }
+
+    public function userPurchase(Request $request)
+    {
+
+        $searchTerm = $request->search_keyword;
+        try {
+            $transactions = Transaction::join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+                ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
+                ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
