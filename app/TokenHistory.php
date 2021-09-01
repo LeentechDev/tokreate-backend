@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\Edition;
+use App\User_profile;
 
 class TokenHistory extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
@@ -34,7 +35,7 @@ class TokenHistory extends Model implements AuthenticatableContract, Authorizabl
      */
     protected $hidden = [];
 
-    protected $with = ['edition_details'];
+    protected $with = ['edition_details', 'owner', 'collector'];
 
     public function getJWTIdentifier()
     {
@@ -43,6 +44,22 @@ class TokenHistory extends Model implements AuthenticatableContract, Authorizabl
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(User_profile::class, 'seller_id', 'user_id');
+    }
+
+    public function collector()
+    {
+        return $this->belongsTo(User_profile::class, 'buyer_id', 'user_id');
+    }
+
+
+    public function token()
+    {
+        return $this->belongsTo(Token::class, 'token_id', 'token_id');
     }
 
     public function edition_details()

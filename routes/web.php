@@ -23,7 +23,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('reset-password', 'AuthController@resetPassword');
     $router->post('change-password', 'AuthController@changePassword');
     $router->get('validate-token', 'AuthController@validateTokenRP');
-    
+
     $router->post('payment', 'DragonpayController@payment');
     $router->post('dragonpay-webhook', 'DragonpayController@webhook');
     $router->get('dragonpay-webhook', 'DragonpayController@webhook');

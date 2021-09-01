@@ -74,7 +74,7 @@ class TransactionController extends Controller
     public function transactionDetails($id)
     {
         try {
-            $transaction = Transaction::with(['transaction_owner'])->find($id);
+            $transaction = Transaction::with(['transaction_owner', 'token_history', 'token'])->find($id);
 
             if ($transaction) {
 
@@ -243,6 +243,7 @@ class TransactionController extends Controller
                 'type' => Constants::TOKEN_HISTORY_BUY,
                 'buyer_id' => $transaction->user_id,
                 'seller_id' => $token->user_id,
+                'transaction_id' => $transaction->transaction_id
             ]);
 
             $token->remaining_token = $token->remaining_token - 1;
@@ -252,24 +253,24 @@ class TransactionController extends Controller
 
     private function transferTokenOwnership($transaction)
     {
-        $_token = Edition::select('*')->where('edition_id', $transaction->edition_id);
-        $token = $_token->first();
+        $_edition = Edition::select('*')->where('edition_id', $transaction->edition_id);
+        $edition = $_edition->first();
 
-        if ($_token) {
+        if ($_edition) {
             /* change the owner of token edition */
-            $_token->update([
+            $_edition->update([
                 'owner_id' => $transaction->user_id,
                 'on_market' => 0,
             ]);
 
 
             TokenHistory::create([
-                'token_id' => $token->token_id,
-                'edition_id' => $token->edition_id,
-                'price' => $token->current_price,
+                'token_id' => $edition->token_id,
+                'edition_id' => $edition->edition_id,
+                'price' => $edition->current_price,
                 'type' => Constants::TOKEN_HISTORY_BUY,
                 'buyer_id' => $transaction->user_id,
-                'seller_id' => $token->user_id,
+                'seller_id' => $edition->user_id,
             ]);
         };
     }
