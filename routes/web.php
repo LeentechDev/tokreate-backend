@@ -116,3 +116,7 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('user-incoming', 'DashboardController@userIncoming');
     $router->get('user-outgoing', 'DashboardController@userOutgoing');
 });
+$router->group(['prefix' => 'api/withdrawal'], function () use ($router) {
+    $router->post('request-withdrawal', 'WithdrawalController@requestWithdrawal');
+    $router->get('update-wthdrawal-status', 'NotificationController@updateWithdrawalStatus');
+});
