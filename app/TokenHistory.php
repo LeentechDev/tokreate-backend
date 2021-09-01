@@ -23,7 +23,7 @@ class TokenHistory extends Model implements AuthenticatableContract, Authorizabl
      */
 
     protected $fillable = [
-        'token_id', 'edition_id', 'price', 'type', 'buyer_id', 'seller_id'
+        'token_id', 'edition_id', 'price', 'type', 'buyer_id', 'seller_id', 'transaction_id'
     ];
 
     protected $table = 'token_history';

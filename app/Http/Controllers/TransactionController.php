@@ -74,7 +74,7 @@ class TransactionController extends Controller
     public function transactionDetails($id)
     {
         try {
-            $transaction = Transaction::with(['transaction_owner', 'token_history', 'token'])->find($id);
+            $transaction = Transaction::with(['transaction_owner', 'token_history'])->find($id);
 
             if ($transaction) {
 
