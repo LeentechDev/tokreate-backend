@@ -46,4 +46,9 @@ class Constants
     const TOKEN_HISTORY_MINT = 1;
     const TOKEN_HISTORY_BUY = 2;
     const TOKEN_HISTORY_SALE = 3;
+
+    const WITHDRAWAL_REQUEST_STATUS = 1;
+    const WITHDRAWAL_PROCESSING_STATUS = 2;
+    const WITHDRAWAL_SUCCESS_STATUS = 3;
+
 }
