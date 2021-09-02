@@ -274,4 +274,75 @@ class TransactionController extends Controller
             ]);
         };
     }
+
+    public function transactionList(Request $request)
+    {
+        $transaction = new Transaction();
+        $searchTerm = $request->search_keyword;
+        // try {
+        if ($request->type === 'minting') {
+            $transactions = $transaction->select(
+                'transactions.*',
+                'tokens.*',
+                'owner.user_profile_full_name as owner_fullname',
+                'owner.user_profile_avatar as owner_avatar'
+            )
+                ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+                ->join('user_profiles as owner', 'tokens.user_id', 'owner.user_id')
+                ->where(function ($q) use ($searchTerm, $request) {
+                    if ($searchTerm) {
+                        $q->where('tokens.token_title', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                    }
+                    if ($request->filter_status) {
+                        $q->where('token_status', $request->filter_status);
+                    }
+                    $q->where('transaction_type', Constants::TRANSACTION_MINTING);
+                })
+                ->with(['transaction_owner', 'token'])
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
+        } else {
+            $transactions = $transaction->select(
+                'transactions.*',
+                'tokens.*',
+                'owner.user_profile_full_name as owner_fullname',
+                'owner.user_profile_avatar as owner_avatar',
+                'collector.user_profile_full_name as collector_fullname',
+                'collector.user_profile_avatar as collector_avatar'
+            )
+                ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
+                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
+                ->join('user_profiles as collector', 'token_history.buyer_id', 'collector.user_id')
+                ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->where(function ($q) use ($searchTerm, $request) {
+                    if ($searchTerm) {
+                        $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                    }
+                    if ($request->filter_status !== "") {
+                        $q->where('transaction_status', $request->filter_status);
+                    } else {
+                        $q->where('transaction_status', '<>', Constants::TRANSACTION_DRAFT);
+                    }
+                })
+                ->with(['transaction_owner', 'token'])
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
+        }
+
+
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $transactions,
+            ]
+        ];
+        return response()->json($response, 200);
+        // } catch (\Throwable $th) {
+        //     return response()->json("Something wen't wrong", 500);
+        // }
+    }
 }

@@ -99,9 +99,10 @@ $router->group(['prefix' => 'api/notification'], function () use ($router) {
     $router->get('list', 'NotificationController@list');
 });
 
-$router->group(['prefix' => 'api/transaction'], function () use ($router) {
+$router->group(['prefix' => 'api/transactions'], function () use ($router) {
     $router->get('transfer-ownership', 'TransactionController@transferOwnership');
     $router->post('update-status', 'TransactionController@updateTransactionStatus');
+    $router->get('', 'TransactionController@transactionList');
     $router->get('{id}', 'TransactionController@transactionDetails');
     $router->post('request-transfer-ownership', 'TransactionController@requestTransferOwnership');
 });
