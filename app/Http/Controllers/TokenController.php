@@ -219,6 +219,9 @@ class TokenController extends Controller
                 $token_destination_path = 'app/images/tokens';
                 $token_file->move($token_destination_path, $generated_token);
 
+                if ($request->token_id) {
+                    $token = Token::find($request->token_id);
+                }
 
                 $token->user_id = Auth::user()->user_id;
                 $token->token_collectible = $request->input('token_collectible');
@@ -233,8 +236,6 @@ class TokenController extends Controller
                 $token->token_saletype = $request->input('token_saletype');
                 $token->token_filetype = $request->input('token_filetype');
                 $token->token_status = Constants::PENDING;
-                $token->token_owner = Auth::user()->user_id;
-                $token->token_creator = Auth::user()->user_id;
                 $token->token_on_market = $request->input('put_on_market');
                 $token->save();
 
@@ -242,47 +243,50 @@ class TokenController extends Controller
 
                 $commission = SiteSettings::where('name', 'commission_percentage')->first();
 
-                $transaction = Transaction::create(
-                    [
-                        "user_id" =>  Auth::user()->user_id,
-                        "transaction_token_id" => $token_id,
-                        "transaction_type" => Constants::TRANSACTION_MINTING,
-                        "transaction_payment_method" =>  "",
-                        "transaction_details" =>  "",
-                        "transaction_service_fee" =>  0,
-                        "transaction_urgency"   => "",
-                        "transaction_gas_fee" =>  0,
-                        "transaction_allowance_fee" =>  0,
-                        "transaction_grand_total" => 0,
-                        "transaction_payment_status" => Constants::TRANSACTION_PAYMENT_PENDING,
-                        "transaction_status" =>  0,
-                        "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100,
-                    ]
-                );
+                if (!$request->token_id) {
+                    $transaction = Transaction::create(
+                        [
+                            "user_id" =>  Auth::user()->user_id,
+                            "transaction_token_id" => $token_id,
+                            "transaction_type" => Constants::TRANSACTION_MINTING,
+                            "transaction_payment_method" =>  "",
+                            "transaction_details" =>  "",
+                            "transaction_service_fee" =>  0,
+                            "transaction_urgency"   => "",
+                            "transaction_gas_fee" =>  0,
+                            "transaction_allowance_fee" =>  0,
+                            "transaction_grand_total" => 0,
+                            "transaction_payment_status" => Constants::TRANSACTION_PAYMENT_PENDING,
+                            "transaction_status" =>  0,
+                            "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100,
+                        ]
+                    );
 
-                if ($token) {
-                    $history = new TokenHistory;
-                    $history->token_id = $token_id;
-                    $history->price = $request->input('token_starting_price');
-                    $history->type = Constants::TOKEN_HISTORY_MINT;
-                    $history = $history->save();
+                    if ($token) {
+                        $history = new TokenHistory;
+                        $history->token_id = $token_id;
+                        $history->price = $request->input('token_starting_price');
+                        $history->type = Constants::TOKEN_HISTORY_MINT;
+                        $history = $history->save();
 
-                    $user_details = User::find(Auth::user()->user_id);
+                        $user_details = User::find(Auth::user()->user_id);
 
-                    $all_admin = User::where('user_role_id', Constants::USER_ADMIN)->get();
-                    foreach ($all_admin as $key => $admin) {
-                        if ($admin->profile->user_notification_settings == 1) {
-                            Notifications::create([
-                                'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . '</b> request for minting.</p>',
-                                'notification_to' => 0,
-                                'notification_from' => Auth::user()->user_id,
-                                'notification_item' => $admin->user_id,
-                                'notification_type' => Constants::NOTIF_MINTING_REQ,
-                            ]);
+                        $all_admin = User::where('user_role_id', Constants::USER_ADMIN)->get();
+                        foreach ($all_admin as $key => $admin) {
+                            if ($admin->profile->user_notification_settings == 1) {
+                                Notifications::create([
+                                    'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . '</b> request for minting.</p>',
+                                    'notification_to' => 0,
+                                    'notification_from' => Auth::user()->user_id,
+                                    'notification_item' => $admin->user_id,
+                                    'notification_type' => Constants::NOTIF_MINTING_REQ,
+                                ]);
+                            }
                         }
                     }
+                } else {
+                    $transaction = Transaction::find($request->transaction_id);
                 }
-
 
                 $token_details = Token::find($token_id);
                 if ($token_details) {
@@ -381,7 +385,7 @@ class TokenController extends Controller
                     ]
                 ];
                 $token_details = $token_details->first();
-                $user_details = User::where('user_id', $token_details->token_owner)->first();
+                $user_details = User::where('user_id', $token_details->user_id)->first();
                 $msg = "";
 
                 /* email and notification */
@@ -433,7 +437,7 @@ class TokenController extends Controller
 
         $token_list = $tokens
             ->join('transactions', 'transactions.transaction_token_id', 'tokens.token_id')
-            ->with(['owner'])->orderBy('token_status', 'ASC')
+            ->orderBy('token_status', 'ASC')
             ->where(function ($q) use ($searchTerm, $request) {
                 if ($searchTerm) {
                     $q->where('token_title', 'like', '%' . $searchTerm . '%')

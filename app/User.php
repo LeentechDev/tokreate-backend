@@ -28,7 +28,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     const UPDATED_AT = 'user_last_login';
     protected $primaryKey = 'user_id';
     protected $fillable = [
-        'user_name', 'user_bio', 'user_email','user_role_id','user_last_login','user_status','user_notification_settings'
+        'user_name', 'user_bio', 'user_email', 'user_role_id', 'user_last_login', 'user_status', 'user_notification_settings'
     ];
 
     // protected $with = ['profile'];
@@ -41,39 +41,42 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $hidden = [
         'password',
     ];
-    
+
     protected $with = [
         'profile'
     ];
 
-    public function getJWTIdentifier(){
+    public function getJWTIdentifier()
+    {
         return $this->getKey();
     }
-    public function getJWTCustomClaims(){
+    public function getJWTCustomClaims()
+    {
         return [];
     }
 
-    public function profile(){
+    public function profile()
+    {
         return $this->belongsTo(User_profile::class, 'user_id', 'user_id');
     }
 
-    public function wallet(){
+    public function wallet()
+    {
         return $this->hasOne(Wallet::class, 'user_id', 'user_id');
     }
 
-    public function tokens(){
-        return $this->hasMany(Token::class, 'token_owner', 'user_id');
-    }
-
-    public function token_editions(){
+    public function token_editions()
+    {
         return $this->hasMany(Edition::class, 'owner_id', 'user_id');
     }
 
-    public function notifications(){
+    public function notifications()
+    {
         return $this->hasMany(Notifications::class, 'notification_to', 'user_id');
     }
 
-    public function minting_requests(){
-        return $this->hasMany(Token::class, 'token_owner', 'user_id');
+    public function minting_requests()
+    {
+        return $this->hasMany(Token::class, 'user_id', 'user_id');
     }
 }

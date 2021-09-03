@@ -28,7 +28,6 @@ class UserController extends Controller
         $user = User::where('user_id', Auth::user()->user_id)
             ->with([
                 'profile',
-                'tokens',
                 'wallet' => function ($q) {
                     $q->orderBy('wallet_id', 'DESC')->first();
                 }
@@ -44,10 +43,10 @@ class UserController extends Controller
 
         $user['notifications'] = $notifications;
 
-        foreach ($user['tokens'] as $key => $value) {
+        /* foreach ($user['tokens'] as $key => $value) {
             $user['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
             $user['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id', 'DESC')->get();
-        }
+        } */
 
         $response = (object)[
             "success" => true,
@@ -67,7 +66,7 @@ class UserController extends Controller
         if ($req->user_id) {
             $user_id = $req->user_id;
         } else {
-            if($req->collection != 2){
+            if ($req->collection != 2) {
                 if ($req->collection) {
                     $on_market = 0;
                 } else {
@@ -75,13 +74,13 @@ class UserController extends Controller
                 }
                 /* DB::enableQueryLog(); */
                 $tokens = Token::select(
-                        'tokens.*',
-                        'editions.edition_no',
-                        'editions.on_market',
-                        'editions.edition_id',
-                        DB::raw("(case when tokens.user_id != " . $user_id . " then editions.current_price else token_starting_price end ) as current_price"),
-                        DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
-                    )
+                    'tokens.*',
+                    'editions.edition_no',
+                    'editions.on_market',
+                    'editions.edition_id',
+                    DB::raw("(case when tokens.user_id != " . $user_id . " then editions.current_price else token_starting_price end ) as current_price"),
+                    DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
+                )
                     ->where(
                         DB::raw("(case when tokens.user_id = " . $user_id . " then tokens.token_on_market else editions.on_market end )"),
                         DB::raw("(case when tokens.user_id = " . $user_id . " then " . $on_market . " else " . $on_market . " end )")
@@ -104,14 +103,14 @@ class UserController extends Controller
                         )
                     )
                     ->paginate($limit);
-            }else{
+            } else {
                 $tokens = Token::select(
                     'tokens.*',
                     'token_collectible_count as remainToken',
                     'token_starting_price as current_price'
                 )
-                ->where('user_id', Auth::user()->user_id)
-                ->paginate($limit);
+                    ->where('user_id', Auth::user()->user_id)
+                    ->paginate($limit);
             }
         }
         /* print_r( DB::getQueryLog()); */
@@ -145,8 +144,8 @@ class UserController extends Controller
         return $response;
     }
 
-    public function getCreateTokens(){
-
+    public function getCreateTokens()
+    {
     }
 
     public function specificToken(Request $req)
@@ -167,6 +166,7 @@ class UserController extends Controller
                     $token_details = Token::where('edition_id', $req->edition_id)
                         ->join('editions', 'editions.token_id', 'tokens.token_id')
                         ->first();
+                    $token_details->owner = User::find($token_details->owner_id);
                 } else {
                     return response()->json(['message' => 'Invalid Token'], 500);
                 }

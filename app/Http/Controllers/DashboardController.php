@@ -75,21 +75,21 @@ class DashboardController extends Controller
 
     public function pendingTransactions(Request $request)
     {
-
-        $transaction = new Transaction();
         $searchTerm = $request->search_keyword;
         try {
-            $transactions = $transaction->select(
+            $transactions = Transaction::select(
                 'transactions.*',
-                'tokens.*',
+                'collector.user_profile_full_name as collector_fullname',
+                'collector.user_profile_avatar as collector_avatar',
                 'owner.user_profile_full_name as owner_fullname',
-                'collector.user_profile_full_name as collector_fullname'
+                'owner.user_profile_avatar as owner_avatar'
             )
+                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
                 ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
+                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
-                ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
-                ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+                ->where('transaction_status', Constants::TRANSACTION_PENDING)
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
@@ -116,21 +116,21 @@ class DashboardController extends Controller
 
     public function successTransactions(Request $request)
     {
-
-        $transaction = new Transaction();
         $searchTerm = $request->search_keyword;
         try {
-            $transactions = $transaction->select(
+            $transactions = Transaction::select(
                 'transactions.*',
-                'tokens.*',
+                'collector.user_profile_full_name as collector_fullname',
+                'collector.user_profile_avatar as collector_avatar',
                 'owner.user_profile_full_name as owner_fullname',
-                'collector.user_profile_full_name as collector_fullname'
+                'owner.user_profile_avatar as owner_avatar'
             )
+                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
                 ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
+                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
-                ->join('user_profiles as owner', 'tokens.token_owner', 'owner.user_id')
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
-                ->where('transaction_status', Constants::TRANSACTION_PENDING)
+                ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')

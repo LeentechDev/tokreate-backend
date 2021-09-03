@@ -91,7 +91,6 @@ class AuthController extends Controller
         $user_data = User::where('user_id', Auth::user()->user_id)
             ->with([
                 'profile',
-                'tokens',
                 'wallet' => function ($q) {
                     $q->orderBy('wallet_id', 'DESC')->first();
                 },
@@ -100,20 +99,11 @@ class AuthController extends Controller
                     $q->orderBy('id', 'DESC')->paginate(10);
                 }
             ])
-            ->where('user_role_id', Constants::USER_ARTIST)->with(['profile', 'tokens'])->first();
+            ->where('user_role_id', Constants::USER_ARTIST)->with(['profile'])->first();
 
 
         if ($user_data) {
             if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
-                foreach ($user_data['tokens'] as $key => $value) {
-                    $user_data['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
-                    $user_data['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id', 'DESC')->get();
-                }
-                // $user_data['wallet'] = $user_data->wallet()->orderBy('wallet_id', 'DESC')->first();
-
-                /* if (!$user_data->profile->user_profile_avatar) {
-                        $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
-                    } */
             } else {
                 return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
             }

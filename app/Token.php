@@ -27,10 +27,10 @@ class Token extends Model implements AuthenticatableContract, AuthorizableContra
     const UPDATED_AT = 'token_updated_at';
     protected $primaryKey = 'token_id';
     protected $fillable = [
-        'user_id', 'token_collectible', 'token_collectible_count', 'token_title', 'token_description', 'token_starting_price', 'token_royalty', 'token_properties', 'token_filename', 'token_saletype', 'token_status', 'token_owner', 'token_creator'
+        'user_id', 'token_collectible', 'token_collectible_count', 'token_title', 'token_description', 'token_starting_price', 'token_royalty', 'token_properties', 'token_filename', 'token_saletype', 'token_status'
     ];
 
-    protected $with = ['owner', 'creator', 'editions'];
+    protected $with = ['creator', 'editions'];
     /**
      * The attributes excluded from the model's JSON form.
      *
@@ -59,12 +59,6 @@ class Token extends Model implements AuthenticatableContract, AuthorizableContra
     public function history()
     {
         return $this->hasMany(TokenHistory::class, 'token_id', 'token_id');
-    }
-
-
-    public function owner()
-    {
-        return $this->belongsTo(User::class, 'token_owner', 'user_id');
     }
 
     public function creator()
