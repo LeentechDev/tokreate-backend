@@ -285,7 +285,7 @@ class DashboardController extends Controller
                 'collector.user_profile_full_name as collector_fullname',
                 'collector.user_profile_avatar as collector_avatar',
                 'owner.user_profile_full_name as owner_fullname',
-                'owner.user_profile_avatar as owner_avatar',
+                'owner.user_profile_avatar as owner_avatar'
             )
                 ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
                 ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
