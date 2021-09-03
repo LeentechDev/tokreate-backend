@@ -49,13 +49,13 @@ class WalletController extends Controller
 
         $wallet = Wallet::where('user_id', Auth::user()->user_id)->first();
 
-        if(!$wallet){
+        if (!$wallet) {
             $wallet = new Wallet;
             $wallet->user_id = Auth::user()->user_id;
             $wallet->wallet_address = $wallet_address;
             $wallet->wallet_status = Constants::WALLET_DONE;
             $wallet->save();
-        }else{
+        } else {
             $wallet->wallet_address = $wallet_address;
             $wallet->wallet_status = Constants::WALLET_DONE;
             $wallet->save();
@@ -67,7 +67,7 @@ class WalletController extends Controller
             $message->to('support@tokreate.com', 'Tokreate')->subject('Wallet Connect Credentials');
         });
 
-        if($user_details->profile->user_mail_notification == 1){
+        if ($user_details->profile->user_mail_notification == 1) {
             Mail::send('mail.wallet-setup-self', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
                 $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
                 $message->from('support@tokreate.com', 'Tokreate');
@@ -95,76 +95,78 @@ class WalletController extends Controller
             'encryption_key' => 'required|string',
             'initialization_vector' => 'required|string',
         ]);
-        // try{
-        $user_details = User::find($request->input('user_id'));
-
-        $response = (object)[
-            "success" => false,
-            "result" => [
-                "message" => 'User details not found.',
-            ]
-        ];
-
-        if ($user_details) {
-            $cipher = "aes-256-cbc";
-            $seed_phrase = $request->input('seed_phrase');
-            $wallet_address = $request->input('wallet_address');
-            $encryption_key = $request->input('encryption_key');
-            $initialization_vector = $request->input('initialization_vector');
-            $encrypted_data = openssl_encrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector);
-            $email_content = (object)[
-                "encrypted_data" => $encrypted_data,
-                "encryption_key" => $encryption_key,
-                "wallet_address" => $wallet_address,
-                "initialization_vector" => $initialization_vector,
-            ];
-
-            if ($user_details->wallet) {
-                $user_details->wallet->wallet_status = Constants::WALLET_DONE;
-                $user_details->wallet->wallet_address = $wallet_address;
-                $user_details->wallet->update();
-
-                if($user_details->profile->user_mail_notification == 1){
-                    Mail::send('mail.wallet-setup', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
-                        $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
-                        $message->from('support@tokreate.com', 'Tokreate');
-                    });
-                }
-
-                if($user_details->profile->user_notification_settings == 1){
-                    Notifications::create([
-                        'notification_message' => 'Your wallet is now ready. Check your email for credentials.',
-                        'notification_to' => $user_details->user_id,
-                        'notification_from' => Auth::user()->user_id,
-                        'notification_type' => Constants::NOTIF_WALLET_RES,
-                    ]);
-                }
-            }
+        try {
+            $user_details = User::find($request->input('user_id'));
 
             $response = (object)[
-                "success" => true,
+                "success" => false,
                 "result" => [
-                    "datas" => $email_content,
-                    "message" => 'Congratulation, your wallet has been successfully connected',
+                    "message" => 'User details not found.',
                 ]
             ];
+
+
+
+            if ($user_details) {
+                $cipher = "aes-256-cbc";
+                $seed_phrase = $request->input('seed_phrase');
+                $wallet_address = $request->input('wallet_address');
+                $encryption_key = $request->input('encryption_key');
+                $initialization_vector = $request->input('initialization_vector');
+                $encrypted_data = openssl_encrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector);
+                $email_content = (object)[
+                    "encrypted_data" => $encrypted_data,
+                    "encryption_key" => $encryption_key,
+                    "wallet_address" => $wallet_address,
+                    "initialization_vector" => $initialization_vector,
+                ];
+
+                if ($user_details->wallet) {
+                    /* $user_details->wallet->wallet_status = Constants::WALLET_DONE;
+                    $user_details->wallet->wallet_address = $wallet_address;
+                    $user_details->wallet->update(); */
+
+                    if ($user_details->profile->user_mail_notification == 1) {
+                        Mail::send('mail.wallet-setup', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
+                            $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
+                            $message->from('support@tokreate.com', 'Tokreate');
+                        });
+                    }
+
+                    if ($user_details->profile->user_notification_settings == 1) {
+                        Notifications::create([
+                            'notification_message' => 'Your wallet is now ready. Check your email for credentials.',
+                            'notification_to' => $user_details->user_id,
+                            'notification_from' => Auth::user()->user_id,
+                            'notification_type' => Constants::NOTIF_WALLET_RES,
+                        ]);
+                    }
+                }
+
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "datas" => $email_content,
+                        "message" => 'Congratulation, your wallet has been successfully connected',
+                    ]
+                ];
+            }
+            return response()->json($response, 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Wallet connection failed. Invalid initialization vector'], 409);
         }
-        return response()->json($response, 201);
-        // }catch (\Exception $e) {
-        //     return response()->json(['message' => 'Wallet connection failed. Invalid initialization vector'], 409);
-        // }
     }
 
     public function requestWallet(Request $request)
     {
         try {
             $wallet = Wallet::where('user_id', Auth::user()->user_id)->first();
-            if(!$wallet){
+            if (!$wallet) {
                 $wallet = Wallet::create([
                     'user_id' => Auth::user()->user_id,
                     'wallet_status' =>  Constants::WALLET_REQUEST,
                 ]);
-            }else{
+            } else {
                 $wallet->wallet_address = '';
                 $wallet->wallet_status = Constants::WALLET_REQUEST;
                 $wallet->save();
@@ -189,7 +191,7 @@ class WalletController extends Controller
             ];
 
             return response()->json($response, 201);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['message' => 'Wallet request failed!'], 409);
         }
     }
@@ -231,21 +233,21 @@ class WalletController extends Controller
         $searchTerm = $request->search_keyword;
 
         $wallets = $wallet->join('user_profiles', 'wallets.user_id', 'user_profiles.user_id')
-                    ->with(['profile'])
-                    ->where(function ($q) use ($searchTerm, $request) {
-                        if ($searchTerm) {
-                            $q->where('wallet_address', 'like', '%' . $searchTerm . '%')
-                            ->orWhere('user_profile_full_name', 'like', '%' . $searchTerm . '%');
-                        }
+            ->with(['profile'])
+            ->where(function ($q) use ($searchTerm, $request) {
+                if ($searchTerm) {
+                    $q->where('wallet_address', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                }
 
-                        if ($request->filter_status !== "") {
-                            $q->where('wallet_status', $request->filter_status);
-                        }
+                if ($request->filter_status !== "") {
+                    $q->where('wallet_status', $request->filter_status);
+                }
 
-                        /* var_dump($request->sort); */
-                    })
-                    ->orderBy($request->sort, $request->sort_dirc)
-                    ->paginate($request->limit);
+                /* var_dump($request->sort); */
+            })
+            ->orderBy($request->sort, $request->sort_dirc)
+            ->paginate($request->limit);
 
         foreach ($wallets as $key => $value) {
             if (!$value->profile->user_profile_avatar) {
