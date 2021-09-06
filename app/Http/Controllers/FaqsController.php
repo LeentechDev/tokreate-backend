@@ -15,9 +15,9 @@ class FaqsController extends Controller
      *
      * @return void
      */
-    public function __construct(){
-        $this->middleware('auth');
-    }
+    // public function __construct(){
+    //     $this->middleware('auth');
+    // }
 
     public function addFaqs(Request $request){
         $this->validate($request, [

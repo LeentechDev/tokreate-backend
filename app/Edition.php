@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\TokenHistory;
+use App\User;
 
 class Edition extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
@@ -25,6 +26,8 @@ class Edition extends Model implements AuthenticatableContract, AuthorizableCont
     protected $fillable = [
         'token_id', 'owner_id', 'current_price', 'edition_no'
     ];
+
+    protected $with = ['owner'];
 
     protected $table = 'editions';
 
@@ -45,5 +48,9 @@ class Edition extends Model implements AuthenticatableContract, AuthorizableCont
 
     public function history(){
         return $this->hasMany(TokenHistory::class, 'edition_id', 'edition_id');
+    }
+
+    public function owner(){
+        return $this->belongsTo(User::class, 'owner_id', 'user_id');
     }
 }

@@ -110,9 +110,7 @@ class HomeController extends Controller
     public function siteSettings(){
         $allowance = SiteSettings::where('name','allowance_fee')->first();
         $commission_rate = SiteSettings::where('name','commission_percentage')->first();
-        $gas_fees = DB::select("SELECT * FROM `gas_fees` 
-        LEFT JOIN `user_profiles` ON `user_profiles`.`user_id` = `gas_fees`.`gas_fee_updated_by`");
-        
+        $gas_fees = DB::select("SELECT * FROM `gas_fees` join `user_profiles` on `user_profiles`.`user_id` = `gas_fees`.`gas_fee_updated_by`");
 
         if($gas_fees){
             $config['allowance_fee'] = $allowance;
