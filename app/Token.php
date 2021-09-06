@@ -27,42 +27,42 @@ class Token extends Model implements AuthenticatableContract, AuthorizableContra
     const UPDATED_AT = 'token_updated_at';
     protected $primaryKey = 'token_id';
     protected $fillable = [
-        'user_id', 'token_collectible','token_collectible_count','token_title','token_description','token_starting_price','token_royalty','token_properties','token_filename','token_saletype','token_status', 'token_owner', 'token_creator'
+        'user_id', 'token_collectible', 'token_collectible_count', 'token_title', 'token_description', 'token_starting_price', 'token_royalty', 'token_properties', 'token_filename', 'token_saletype', 'token_status'
     ];
 
-    protected $with = ['owner', 'creator', 'editions'];
+    protected $with = ['creator', 'editions'];
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
-    protected $hidden = [
-    ];
-    public function getJWTIdentifier(){
+    protected $hidden = [];
+    public function getJWTIdentifier()
+    {
         return $this->getKey();
     }
-    public function getJWTCustomClaims(){
+    public function getJWTCustomClaims()
+    {
         return [];
     }
 
-    public function transactions(){
-        return $this->hasMany(Transaction::class, 'transaction_token_id', 'token_id');   
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'transaction_token_id', 'token_id');
     }
 
-    public function editions(){
+    public function editions()
+    {
         return $this->hasMany(Edition::class, 'token_id', 'token_id');
     }
 
-    public function history(){
+    public function history()
+    {
         return $this->hasMany(TokenHistory::class, 'token_id', 'token_id');
     }
 
-
-    public function owner(){
-        return $this->belongsTo(User::class, 'token_owner', 'user_id');   
-    }
-
-    public function creator(){
-        return $this->belongsTo(User::class, 'user_id', 'user_id');   
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 }

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class UpdateTokenTable4 extends Migration
+class UpdateTokenHistoryTable3 extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,8 @@ class UpdateTokenTable4 extends Migration
      */
     public function up()
     {
-        Schema::table('tokens', function (Blueprint $table) {
-            $table->integer('remaining_token');
+        Schema::table('token_history', function (Blueprint $table) {
+            $table->integer('transaction_id')->nullable();
         });
     }
 

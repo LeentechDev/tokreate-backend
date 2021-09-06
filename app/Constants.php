@@ -2,7 +2,8 @@
 
 namespace App;
 
-class Constants {
+class Constants
+{
     const USER_ADMIN = 1;
     const USER_ARTIST = 2;
     const USER_COLLECTOR = 3;
@@ -35,6 +36,7 @@ class Constants {
     const TRANSACTION_PROCESSING = 1;
     const TRANSACTION_FAILED = 2;
     const TRANSACTION_SUCCESS = 3;
+    const TRANSACTION_DRAFT = 6;
 
     const TRANSACTION_PAYMENT_PENDING = 0;
     const TRANSACTION_PAYMENT_SUCCESS = 1;
@@ -44,4 +46,9 @@ class Constants {
     const TOKEN_HISTORY_MINT = 1;
     const TOKEN_HISTORY_BUY = 2;
     const TOKEN_HISTORY_SALE = 3;
+
+    const WITHDRAWAL_REQUEST_STATUS = 1;
+    const WITHDRAWAL_PROCESSING_STATUS = 2;
+    const WITHDRAWAL_SUCCESS_STATUS = 3;
+
 }

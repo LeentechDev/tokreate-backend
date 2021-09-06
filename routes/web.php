@@ -23,7 +23,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('reset-password', 'AuthController@resetPassword');
     $router->post('change-password', 'AuthController@changePassword');
     $router->get('validate-token', 'AuthController@validateTokenRP');
-    
+
     $router->post('payment', 'DragonpayController@payment');
     $router->post('dragonpay-webhook', 'DragonpayController@webhook');
     $router->get('dragonpay-webhook', 'DragonpayController@webhook');
@@ -99,13 +99,14 @@ $router->group(['prefix' => 'api/notification'], function () use ($router) {
     $router->get('list', 'NotificationController@list');
 });
 
-$router->group(['prefix' => 'api/transaction'], function () use ($router) {
+$router->group(['prefix' => 'api/transactions'], function () use ($router) {
     $router->get('transfer-ownership', 'TransactionController@transferOwnership');
     $router->post('update-status', 'TransactionController@updateTransactionStatus');
     $router->get('withdrawal-list', 'TransactionController@withdrawalList');
     $router->get('purchase-list', 'TransactionController@purchaseList');
     $router->get('{id}', 'TransactionController@transactionDetails');
-    
+    $router->get('', 'TransactionController@transactionList');
+    $router->post('request-transfer-ownership', 'TransactionController@requestTransferOwnership');
 });
 
 
@@ -113,6 +114,13 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('dashboard', 'DashboardController@dashboardReports');
     $router->get('pending-transaction', 'DashboardController@pendingTransactions');
     $router->get('success-transaction', 'DashboardController@successTransactions');
-    $router->get('transaction-dashboard', 'TransactionController@transactionReports');
-    
+    $router->get('user-sales', 'DashboardController@userSales');
+    $router->get('user-purchase', 'DashboardController@userPurchase');
+    $router->get('user-incoming', 'DashboardController@userIncoming');
+    $router->get('user-outgoing', 'DashboardController@userOutgoing');
+});
+
+$router->group(['prefix' => 'api/withdrawal'], function () use ($router) {
+    $router->post('request-withdrawal', 'WithdrawalController@requestWithdrawal');
+    $router->get('update-wthdrawal-status', 'NotificationController@updateWithdrawalStatus');
 });
