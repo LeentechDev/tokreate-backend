@@ -53,7 +53,7 @@ class DragonpayController extends Controller
                 if (!$transaction->edition_id) {
                     $token = Token::select('*', 'token_starting_price as current_price')->where('token_id', $transaction->transaction_token_id)->first();
                 } else {
-                    $token = Edition::select('*')->join('tokens', 'tokens.token_id', 'edition.token_id')->where('edition_id', $transaction->edition_id)->first();
+                    $token = Edition::select('*')->join('tokens', 'tokens.token_id', 'editions.token_id')->where('edition_id', $transaction->edition_id)->first();
                 }
 
                 $grand_total = $request->transaction_gas_fee + $request['transaction_allowance_fee'] + $token->current_price;

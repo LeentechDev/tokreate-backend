@@ -80,6 +80,7 @@ class UserController extends Controller
                         'editions.on_market',
                         'editions.edition_id',
                         'editions.current_price as current_price',
+                        'editions.owner_id',
                         DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
                     )
                     ->rightJoin("editions", 'tokens.token_id', 'editions.token_id')
@@ -90,13 +91,7 @@ class UserController extends Controller
                     ])
                     ->where('token_status', Constants::READY)
                     ->where('on_market', $on_market)
-                    ->where('owner_id', $user_id)
-                    ->where(DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end )"), '<>', 0)
-                    // ->groupBy(
-                    //     DB::raw(
-                    //         '(case when tokens.user_id = ' . $user_id . ' then tokens.token_id else editions.edition_id end )'
-                    //     )
-                    // )
+                    ->where('editions.owner_id', $user_id)
                     ->paginate($limit);
             } else {
                 $tokens = Token::select(
@@ -114,6 +109,7 @@ class UserController extends Controller
             $tokens[$key]->history = $value->history()->orderBy('id', 'DESC')->paginate(10);
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
             $tokens[$key]->mint_transactions = $value->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
+            $tokens[$key]->owner = User::find($value->owner_id);
         }
 
         if ($tokens->total()) {
@@ -156,7 +152,7 @@ class UserController extends Controller
         if ($token_details) {
 
             /* if the given user is not the creator of token get the details from token table along with edition details */
-            if ($token_details->user_id != Auth::user()->user_id) {
+            /* if ($token_details->user_id != Auth::user()->user_id) { */
                 if ($req->edition_id) {
                     $token_details = Token::where('edition_id', $req->edition_id)
                         ->join('editions', 'editions.token_id', 'tokens.token_id')
@@ -165,7 +161,7 @@ class UserController extends Controller
                 } else {
                     return response()->json(['message' => 'Invalid Token'], 500);
                 }
-            }
+            /* } */
 
             if ($token_details) {
                 $token_details->history = $token_details->history()->orderBy('id', 'DESC')->paginate(10);

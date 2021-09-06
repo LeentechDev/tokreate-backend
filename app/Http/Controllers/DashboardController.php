@@ -246,10 +246,11 @@ class DashboardController extends Controller
                 'owner.user_profile_full_name as owner_fullname',
                 'owner.user_profile_avatar as owner_avatar'
             )
-                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
+                ->join('editions', 'transactions.edition_id', 'editions.edition_id')
                 ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
-                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
+                ->join('user_profiles as owner', 'editions.owner_id', 'owner.user_id')
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+                
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
                 ->where('transaction_status', '<>', Constants::TRANSACTION_SUCCESS)
                 ->where(function ($q) use ($searchTerm, $request) {
@@ -259,7 +260,7 @@ class DashboardController extends Controller
                     }
                 })
                 ->with(['transaction_owner', 'token'])
-                ->where('token_history.seller_id', Auth::user()->user_id)
+                ->where('editions.owner_id', Auth::user()->user_id)
                 ->orderBy($request->sort, $request->sort_dirc)
                 ->paginate($request->limit);
 
@@ -287,9 +288,9 @@ class DashboardController extends Controller
                 'owner.user_profile_full_name as owner_fullname',
                 'owner.user_profile_avatar as owner_avatar'
             )
-                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
+                ->join('editions', 'transactions.edition_id', 'editions.edition_id')
                 ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
-                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
+                ->join('user_profiles as owner', 'editions.owner_id', 'owner.user_id')
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
                 ->where('transaction_status', '<>', Constants::TRANSACTION_SUCCESS)

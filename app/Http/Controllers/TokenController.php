@@ -113,30 +113,30 @@ class TokenController extends Controller
 
     public function addToMarket(Request $request)
     {
-        $tokens = Token::where('token_id', $request->token_id)
-            ->where('user_id', Auth::user()->user_id)->first();
+        $edition = Edition::find($request->edition_id);
 
         /* if the token is created by requestor - update all the remaining token edition owned by him*/
-        if ($tokens) {
+        if ($edition) {
+            $edition->on_market = Constants::TOKEN_ON_MARKET;
+            $edition->current_price = $request->price;
 
-            /* $editions = Edition::where('token_id',$request->token_id)->where('owner_id', Auth::user()->user_id)->get();
-
-            foreach ($editions as $key => $edition) {
-                $edition->on_market = Constants::TOKEN_ON_MARKET;
-                $edition->current_price = $request->price;
-                $updated = $edition->update();
-            } */
-
-            $tokens->token_on_market = Constants::TOKEN_ON_MARKET;
-            $tokens->token_starting_price = $request->price;
-            $updated = $tokens->update();
+            $updated = $edition->update();
             if ($updated) {
 
                 TokenHistory::create([
                     'token_id' => $request->token_id,
                     'type' => Constants::TOKEN_HISTORY_SALE,
                     'price' => $request->price,
+                    'seller_id' => Auth::user()->user_id,
+                    'edition_id' => $edition->edition_id
                 ]);
+
+                $_token = Token::find($request->token_id);
+                
+                if($_token->remaining_token > 0){
+                    $_token->token_starting_price = $request->price;
+                    $_token->save();
+                }
 
                 $response = (object)[
                     "success" => true,
@@ -148,38 +148,10 @@ class TokenController extends Controller
                 return response()->json($response, 200);
             }
         } else {
-            /* if he/she is not the creator of token update the specific edition he/she owned */
-            $edition = Edition::find($request->edition_id);
-
-            if ($edition) {
-                $edition->on_market = Constants::TOKEN_ON_MARKET;
-                $edition->current_price = $request->price;
-
-                $updated = $edition->update();
-                if ($updated) {
-
-                    TokenHistory::create([
-                        'token_id' => $request->token_id,
-                        'type' => Constants::TOKEN_HISTORY_SALE,
-                        'price' => $request->price,
-                        'edition_id' => $edition->edition_id
-                    ]);
-
-                    $response = (object)[
-                        "success" => true,
-                        "result" => [
-                            "datas" => $updated,
-                            "message" => "Artwork successfully put on marketplace",
-                        ]
-                    ];
-                    return response()->json($response, 200);
-                }
-            } else {
-                $response = (object)[
-                    "message" => "Artwork not found.",
-                ];
-                return response()->json($response, 409);
-            }
+            $response = (object)[
+                "message" => "Artwork not found.",
+            ];
+            return response()->json($response, 409);
         }
         $response = (object)[
             "message" => "Artwork " . $request->token_id . " not found in your collection.",
@@ -270,11 +242,29 @@ class TokenController extends Controller
                     );
 
                     if ($token) {
-                        $history = new TokenHistory;
-                        $history->token_id = $token_id;
-                        $history->price = $request->input('token_starting_price');
-                        $history->type = Constants::TOKEN_HISTORY_MINT;
-                        $history = $history->save();
+
+                        /* create edition */
+                        $edition_save = Edition::create([
+                            'token_id' => $token->token_id,
+                            'owner_id' => Auth::user()->user_id,
+                            'current_price' => $request->input('token_starting_price'),
+                            'edition_no' => 1,
+                            'on_market' => $token->token_on_market,
+                        ]);
+
+                        if($edition_save){
+
+                            $_token = Token::find($token->token_id);
+                            $_token->token_on_market = $_token->token_on_market - 1;
+                            $_token->save();
+
+
+                            $history = new TokenHistory;
+                            $history->token_id = $token->token_id;
+                            $history->price = $token->token_starting_price;
+                            $history->type = $token->token_on_market;
+                            $history = $history->save();
+                        }
 
                         $user_details = User::find(Auth::user()->user_id);
 
