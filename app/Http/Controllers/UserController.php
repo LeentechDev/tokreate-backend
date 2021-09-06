@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
 use App\Token;
+use App\Edition;
 use App\User_profile;
 use App\Constants;
 use App\Notifications;
@@ -74,39 +75,33 @@ class UserController extends Controller
                 }
                 /* DB::enableQueryLog(); */
                 $tokens = Token::select(
-                    'tokens.*',
-                    'editions.edition_no',
-                    'editions.on_market',
-                    'editions.edition_id',
-                    DB::raw("(case when tokens.user_id != " . $user_id . " then editions.current_price else token_starting_price end ) as current_price"),
-                    DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
-                )
-                    ->where(
-                        DB::raw("(case when tokens.user_id = " . $user_id . " then tokens.token_on_market else editions.on_market end )"),
-                        DB::raw("(case when tokens.user_id = " . $user_id . " then " . $on_market . " else " . $on_market . " end )")
+                        'tokens.*',
+                        'editions.edition_no',
+                        'editions.on_market',
+                        'editions.edition_id',
+                        'editions.current_price as current_price',
+                        DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
                     )
-                    ->where(
-                        DB::raw("(case when tokens.user_id = " . $user_id . " then tokens.user_id else editions.owner_id end)"),
-                        DB::raw("(case when tokens.user_id = " . $user_id . " then " . $user_id . " else " . $user_id . " end)")
-                    )
-                    ->leftJoin("editions", 'editions.token_id', 'tokens.token_id')
+                    ->rightJoin("editions", 'tokens.token_id', 'editions.token_id')
                     ->with([
                         'transactions' => function ($q) {
                             $q->orderBy('transaction_id', 'DESC');
                         }
                     ])
                     ->where('token_status', Constants::READY)
+                    ->where('on_market', $on_market)
+                    ->where('owner_id', $user_id)
                     ->where(DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end )"), '<>', 0)
-                    ->groupBy(
-                        DB::raw(
-                            '(case when tokens.user_id = ' . $user_id . ' then tokens.token_id else editions.edition_id end )'
-                        )
-                    )
+                    // ->groupBy(
+                    //     DB::raw(
+                    //         '(case when tokens.user_id = ' . $user_id . ' then tokens.token_id else editions.edition_id end )'
+                    //     )
+                    // )
                     ->paginate($limit);
             } else {
                 $tokens = Token::select(
                     'tokens.*',
-                    'token_collectible_count as remainToken',
+                    'token_collectible_count as edition_no',
                     'token_starting_price as current_price'
                 )
                     ->where('user_id', Auth::user()->user_id)

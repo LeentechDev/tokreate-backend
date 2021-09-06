@@ -80,6 +80,13 @@ class TokenController extends Controller
 
         if ($token_details) {
 
+            if ($req->edition_id) {
+                $token_details = Token::where('edition_id', $req->edition_id)
+                    ->join('editions', 'editions.token_id', 'tokens.token_id')
+                    ->first();
+                $token_details->owner = User::find($token_details->owner_id);
+            }
+
             $token_details->history = $token_details->history()->orderBy('id', 'DESC')->get();
             $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
             $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();

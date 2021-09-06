@@ -24,7 +24,7 @@ class Edition extends Model implements AuthenticatableContract, AuthorizableCont
 
     protected $primaryKey = 'edition_id';
     protected $fillable = [
-        'token_id', 'owner_id', 'current_price', 'edition_no'
+        'token_id', 'owner_id', 'current_price', 'edition_no', 'on_market'
     ];
 
     protected $with = ['owner'];

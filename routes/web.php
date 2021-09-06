@@ -29,7 +29,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('dragonpay-webhook', 'DragonpayController@webhook');
 
     $router->get('tokens', 'HomeController@getTokens');
-    $router->get('public/token/specific-token/{token_id}', 'HomeController@specificToken');
+    $router->get('public/token/specific-token', 'HomeController@specificToken');
     $router->get('gas-fee', 'HomeController@getGasFees');
     $router->get('site-settings', 'HomeController@siteSettings');
     $router->post('update-site-settings', 'HomeController@updateSiteSettings');
@@ -117,7 +117,8 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('user-incoming', 'DashboardController@userIncoming');
     $router->get('user-outgoing', 'DashboardController@userOutgoing');
 });
-$router->group(['prefix' => 'api/withdrawal'], function () use ($router) {
+$router->group(['prefix' => 'api/withdrawals'], function () use ($router) {
     $router->post('request-withdrawal', 'WithdrawalController@requestWithdrawal');
-    $router->get('update-wthdrawal-status', 'NotificationController@updateWithdrawalStatus');
+    $router->get('update-wthdrawal-status', 'WithdrawalController@updateWithdrawalStatus');
+    $router->get('', 'WithdrawalController@getWithdrawals');
 });
