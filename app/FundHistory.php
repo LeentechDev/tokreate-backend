@@ -23,7 +23,7 @@ class FundHistory extends Model implements AuthenticatableContract, Authorizable
 
     protected $primaryKey = 'fund_history_id';
     protected $fillable = [
-        'user_id'
+        'fund_id','type','amount'
     ];
 
     /**

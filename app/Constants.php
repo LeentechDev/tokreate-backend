@@ -51,4 +51,7 @@ class Constants
     const WITHDRAWAL_PROCESSING_STATUS = 2;
     const WITHDRAWAL_SUCCESS_STATUS = 3;
 
+    const FUND_SOURCE_SOLD = 1;
+    const FUND_SOURCE_ROYALTY = 2;
+    const FUND_SOURCE_REFUND = 3;
 }

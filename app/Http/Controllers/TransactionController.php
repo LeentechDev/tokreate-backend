@@ -11,6 +11,7 @@ use App\Token;
 use App\Transaction;
 use App\Constants;
 use App\Edition;
+use App\FundHistory;
 use App\SiteSettings;
 use App\Notifications;
 use App\TokenHistory;
@@ -158,7 +159,6 @@ class TransactionController extends Controller
             $transaction_details = $_transaction->first();
 
             if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
-                $this->createEdition($transaction_details);
                 $this->transferTokenOwnership($transaction_details);
             }
 
@@ -219,6 +219,7 @@ class TransactionController extends Controller
 
         $_token = Token::select('*', 'token_starting_price as current_price')->where('token_id', $transaction->transaction_token_id);
         $_transaction = Transaction::find($transaction->transaction_id);
+        $_edition = Edition::find($transaction->edition_id);
         $token = $_token->first();
         $total_edition = Edition::where('token_id', $token->token_id)->count();
 
@@ -236,6 +237,23 @@ class TransactionController extends Controller
 
             $token->remaining_token = $token->remaining_token - 1;
             $token->save();
+
+            /* if creator is not the seller of the token compute the royalties */
+            if($token->user_id !== $_edition->owner_id){
+
+                $user_royalty = ($token->current_price * $_token->token_royalty ) / 100;
+
+                $_transaction->tranaction_royalty_amount = $user_royalty;
+                $transaction_saved = $_transaction->save();
+
+                if($transaction_saved){
+                    FundHistory::create([
+                        'type' => Constants::FUND_SOURCE_ROYALTY,
+                        'amount' => $user_royalty, 
+                        'fund_id' => 
+                    ])
+                }
+            }
         };
     }
 
@@ -251,7 +269,8 @@ class TransactionController extends Controller
                 'price' => $edition->current_price,
                 'type' => Constants::TOKEN_HISTORY_BUY,
                 'buyer_id' => $transaction->user_id,
-                'seller_id' => $edition->user_id,
+                'seller_id' => $edition->owner_id,
+                'transaction_id' => $transaction->transaction_id
             ]);
 
             /* change the owner of token edition */
@@ -259,6 +278,8 @@ class TransactionController extends Controller
                 'owner_id' => $transaction->user_id,
                 'on_market' => 0,
             ]);
+
+            $this->createEdition($transaction);
         };
     }
 
