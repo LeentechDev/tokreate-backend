@@ -44,9 +44,9 @@ class TransactionController extends Controller
                 'owner.user_profile_full_name as owner_fullname',
                 'owner.user_profile_avatar as owner_avatar'
             )
-                ->join('editions', 'transactions.edition_id', 'editions.edition_id')
-                ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
-                ->join('user_profiles as owner', 'editions.owner_id', 'owner.user_id')
+                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
+                ->join('user_profiles as collector', 'token_history.buyer_id', 'collector.user_id')
+                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
                 ->where('transaction_status', '<>', Constants::TRANSACTION_DRAFT)
@@ -112,7 +112,6 @@ class TransactionController extends Controller
 
     public function requestTransferOwnership(Request $request)
     {
-        $commission = SiteSettings::where('name', 'commission_percentage')->first();
 
         $transaction = Transaction::create(
             [
@@ -222,43 +221,47 @@ class TransactionController extends Controller
         $_transaction = Transaction::find($transaction->transaction_id);
         $_edition = Edition::find($transaction->edition_id);
         $token = $_token->first();
-        $total_edition = Edition::where('token_id', $token->token_id)->count();
 
+        /* var_dump($token->user_id);
+        var_dump($_edition->owner_id);
+        die; */
 
-        if ($token->remaining_token > 0) {
+        /* if creator is not the seller of the token compute the royalties */
+        if ((int)$token->user_id !== (int)$_edition->owner_id) {
 
-            /* create edition */
-            $edition_save = Edition::create([
-                'token_id' => $token->token_id,
-                'owner_id' => $token->user_id,
-                'current_price' => $token->current_price,
-                'edition_no' => $total_edition + 1,
-                'on_market' => $token->token_on_market,
-            ]);
+            $user_royalty = ($token->current_price * $token->token_royalty) / 100;
 
-            $token->remaining_token = $token->remaining_token - 1;
-            $token->save();
+            $_transaction->transaction_royalty_amount = $user_royalty;
+            $transaction_saved = $_transaction->save();
 
-            /* if creator is not the seller of the token compute the royalties */
-            if ($token->user_id !== $_edition->owner_id) {
+            if ($transaction_saved) {
 
-                $user_royalty = ($token->current_price * $_token->token_royalty) / 100;
+                $fund = Fund::where('user_id', $token->user_id)->first();
 
-                $_transaction->tranaction_royalty_amount = $user_royalty;
-                $transaction_saved = $_transaction->save();
-
-                if ($transaction_saved) {
-
-                    $fund = Fund::where('user_id', $token->user_id)->first();
-
-                    FundHistory::create([
-                        'type' => Constants::FUND_SOURCE_ROYALTY,
-                        'amount' => $user_royalty,
-                        'fund_id' => $fund->fund_id,
-                    ]);
-                }
+                FundHistory::create([
+                    'type' => Constants::FUND_SOURCE_ROYALTY,
+                    'amount' => $user_royalty,
+                    'fund_id' => $fund->fund_id,
+                ]);
             }
-        };
+        } else {
+            if ($token->remaining_token > 0) {
+
+                $total_edition = Edition::where('token_id', $token->token_id)->count();
+
+                $token->remaining_token = $token->remaining_token - 1;
+                $token->save();
+
+                /* create edition */
+                $edition_save = Edition::create([
+                    'token_id' => $token->token_id,
+                    'owner_id' => $token->user_id,
+                    'current_price' => $token->current_price,
+                    'edition_no' => $total_edition + 1,
+                    'on_market' => $token->token_on_market,
+                ]);
+            }
+        }
     }
 
     private function transferTokenOwnership($transaction)
@@ -267,23 +270,15 @@ class TransactionController extends Controller
         $edition = $_edition->first();
 
         if ($_edition) {
-            TokenHistory::create([
-                'token_id' => $edition->token_id,
-                'edition_id' => $edition->edition_id,
-                'price' => $edition->current_price,
-                'type' => Constants::TOKEN_HISTORY_BUY,
-                'buyer_id' => $transaction->user_id,
-                'seller_id' => $edition->owner_id,
-                'transaction_id' => $transaction->transaction_id
-            ]);
+
+            $this->createEdition($transaction);
+            http: //dev.tokreate.com:8181/
 
             /* change the owner of token edition */
             $_edition->update([
                 'owner_id' => $transaction->user_id,
                 'on_market' => 0,
             ]);
-
-            $this->createEdition($transaction);
         };
     }
 

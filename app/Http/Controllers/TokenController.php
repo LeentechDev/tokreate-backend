@@ -132,8 +132,8 @@ class TokenController extends Controller
                 ]);
 
                 $_token = Token::find($request->token_id);
-                
-                if($_token->remaining_token > 0){
+
+                if ($_token->remaining_token > 0) {
                     $_token->token_starting_price = $request->price;
                     $_token->save();
                 }
@@ -252,10 +252,10 @@ class TokenController extends Controller
                             'on_market' => $token->token_on_market,
                         ]);
 
-                        if($edition_save){
+                        if ($edition_save) {
 
                             $_token = Token::find($token->token_id);
-                            $_token->token_on_market = $_token->token_on_market - 1;
+                            $_token->remaining_token = $_token->remaining_token - 1;
                             $_token->save();
 
 

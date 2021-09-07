@@ -23,25 +23,29 @@ class FundHistory extends Model implements AuthenticatableContract, Authorizable
 
     protected $primaryKey = 'fund_history_id';
     protected $fillable = [
-        'fund_id','type','amount'
+        'fund_id', 'type', 'amount'
     ];
+
+    protected $table = 'fund_history';
 
     /**
      * The attributes excluded from the model's JSON form.
      *
      * @var array
      */
-    protected $hidden = [
-    ];
-    
-    public function getJWTIdentifier(){
+    protected $hidden = [];
+
+    public function getJWTIdentifier()
+    {
         return $this->getKey();
     }
-    public function getJWTCustomClaims(){
+    public function getJWTCustomClaims()
+    {
         return [];
     }
 
-    public function history(){
+    public function history()
+    {
         return $this->belongsTo(Fund::class, 'fund_id', 'fund_id');
     }
 }
