@@ -64,6 +64,8 @@ class DragonpayController extends Controller
 
             if ($transaction) {
                 $transaction->update($request->all());
+
+                $this->createHistory($transaction);
             }
 
             $user_details = User::find(Auth::user()->user_id);
@@ -109,6 +111,23 @@ class DragonpayController extends Controller
         }
     }
 
+    public function createHistory($transaction)
+    {
+
+        $edition = Edition::find($transaction->edition_id);
+        if ($edition) {
+            TokenHistory::create([
+                'token_id' => $transaction->transaction_token_id,
+                'edition_id' => $transaction->edition_id,
+                'price' => $edition->current_price,
+                'type' => Constants::TOKEN_HISTORY_BUY,
+                'buyer_id' => $transaction->user_id,
+                'seller_id' => $edition->owner_id,
+                'transaction_id' => $transaction->transaction_id
+            ]);
+        }
+    }
+
     public function webhook(Request $request)
     {
 
@@ -133,10 +152,10 @@ class DragonpayController extends Controller
             switch ($request->status) {
                 case 'S':
                     try {
-                        Transaction::where('token_transaction_id', $request->txnid)->update([
+                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
                             'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_SUCCESS
                         ]);
-                        $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
                         // return responseWithMessage(200, "Success", $result);
                     } catch (\Throwable $th) {
                         return $th;
@@ -144,11 +163,11 @@ class DragonpayController extends Controller
                     break;
                 case 'P':
                     try {
-                        Transaction::where('token_transaction_id', $request->txnid)->update([
+                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
                             'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_PENDING
                         ]);
 
-                        $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
                         // return responseWithMessage(200, "Success", $result);
                     } catch (\Throwable $th) {
                         return $th;
@@ -156,10 +175,10 @@ class DragonpayController extends Controller
                     break;
                 case 'F':
                     try {
-                        Transaction::where('token_transaction_id', $request->txnid)->update([
+                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
                             'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
                         ]);
-                        $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
                         // return responseWithMessage(200, "Success", $result);
                     } catch (\Throwable $th) {
                         return $th;
@@ -167,10 +186,10 @@ class DragonpayController extends Controller
                     break;
                 case 'V':
                     try {
-                        Transaction::where('token_transaction_id', $request->txnid)->update([
+                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
                             'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_CANCEL
                         ]);
-                        $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
                         // return responseWithMessage(200, "Success", $result);
                     } catch (\Throwable $th) {
                         return $th;
@@ -178,10 +197,10 @@ class DragonpayController extends Controller
                     break;
                 default:
                     try {
-                        Transaction::where('token_transaction_id', $request->txnid)->update([
+                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
                             'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
                         ]);
-                        $result = Transaction::where('token_transaction_id', $request->txnid)->first();
+                        $result = Transaction::where('token_transaction_payment_tnxid', $request->txnid)->first();
                         // return responseWithMessage(200, "Success", $result);
                     } catch (\Throwable $th) {
                         return $th;
