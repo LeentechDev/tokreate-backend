@@ -11,6 +11,7 @@ use App\Token;
 use App\Transaction;
 use App\Constants;
 use App\Edition;
+use App\Fund;
 use App\FundHistory;
 use App\SiteSettings;
 use App\Notifications;
@@ -239,19 +240,22 @@ class TransactionController extends Controller
             $token->save();
 
             /* if creator is not the seller of the token compute the royalties */
-            if($token->user_id !== $_edition->owner_id){
+            if ($token->user_id !== $_edition->owner_id) {
 
-                $user_royalty = ($token->current_price * $_token->token_royalty ) / 100;
+                $user_royalty = ($token->current_price * $_token->token_royalty) / 100;
 
                 $_transaction->tranaction_royalty_amount = $user_royalty;
                 $transaction_saved = $_transaction->save();
 
-                if($transaction_saved){
+                if ($transaction_saved) {
+
+                    $fund = Fund::where('user_id', $token->user_id)->first();
+
                     FundHistory::create([
                         'type' => Constants::FUND_SOURCE_ROYALTY,
-                        'amount' => $user_royalty, 
-                        'fund_id' => 
-                    ])
+                        'amount' => $user_royalty,
+                        'fund_id' => $fund->fund_id,
+                    ]);
                 }
             }
         };
