@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Auth;
 
 use App\Constants;
 use App\Withdrawal;
-
+use App\Transaction;
+use DB; 
 class WithdrawalController extends Controller
 {
     /**
@@ -87,4 +88,53 @@ class WithdrawalController extends Controller
             return response()->json(['message' => 'Transaction status update failed!'], 409);
         }
     }  
+
+
+    public function getTotalEarnings(){
+        
+        $getTotalEarnings['totalEarnings'] = DB::table('transactions')->sum('transaction_computed_commission');
+
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $getTotalEarnings,
+            ]
+        ];
+        return response()->json($response, 200);
+    }
+
+    public function getCommissionList(){
+
+        $getCommissionList =  DB::table('transactions')
+            ->where('transaction_payment_status', Constants::TRANSACTION_PAYMENT_SUCCESS)
+            ->join('user_profiles as collector', 'collector.user_id', 'transactions.user_id')
+            ->join('token_history', 'token_history.seller_id', 'transactions.user_id')
+            ->join('user_profiles  as owner', 'owner.user_id', 'token_history.seller_id')
+            ->paginate();
+
+
+        if($getCommissionList){
+            $response=(object)[
+                "success" => true,  
+                "result" => [
+                    "datas" => $getCommissionList,  
+                    "message" => "Here are the list of collected commissions",
+                ]
+            ];
+            return response()->json($response, 200);
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "There are no available collected commissions",
+                ]
+            ];
+        }
+        return response()->json($response, 200);
+        
+
+
+    }
 }
+
+
