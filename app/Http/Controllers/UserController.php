@@ -203,7 +203,7 @@ class UserController extends Controller
 
             return $randomString;
         }
-        // try {
+        try {
         $user_details = User_profile::where('user_id', Auth::user()->user_id);
         if ($user_details) {
             $request_data = $request->all();
@@ -238,8 +238,7 @@ class UserController extends Controller
         } else {
             return response()->json(['message' => 'Account update failed!'], 409);
         }
-    }
-        /* }catch (\Exception $e) {
+        }catch (\Exception $e) {
             return response()->json(['message' => 'Account update failed!'], 409);
         }
     }

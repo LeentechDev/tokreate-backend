@@ -103,15 +103,29 @@ class WithdrawalController extends Controller
         return response()->json($response, 200);
     }
 
-    public function getCommissionList(){
+    public function getCommissionList(Request $request){
+        $searchTerm = $request->search_keyword;
+        $getCommissionList =  Transaction::select(
+            'transactions.*',
+            'collector.user_profile_full_name as collector_fullname',
+            'collector.user_profile_avatar as collector_avatar',
+            'owner.user_profile_full_name as owner_fullname',
+            'owner.user_profile_avatar as owner_avatar')
 
-        $getCommissionList =  DB::table('transactions')
-            ->where('transaction_payment_status', Constants::TRANSACTION_PAYMENT_SUCCESS)
-            ->join('user_profiles as collector', 'collector.user_id', 'transactions.user_id')
-            ->join('token_history', 'token_history.seller_id', 'transactions.user_id')
+            ->whereNotNull('transactions.transaction_computed_commission')
+            ->join('token_history', 'token_history.transaction_id', 'transactions.transaction_id')
+            ->join('user_profiles as collector', 'collector.user_id', 'token_history.buyer_id')
             ->join('user_profiles  as owner', 'owner.user_id', 'token_history.seller_id')
-            ->paginate();
+            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
 
+            ->where(function ($q) use ($searchTerm, $request) {
+                if ($searchTerm) {
+                    $q->where('transactions.transaction_id', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                }
+            })
+            ->paginate($request->limit);
 
         if($getCommissionList){
             $response=(object)[
@@ -126,6 +140,7 @@ class WithdrawalController extends Controller
             $response=(object)[
                 "success" => false,
                 "result" => [
+                    // "datas" => $getCommissionList, 
                     "message" => "There are no available collected commissions",
                 ]
             ];
