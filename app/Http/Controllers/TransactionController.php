@@ -32,9 +32,7 @@ class TransactionController extends Controller
     public function transferOwnership(Request $request)
     {
 
-        $transaction = new Transaction();
         $searchTerm = $request->search_keyword;
-
         try {
             $transactions = Transaction::select(
                 'transactions.*',
@@ -44,12 +42,13 @@ class TransactionController extends Controller
                 'owner.user_profile_full_name as owner_fullname',
                 'owner.user_profile_avatar as owner_avatar'
             )
-                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
+                ->join('editions', 'transactions.edition_id', 'editions.edition_id')
                 ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
-                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
+                ->join('user_profiles as owner', 'editions.owner_id', 'owner.user_id')
                 ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
                 ->where('transaction_status', '<>', Constants::TRANSACTION_DRAFT)
+                ->where('transaction_status', '<>', Constants::TRANSACTION_SUCCESS)
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
@@ -86,7 +85,7 @@ class TransactionController extends Controller
                 if (!$transaction->edition_id) {
                     $transaction->token = Token::select('*', 'token_starting_price as current_price')->where('token_id', $transaction->transaction_token_id)->first();
                 } else {
-                    $transaction->token = Edition::select('*')->join('tokens', 'tokens.token_id', 'edition.token_id')->where('edition_id', $transaction->edition_id)->first();
+                    $transaction->token = Edition::select('*')->join('tokens', 'tokens.token_id', 'editions.token_id')->where('edition_id', $transaction->edition_id)->first();
                 }
 
                 $response = (object)[
@@ -158,14 +157,9 @@ class TransactionController extends Controller
 
             $transaction_details = $_transaction->first();
 
-            /* var_dump(Constants::TRANSACTION_SUCCESS);
-                var_dump(($request->transaction_status)); */
             if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
-                if (!$transaction_details->edition_id) {
-                    $this->createEdition($transaction_details);
-                } else {
-                    $this->transferTokenOwnership($transaction_details);
-                }
+                $this->createEdition($transaction_details);
+                $this->transferTokenOwnership($transaction_details);
             }
 
             $response = (object)[
@@ -224,31 +218,20 @@ class TransactionController extends Controller
     {
 
         $_token = Token::select('*', 'token_starting_price as current_price')->where('token_id', $transaction->transaction_token_id);
+        $_transaction = Transaction::find($transaction->transaction_id);
         $token = $_token->first();
         $total_edition = Edition::where('token_id', $token->token_id)->count();
 
-        /* echo '<pre>';
-        var_dump($transaction->transaction_id);
-        die; */
+
         if ($token->remaining_token > 0) {
 
             /* create edition */
             $edition_save = Edition::create([
                 'token_id' => $token->token_id,
-                'owner_id' => $transaction->user_id,
+                'owner_id' => $token->user_id,
                 'current_price' => $token->current_price,
                 'edition_no' => $total_edition + 1,
-                'on_market' => 0,
-            ]);
-
-            TokenHistory::create([
-                'token_id' => $token->token_id,
-                'edition_id' => $edition_save->edition_id,
-                'price' => $token->current_price,
-                'type' => Constants::TOKEN_HISTORY_BUY,
-                'buyer_id' => $transaction->user_id,
-                'seller_id' => $token->user_id,
-                'transaction_id' => $transaction->transaction_id
+                'on_market' => $token->token_on_market,
             ]);
 
             $token->remaining_token = $token->remaining_token - 1;
@@ -262,13 +245,6 @@ class TransactionController extends Controller
         $edition = $_edition->first();
 
         if ($_edition) {
-            /* change the owner of token edition */
-            $_edition->update([
-                'owner_id' => $transaction->user_id,
-                'on_market' => 0,
-            ]);
-
-
             TokenHistory::create([
                 'token_id' => $edition->token_id,
                 'edition_id' => $edition->edition_id,
@@ -276,6 +252,12 @@ class TransactionController extends Controller
                 'type' => Constants::TOKEN_HISTORY_BUY,
                 'buyer_id' => $transaction->user_id,
                 'seller_id' => $edition->user_id,
+            ]);
+
+            /* change the owner of token edition */
+            $_edition->update([
+                'owner_id' => $transaction->user_id,
+                'on_market' => 0,
             ]);
         };
     }

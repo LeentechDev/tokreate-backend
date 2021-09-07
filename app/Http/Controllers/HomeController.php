@@ -23,14 +23,14 @@ class HomeController extends Controller
 
     public function getTokens(Request $request)
     {
-        $tokens = new Token();
         $searchTerm = $request->search_key;
 
-        $tokens = $tokens->with(['transactions' => function ($q) {
+        $tokens = Token::rightJoin('editions', 'editions.token_id', 'tokens.token_id')->with(['transactions' => function ($q) {
             $q->orderBy('transaction_id', 'DESC');
         }])
-            ->orderBy('token_id', 'DESC')
+            ->orderBy('tokens.token_id', 'DESC')
             ->whereIn('token_status', [Constants::READY])
+            ->where('editions.on_market', Constants::TOKEN_ON_MARKET)
             ->where(function ($q) use ($searchTerm) {
                 if ($searchTerm) {
                     $q->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
@@ -40,6 +40,7 @@ class HomeController extends Controller
 
         foreach ($tokens as $key => $value) {
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
+            $tokens[$key]->owner = User::find($value->owner_id);
         }
 
         if ($tokens) {
@@ -55,6 +56,47 @@ class HomeController extends Controller
                 "success" => false,
                 "result" => [
                     "message" => "No artworks found.",
+                ]
+            ];
+            return response()->json($response, 409);
+        }
+    }
+
+    public function specificToken(Request $req)
+    {
+
+        $token_details = Token::find($req->token_id);
+        if ($token_details) {
+
+            /* if the given user is not the creator of token get the details from token table along with edition details */
+            if ($req->edition_id) {
+                $token_details = Token::where('edition_id', $req->edition_id)
+                    ->join('editions', 'editions.token_id', 'tokens.token_id')
+                    ->first();
+                $token_details->owner = User::find($token_details->owner_id);
+            } else {
+                return response()->json(['message' => 'Invalid Token'], 500);
+            }
+
+            if ($token_details) {
+                $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
+                $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
+
+
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "datas" => $token_details,
+                        "message" => "Here are the details of the token.",
+                    ]
+                ];
+                return response()->json($response, 200);
+            }
+        } else {
+            $response = (object)[
+                "success" => false,
+                "result" => [
+                    "message" => "Token not found.",
                 ]
             ];
             return response()->json($response, 409);
@@ -136,46 +178,5 @@ class HomeController extends Controller
         return response()->json($response, 200);
     }
 
-    public function specificToken($id)
-    {
-
-        $token_details = Token::find($id);
-        if ($token_details) {
-
-            /* if the given user is not the creator of token get the details from token table along with edition details */
-            if ($token_details->user_id != Auth::user()->user_id) {
-                if ($req->edition_id) {
-                    $token_details = Token::where('edition_id', $req->edition_id)
-                        ->join('editions', 'editions.token_id', 'tokens.token_id')
-                        ->first();
-                    $token_details->owner = User::find($token_details->owner_id);
-                } else {
-                    return response()->json(['message' => 'Invalid Token'], 500);
-                }
-            }
-
-            if ($token_details) {
-                $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
-                $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
-
-
-                $response = (object)[
-                    "success" => true,
-                    "result" => [
-                        "datas" => $token_details,
-                        "message" => "Here are the details of the token.",
-                    ]
-                ];
-                return response()->json($response, 200);
-            }
-        } else {
-            $response = (object)[
-                "success" => false,
-                "result" => [
-                    "message" => "Token not found.",
-                ]
-            ];
-            return response()->json($response, 409);
-        }
-    }
+    
 }

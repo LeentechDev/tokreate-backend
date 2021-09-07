@@ -40,6 +40,33 @@ class WithdrawalController extends Controller
         return response()->json($response, 200);
     }
 
+    public function getWithdrawals(Request $request){
+        $searchTerm = $request->search_keyword;
+        // try {
+            $withdrawals = Withdrawal::join('user_profiles', 'user_profiles.user_id', 'withdrawals.withdrawal_user_id')
+                    ->where(function ($q) use ($searchTerm, $request) {
+                    if ($searchTerm) {
+                        $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                    }
+                    if ($request->filter_status !== "") {
+                        $q->where('withdrawal_status', $request->filter_status);
+                    }
+                })
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $withdrawals,
+                ]
+            ];
+            return response()->json($response, 200);
+        // } catch (\Throwable $th) {
+        //     return response()->json("Something wen't wrong", 500);
+        // }
+    }
+
     public function updateWithdrawalStatus(Request $request){
         $this->validate($request, [
             'withdrawal_id' => 'required|string',
