@@ -92,7 +92,9 @@ class WithdrawalController extends Controller
 
     public function getTotalEarnings(){
         
-        $getTotalEarnings['totalEarnings'] = DB::table('transactions')->sum('transaction_computed_commission');
+        $getTotalEarnings['totalEarnings'] = DB::table('transactions') 
+        ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+        ->sum('transaction_computed_commission');
 
         $response = (object)[
             "success" => true,
