@@ -174,6 +174,7 @@ class DashboardController extends Controller
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
                             ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%');
                     }
                 })
@@ -215,6 +216,7 @@ class DashboardController extends Controller
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
                             ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%');
                     }
                 })
@@ -255,6 +257,7 @@ class DashboardController extends Controller
             ->where(function ($q) use ($searchTerm, $request) {
                 if ($searchTerm) {
                     $q->where('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                        ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
                         ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%');
                 }
             })
@@ -296,11 +299,55 @@ class DashboardController extends Controller
                 ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
                             ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%');
                     }
                 })
                 ->with(['transaction_owner', 'token'])
                 ->where('transactions.user_id', Auth::user()->user_id)
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $transactions,
+                ]
+            ];
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Something wen't wrong"], 200);
+        }
+    }
+
+    public function userRoyalties(Request $request)
+    {
+
+        $searchTerm = $request->search_keyword;
+        try {
+            $transactions = Transaction::select(
+                'transactions.*',
+                'collector.user_profile_full_name as collector_fullname',
+                'collector.user_profile_avatar as collector_avatar',
+                'owner.user_profile_full_name as owner_fullname',
+                'owner.user_profile_avatar as owner_avatar'
+            )
+                ->join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
+                ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
+                ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
+                ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+                ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+                ->whereNotNull('transaction_royalty_amount')
+                ->where(function ($q) use ($searchTerm, $request) {
+                    if ($searchTerm) {
+                        $q->where('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                            ->orWhere('tokens.token_title', 'like', '%' . $searchTerm . '%');
+                    }
+                })
+                ->with(['transaction_owner', 'token'])
+                ->where('tokens.user_id', Auth::user()->user_id)
                 ->orderBy($request->sort, $request->sort_dirc)
                 ->paginate($request->limit);
 
