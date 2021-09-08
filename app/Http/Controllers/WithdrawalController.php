@@ -43,7 +43,7 @@ class WithdrawalController extends Controller
 
     public function getWithdrawals(Request $request){
         $searchTerm = $request->search_keyword;
-        // try {
+        try {
             $withdrawals = Withdrawal::join('user_profiles', 'user_profiles.user_id', 'withdrawals.withdrawal_user_id')
                     ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
@@ -52,6 +52,42 @@ class WithdrawalController extends Controller
                     if ($request->filter_status !== "") {
                         $q->where('withdrawal_status', $request->filter_status);
                     }
+                    if($request->user_id){
+                        $q->where('withdrawal_user_id', $request->user_id);
+                    }
+                })
+                ->orderBy($request->sort, $request->sort_dirc)
+                ->paginate($request->limit);
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $withdrawals,
+                ]
+            ];
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
+            return response()->json("Something wen't wrong", 500);
+        }
+    }
+
+    public function getUserWithdrawals(Request $request){
+        $searchTerm = $request->search_keyword;
+        $user_id = Auth::user()->user_id;
+        if($request->user_id){
+            $user_id = $request->user_id;
+        }
+        
+        // try {
+            $withdrawals = Withdrawal::join('user_profiles', 'user_profiles.user_id', 'withdrawals.withdrawal_user_id')
+                ->where(function ($q) use ($searchTerm, $request, $user_id) {
+                        if ($searchTerm) {
+                            $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                        }
+                        if ($request->filter_status !== "") {
+                            $q->where('withdrawal_status', $request->filter_status);
+                        }
+                        $q->where('withdrawal_user_id', $user_id);
                 })
                 ->orderBy($request->sort, $request->sort_dirc)
                 ->paginate($request->limit);
@@ -67,6 +103,7 @@ class WithdrawalController extends Controller
         //     return response()->json("Something wen't wrong", 500);
         // }
     }
+
 
     public function updateWithdrawalStatus(Request $request){
         $this->validate($request, [

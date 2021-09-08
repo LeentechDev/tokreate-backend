@@ -119,6 +119,7 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('user-incoming', 'DashboardController@userIncoming');
     $router->get('user-outgoing', 'DashboardController@userOutgoing');
     $router->get('user-royalties', 'DashboardController@userRoyalties');
+    $router->get('user-dashboard', 'DashboardController@userDashboardReports');
 });
 
 $router->group(['prefix' => 'api/withdrawals'], function () use ($router) {
@@ -126,5 +127,6 @@ $router->group(['prefix' => 'api/withdrawals'], function () use ($router) {
     $router->get('update-wthdrawal-status', 'WithdrawalController@updateWithdrawalStatus');
     $router->get('get-total-earning', 'WithdrawalController@getTotalEarnings');
     $router->get('get-commission-list', 'WithdrawalController@getCommissionList');
+    $router->get('user', 'WithdrawalController@getUserWithdrawals');
     $router->get('', 'WithdrawalController@getWithdrawals');
 });
