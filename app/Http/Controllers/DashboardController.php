@@ -366,10 +366,16 @@ class DashboardController extends Controller
     public function userDashboardReports(Request $request)
     {
         try {
-            $reports['stats']['total_transaction'] = Transaction::where('transaction_type', Constants::TRANSACTION_TRANSFER)->count();
-            $reports['stats']['total_offers'] = Transaction::where('transaction_type', Constants::TRANSACTION_TRANSFER)->count();
-            $reports['stats']['total_users'] = User::where('user_role_id', Constants::USER_ARTIST)->count();
-            $reports['stats']['total_tokens'] = Token::count();
+            $reports['stats']['total_sales'] = Transaction::select(DB::raw("sum(transactions.transaction_token_price) as total"))
+                                            ->rightJoin('token_history', 'token_history.transaction_id', 'token_history.transaction_id')
+                                            ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                                            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+                                            ->where('seller_id', Auth::user()->user_id)
+                                            ->first();
+
+            $reports['stats']['total_purchase'] = Transaction::where('transaction_type', Constants::TRANSACTION_TRANSFER)->count();
+            $reports['stats']['total_tokens'] = User::where('user_role_id', Constants::USER_ARTIST)->count();
+            $reports['stats']['total_royalty_earnings'] = Token::count();
 
             $response = (object)[
                 "success" => true,
