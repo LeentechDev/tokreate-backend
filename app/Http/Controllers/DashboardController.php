@@ -362,4 +362,24 @@ class DashboardController extends Controller
             return response()->json(['message' => "Something wen't wrong"], 200);
         }
     }
+
+    public function userDashboardReports(Request $request)
+    {
+        try {
+            $reports['stats']['total_transaction'] = Transaction::where('transaction_type', Constants::TRANSACTION_TRANSFER)->count();
+            $reports['stats']['total_offers'] = Transaction::where('transaction_type', Constants::TRANSACTION_TRANSFER)->count();
+            $reports['stats']['total_users'] = User::where('user_role_id', Constants::USER_ARTIST)->count();
+            $reports['stats']['total_tokens'] = Token::count();
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $reports,
+                ]
+            ];
+            return response()->json($response, 200);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Something wen't wrong"], 200);
+        }
+    }
 }
