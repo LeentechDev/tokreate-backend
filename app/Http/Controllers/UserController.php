@@ -63,7 +63,7 @@ class UserController extends Controller
         $user_id = Auth::user()->user_id;
         $page = $req->page;
         $limit = $req->limit;
-
+        /* DB::enableQueryLog(); */
         if ($req->user_id) {
             $user_id = $req->user_id;
         } else {
@@ -73,16 +73,16 @@ class UserController extends Controller
                 } else {
                     $on_market = 1;
                 }
-                /* DB::enableQueryLog(); */
+
                 $tokens = Token::select(
-                        'tokens.*',
-                        'editions.edition_no',
-                        'editions.on_market',
-                        'editions.edition_id',
-                        'editions.current_price as current_price',
-                        'editions.owner_id',
-                        DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
-                    )
+                    'tokens.*',
+                    'editions.edition_no',
+                    'editions.on_market',
+                    'editions.edition_id',
+                    'editions.current_price as current_price',
+                    'editions.owner_id',
+                    DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
+                )
                     ->rightJoin("editions", 'tokens.token_id', 'editions.token_id')
                     ->with([
                         'transactions' => function ($q) {
@@ -95,15 +95,18 @@ class UserController extends Controller
                     ->paginate($limit);
             } else {
                 $tokens = Token::select(
-                    'tokens.*',
+                    '*',
                     'token_collectible_count as edition_no',
                     'token_starting_price as current_price'
                 )
+                    ->leftJoin('editions', 'editions.token_id', 'tokens.token_id')
                     ->where('user_id', Auth::user()->user_id)
+                    ->groupBy('tokens.token_id')
                     ->paginate($limit);
             }
         }
-        /* print_r( DB::getQueryLog()); */
+        /* print_r(DB::getQueryLog());
+        die; */
 
         foreach ($tokens as $key => $value) {
             $tokens[$key]->history = $value->history()->orderBy('id', 'DESC')->paginate(10);
@@ -153,14 +156,18 @@ class UserController extends Controller
 
             /* if the given user is not the creator of token get the details from token table along with edition details */
             /* if ($token_details->user_id != Auth::user()->user_id) { */
-                if ($req->edition_id) {
-                    $token_details = Token::where('edition_id', $req->edition_id)
-                        ->join('editions', 'editions.token_id', 'tokens.token_id')
-                        ->first();
-                    $token_details->owner = User::find($token_details->owner_id);
-                } else {
-                    return response()->json(['message' => 'Invalid Token'], 500);
-                }
+            if ($req->edition_id) {
+                $token_details = Token::where('edition_id', $req->edition_id)
+                    ->join('editions', 'editions.token_id', 'tokens.token_id')
+                    ->first();
+                $token_details->owner = User::find($token_details->owner_id);
+            } else {
+                $token_details = Token::where('tokens.token_id', $req->token_id)
+                    ->join('editions', 'editions.token_id', 'tokens.token_id')
+                    ->where('editions.edition_no', 1)
+                    ->first();
+                $token_details->owner = User::find($token_details->owner_id);
+            }
             /* } */
 
             if ($token_details) {
@@ -204,41 +211,41 @@ class UserController extends Controller
             return $randomString;
         }
         try {
-        $user_details = User_profile::where('user_id', Auth::user()->user_id);
-        if ($user_details) {
-            $request_data = $request->all();
+            $user_details = User_profile::where('user_id', Auth::user()->user_id);
+            if ($user_details) {
+                $request_data = $request->all();
 
-            unset($request_data['user_name']);
-            unset($request_data['user_email']);
+                unset($request_data['user_name']);
+                unset($request_data['user_email']);
 
-            $request_data['user_notification_settings'] = 1;
-            $request_data['user_profile_completed'] = 1;
-            $user_details->update($request_data);
-            if ($request->hasFile('user_profile_avatar')) {
-                $user_file      = $request->file('user_profile_avatar');
-                $user_filename  = $user_file->getClientOriginalName();
-                $user_extension = $user_file->guessExtension();
-                $user_picture   = date('His') . '-' . getRandomString(8);
-                $user_avatar    = $user_picture . '.' . $user_extension;
-                $destination_path = 'app/images/user_avatar';
-                if ($user_file->move($destination_path, $user_avatar)) {
-                    $profile_path = url($destination_path . '/' . $user_avatar);
-                } else {
-                    $profile_path = url('app/images/default_avatar.jpg');
+                $request_data['user_notification_settings'] = 1;
+                $request_data['user_profile_completed'] = 1;
+                $user_details->update($request_data);
+                if ($request->hasFile('user_profile_avatar')) {
+                    $user_file      = $request->file('user_profile_avatar');
+                    $user_filename  = $user_file->getClientOriginalName();
+                    $user_extension = $user_file->guessExtension();
+                    $user_picture   = date('His') . '-' . getRandomString(8);
+                    $user_avatar    = $user_picture . '.' . $user_extension;
+                    $destination_path = 'app/images/user_avatar';
+                    if ($user_file->move($destination_path, $user_avatar)) {
+                        $profile_path = url($destination_path . '/' . $user_avatar);
+                    } else {
+                        $profile_path = url('app/images/default_avatar.jpg');
+                    }
+                    DB::statement("UPDATE `user_profiles` set `user_profile_avatar` = '" . $profile_path . "' Where `user_id` = '" . Auth::user()->user_id . "'");
                 }
-                DB::statement("UPDATE `user_profiles` set `user_profile_avatar` = '" . $profile_path . "' Where `user_id` = '" . Auth::user()->user_id . "'");
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Account has been successfully updated."
+                    ]
+                ];
+                return response()->json($response, 201);
+            } else {
+                return response()->json(['message' => 'Account update failed!'], 409);
             }
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Account has been successfully updated."
-                ]
-            ];
-            return response()->json($response, 201);
-        } else {
-            return response()->json(['message' => 'Account update failed!'], 409);
-        }
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['message' => 'Account update failed!'], 409);
         }
     }

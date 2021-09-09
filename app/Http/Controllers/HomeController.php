@@ -39,6 +39,8 @@ class HomeController extends Controller
             ->paginate($request->limit);
 
         foreach ($tokens as $key => $value) {
+            $tokens[$key]->history = $value->history()->orderBy('id', 'DESC')->paginate(10);
+            $tokens[$key]->mint_transactions = $value->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
             $tokens[$key]->owner = User::find($value->owner_id);
         }
@@ -79,7 +81,9 @@ class HomeController extends Controller
             }
 
             if ($token_details) {
-                $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
+                $token_details->history = $token_details->history()->orderBy('id', 'DESC')->paginate(10);
+                $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->paginate(10);
+                $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
                 $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
 
 
@@ -135,7 +139,7 @@ class HomeController extends Controller
             DB::table('gas_fees')->where('gas_fee_name', 'superfast')->update(['gas_fee_amount' => $r->superfast]);
             DB::table('gas_fees')->where('gas_fee_name', 'gas_fee_updated_by')->update(['gas_fee_updated_by' => $r->gas_fee_updated_by]);
             DB::table('gas_fees')->where('gas_fee_name', 'gas_fee_updated_at')->update(['gas_fee_updated_at' => $r->gas_fee_updated_at]);
-            
+
             SiteSettings::where('name', 'commission_percentage')->update(['value' => $r->commision_rate]);
             $response = (object)[
                 "success" => true,
@@ -177,6 +181,4 @@ class HomeController extends Controller
 
         return response()->json($response, 200);
     }
-
-    
 }
