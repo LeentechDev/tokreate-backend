@@ -42,84 +42,87 @@ class PostbackController extends Controller
             $request->message,
             SELF::MERCHANT_PASS
         ];
+        try {
 
-
-        $file = 'test.txt';
-        if (!is_file($file)) {         // Some simple example content.
-            file_put_contents($file, $request->txnid);     // Save our content to the file.
-        }
-
-
-        $validateDigest = sha1(implode(':', $validateRequest));
-
-        if (strval($request->digest) == $validateDigest) {
-
-            $url = $this->getBaseUrl();
-
-            $getQuery = 'op=GETSTATUS&merchantid=' . Self::MERCHANT_ID . '&merchantpwd=' . Self::MERCHANT_PASS . '&txnid=' . $request->txnid;
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url . $getQuery);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $status = curl_exec($ch);
-
-            switch ($status) {
-                case 'S':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_SUCCESS
-                        ]);
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                case 'P':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_PENDING
-                        ]);
-
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                case 'F':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
-                        ]);
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                case 'V':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_CANCEL
-                        ]);
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                default:
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
-                        ]);
-                        $result = Transaction::where('token_transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
+            $file = 'test.txt';
+            if (!is_file($file)) {         // Some simple example content.
+                file_put_contents($file, $request->txnid);     // Save our content to the file.
             }
+
+
+            $validateDigest = sha1(implode(':', $validateRequest));
+
+            if (strval($request->digest) == $validateDigest) {
+
+                $url = $this->getBaseUrl();
+
+                $getQuery = 'op=GETSTATUS&merchantid=' . Self::MERCHANT_ID . '&merchantpwd=' . Self::MERCHANT_PASS . '&txnid=' . $request->txnid;
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url . $getQuery);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $status = curl_exec($ch);
+
+                switch ($status) {
+                    case 'S':
+                        try {
+                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
+                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_SUCCESS
+                            ]);
+                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
+                            // return responseWithMessage(200, "Success", $result);
+                        } catch (\Throwable $th) {
+                            return $th;
+                        }
+                        break;
+                    case 'P':
+                        try {
+                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
+                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_PENDING
+                            ]);
+
+                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
+                            // return responseWithMessage(200, "Success", $result);
+                        } catch (\Throwable $th) {
+                            return $th;
+                        }
+                        break;
+                    case 'F':
+                        try {
+                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
+                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
+                            ]);
+                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
+                            // return responseWithMessage(200, "Success", $result);
+                        } catch (\Throwable $th) {
+                            return $th;
+                        }
+                        break;
+                    case 'V':
+                        try {
+                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
+                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_CANCEL
+                            ]);
+                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
+                            // return responseWithMessage(200, "Success", $result);
+                        } catch (\Throwable $th) {
+                            return $th;
+                        }
+                        break;
+                    default:
+                        try {
+                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
+                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
+                            ]);
+                            $result = Transaction::where('token_transaction_payment_tnxid', $request->txnid)->first();
+                            // return responseWithMessage(200, "Success", $result);
+                        } catch (\Throwable $th) {
+                            return $th;
+                        }
+                        break;
+                }
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
         }
     }
 
