@@ -31,6 +31,10 @@ class DragonpayController extends Controller
     protected const MERCHANT_API_KEY = 'bec973b72e20e653ddc54c0b37cbf18a254b6928';
     protected const MODE = 'development';
 
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function payment(Request $request)
     {
@@ -77,9 +81,9 @@ class DragonpayController extends Controller
                 'ccy' => 'PHP',
                 'description' => 'test',
                 'email' => $user_details->user_email,
-            
+
             );
-            
+
             $params['amount'] = number_format($params['amount'], 2, '.', '');
             $params['key'] = SELF::MERCHANT_PASS;
             $digest_string = implode(':', $params);
@@ -126,97 +130,6 @@ class DragonpayController extends Controller
                 'seller_id' => $edition->owner_id,
                 'transaction_id' => $transaction->transaction_id
             ]);
-        }
-    }
-
-    public function webhook(Request $request)
-    {
-
-        $validateRequest = [
-            $request->txnid,
-            $request->refno,
-            $request->status,
-            $request->message,
-            SELF::MERCHANT_PASS
-        ];
-
-
-        $file = 'test.txt';
-        if (!is_file($file)) {         // Some simple example content.
-            file_put_contents($file, $request->txnid);     // Save our content to the file.
-        }
-
-
-        $validateDigest = sha1(implode(':', $validateRequest));
-
-        if (strval($request->digest) == $validateDigest) {
-            switch ($request->status) {
-                case 'S':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_SUCCESS
-                        ]);
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                case 'P':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_PENDING
-                        ]);
-
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                case 'F':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
-                        ]);
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                case 'V':
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_CANCEL
-                        ]);
-                        $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-                default:
-                    try {
-                        Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                            'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
-                        ]);
-                        $result = Transaction::where('token_transaction_payment_tnxid', $request->txnid)->first();
-                        // return responseWithMessage(200, "Success", $result);
-                    } catch (\Throwable $th) {
-                        return $th;
-                    }
-                    break;
-            }
-        }
-    }
-
-    private function getHost()
-    {
-        if (SELF::MODE == 'development') {
-            return 'test.dragonpay.ph';
-        } else {
-            return 'gw.dragonpay.ph';
         }
     }
 

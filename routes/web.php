@@ -16,6 +16,8 @@ $router->get('/', function () use ($router) {
 });
 $router->get('/mail', 'MailController@mail');
 
+$router->post('/dragonpay-webhook', 'PostbackController@webhook');
+
 $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('register', 'AuthController@register');
     $router->post('login', 'AuthController@login');
@@ -24,9 +26,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('change-password', 'AuthController@changePassword');
     $router->get('validate-token', 'AuthController@validateTokenRP');
 
-    $router->post('payment', 'DragonpayController@payment');
-    $router->post('dragonpay-webhook', 'DragonpayController@webhook');
-    $router->get('dragonpay-webhook', 'DragonpayController@webhook');
+    $router->post('payment', 'DragonpayController@payment');;
+    // $router->get('dragonpay-webhook', 'DragonpayController@webhook');
 
     $router->get('tokens', 'HomeController@getTokens');
     $router->get('public/token/specific-token', 'HomeController@specificToken');
