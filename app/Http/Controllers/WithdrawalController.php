@@ -26,8 +26,9 @@ class WithdrawalController extends Controller
         $withdrawal = Withdrawal::create(
             [
                 "withdrawal_user_id" =>  Auth::user()->user_id,
-                "withdrawal_amount" => $request->input('withdrawal_amount'),
+                "withdrawal_amount" => $request->input('amount'),
                 "withdrawal_status" => Constants::WITHDRAWAL_REQUEST_STATUS,
+                "withdrawal_gcash" => $request->input('phone'),
             ]
         );
         if ($withdrawal) {

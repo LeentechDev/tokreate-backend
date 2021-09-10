@@ -124,7 +124,7 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
 });
 
 $router->group(['prefix' => 'api/withdrawals'], function () use ($router) {
-    $router->post('request-withdrawal', 'WithdrawalController@requestWithdrawal');
+    $router->post('request', 'WithdrawalController@requestWithdrawal');
     $router->get('update-wthdrawal-status', 'WithdrawalController@updateWithdrawalStatus');
     $router->get('get-total-earning', 'WithdrawalController@getTotalEarnings');
     $router->get('get-commission-list', 'WithdrawalController@getCommissionList');
