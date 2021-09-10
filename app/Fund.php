@@ -33,17 +33,21 @@ class Fund extends Model implements AuthenticatableContract, AuthorizableContrac
      *
      * @var array
      */
-    protected $hidden = [
-    ];
-    
-    public function getJWTIdentifier(){
+    protected $hidden = [];
+
+    protected $with = ['history'];
+
+    public function getJWTIdentifier()
+    {
         return $this->getKey();
     }
-    public function getJWTCustomClaims(){
+    public function getJWTCustomClaims()
+    {
         return [];
     }
 
-    public function history(){
+    public function history()
+    {
         return $this->hasMany(FundHistory::class, 'fund_id', 'fund_id');
     }
 }

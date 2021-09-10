@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Constants;
+use App\Edition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
@@ -365,27 +366,40 @@ class DashboardController extends Controller
 
     public function userDashboardReports(Request $request)
     {
-        try {
-            $reports['stats']['total_sales'] = Transaction::select(DB::raw("sum(transactions.transaction_token_price) as total"))
-                                            ->rightJoin('token_history', 'token_history.transaction_id', 'token_history.transaction_id')
-                                            ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
-                                            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
-                                            ->where('seller_id', Auth::user()->user_id)
-                                            ->first();
+        // try {
+        $reports['stats']['total_sales'] = TokenHistory::join('transactions', 'token_history.transaction_id', 'transactions.transaction_id')
+            ->where('token_history.seller_id', Auth::user()->user_id)
+            ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+            ->sum("price");
 
-            $reports['stats']['total_purchase'] = Transaction::where('transaction_type', Constants::TRANSACTION_TRANSFER)->count();
-            $reports['stats']['total_tokens'] = User::where('user_role_id', Constants::USER_ARTIST)->count();
-            $reports['stats']['total_royalty_earnings'] = Token::count();
+        $reports['stats']['total_purchase'] = TokenHistory::join('transactions', 'token_history.transaction_id', 'transactions.transaction_id')
+            ->where('token_history.buyer_id', Auth::user()->user_id)
+            ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+            ->sum("price");
+        $reports['stats']['total_tokens'] = Edition::where('owner_id', Auth::user()->user_id)->count();
 
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $reports,
-                ]
-            ];
-            return response()->json($response, 200);
-        } catch (\Throwable $th) {
+        $reports['stats']['total_royalty_earnings'] = Transaction::join('token_history', 'transactions.transaction_id', 'token_history.transaction_id')
+            ->join('user_profiles as collector', 'transactions.user_id', 'collector.user_id')
+            ->join('user_profiles as owner', 'token_history.seller_id', 'owner.user_id')
+            ->join('tokens', 'tokens.token_id', 'transactions.transaction_token_id')
+            ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+            ->whereNotNull('transaction_royalty_amount')
+            ->where('tokens.user_id', Auth::user()->user_id)
+            ->sum('transaction_royalty_amount');
+
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $reports,
+            ]
+        ];
+
+        return response()->json($response, 200);
+        /* } catch (\Throwable $th) {
             return response()->json(['message' => "Something wen't wrong"], 200);
-        }
+        } */
     }
 }

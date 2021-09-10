@@ -31,7 +31,8 @@ class UserController extends Controller
                 'profile',
                 'wallet' => function ($q) {
                     $q->orderBy('wallet_id', 'DESC')->first();
-                }
+                },
+                'fund'
             ])->first();
 
         if (Auth::user()->user_role_id === Constants::USER_ADMIN) {
@@ -43,11 +44,7 @@ class UserController extends Controller
         }
 
         $user['notifications'] = $notifications;
-
-        /* foreach ($user['tokens'] as $key => $value) {
-            $user['tokens'][$key]->token_properties = json_decode(json_decode($value->token_properties));
-            $user['tokens'][$key]->transactions = $value->transactions()->orderBy('transaction_id', 'DESC')->get();
-        } */
+        $user['total_available_fund'] = $user->fund->history()->sum('amount');
 
         $response = (object)[
             "success" => true,

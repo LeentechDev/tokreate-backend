@@ -44,25 +44,19 @@ class PostbackController extends Controller
         ];
         try {
 
-            $file = 'test.txt';
-            if (!is_file($file)) {         // Some simple example content.
-                file_put_contents($file, $request->txnid);     // Save our content to the file.
-            }
-
 
             $validateDigest = sha1(implode(':', $validateRequest));
 
+
             if (strval($request->digest) == $validateDigest) {
 
-                $url = $this->getBaseUrl();
+                $file = 'test.txt';
+                if (!is_file($file)) {         // Some simple example content.
+                    file_put_contents($file, $request->status);     // Save our content to the file.
+                }
 
-                $getQuery = 'op=GETSTATUS&merchantid=' . Self::MERCHANT_ID . '&merchantpwd=' . Self::MERCHANT_PASS . '&txnid=' . $request->txnid;
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $url . $getQuery);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                $status = curl_exec($ch);
 
-                switch ($status) {
+                switch ($request->status) {
                     case 'S':
                         try {
                             Transaction::where('transaction_payment_tnxid', $request->txnid)->update([

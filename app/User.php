@@ -12,6 +12,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\User_profile;
 use App\Wallet;
 use App\Token;
+use App\Fund;
 use App\Edition;
 use App\Notifications;
 
@@ -78,5 +79,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function minting_requests()
     {
         return $this->hasMany(Token::class, 'user_id', 'user_id');
+    }
+
+    public function fund()
+    {
+        return $this->hasOne(Fund::class, 'user_id', 'user_id');
     }
 }
