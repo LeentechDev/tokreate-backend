@@ -44,8 +44,9 @@ class UserController extends Controller
         }
 
         $user['notifications'] = $notifications;
-        $user['total_available_fund'] = $user->fund->history()->sum('amount');
-
+        if($user->fund){
+            $user['total_available_fund'] = $user->fund->history()->sum('amount');
+        }
         $response = (object)[
             "success" => true,
             "result" => [
