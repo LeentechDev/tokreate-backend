@@ -105,6 +105,8 @@ $router->group(['prefix' => 'api/transactions'], function () use ($router) {
     $router->post('update-status', 'TransactionController@updateTransactionStatus');
     $router->get('withdrawal-list', 'TransactionController@withdrawalList');
     $router->get('purchase-list', 'TransactionController@purchaseList');
+    $router->get('get-total-earning', 'WithdrawalController@getTotalEarnings');
+    $router->get('get-commission-list', 'WithdrawalController@getCommissionList');
     $router->get('{id}', 'TransactionController@transactionDetails');
     $router->get('', 'TransactionController@transactionList');
     $router->post('request-transfer-ownership', 'TransactionController@requestTransferOwnership');
@@ -126,8 +128,6 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
 $router->group(['prefix' => 'api/withdrawals'], function () use ($router) {
     $router->post('request-withdrawal', 'WithdrawalController@requestWithdrawal');
     $router->get('update-wthdrawal-status', 'WithdrawalController@updateWithdrawalStatus');
-    $router->get('get-total-earning', 'WithdrawalController@getTotalEarnings');
-    $router->get('get-commission-list', 'WithdrawalController@getCommissionList');
     $router->get('user', 'WithdrawalController@getUserWithdrawals');
     $router->get('', 'WithdrawalController@getWithdrawals');
 });
