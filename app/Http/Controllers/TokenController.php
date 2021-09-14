@@ -273,9 +273,9 @@ class TokenController extends Controller
                             if ($admin->profile->user_notification_settings == 1) {
                                 Notifications::create([
                                     'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . '</b> request for minting.</p>',
-                                    'notification_to' => 0,
+                                    'notification_to' => $admin->user_id,
                                     'notification_from' => Auth::user()->user_id,
-                                    'notification_item' => $admin->user_id,
+                                    'notification_item' => $token->token_id,
                                     'notification_type' => Constants::NOTIF_MINTING_REQ,
                                 ]);
                             }
