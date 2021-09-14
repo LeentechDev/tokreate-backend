@@ -35,13 +35,8 @@ class UserController extends Controller
                 }
             ])->first();
 
-        if (Auth::user()->user_role_id === Constants::USER_ADMIN) {
-            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
-                ->where('notification_to', 0)->limit(10)->get();
-        } else {
-            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
-                ->where('notification_to', Auth::user()->user_id)->limit(10)->get();
-        }
+        $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
 
         $user['notifications'] = $notifications;
         if ($user->fund) {

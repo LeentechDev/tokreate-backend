@@ -434,7 +434,6 @@ class TokenController extends Controller
 
         $token_list = $tokens
             ->join('transactions', 'transactions.transaction_token_id', 'tokens.token_id')
-            ->orderBy('token_status', 'ASC')
             ->where(function ($q) use ($searchTerm, $request) {
                 if ($searchTerm) {
                     $q->where('token_title', 'like', '%' . $searchTerm . '%')
@@ -444,6 +443,8 @@ class TokenController extends Controller
                     $q->where('transaction_urgency', $request->filter_urgency);
                 }
             })
+            ->orderBy('token_status', 'ASC')
+            ->orderBy('token_id', 'ASC')
             ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
             ->paginate($request->limit);
 

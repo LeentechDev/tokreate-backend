@@ -97,7 +97,7 @@ class AuthController extends Controller
                 },
                 'notifications' => function ($q) {
                     $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
-                    $q->orderBy('id', 'DESC')->paginate(10);
+                    $q->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
                 }
             ])
             ->where('user_role_id', Constants::USER_ARTIST)->with(['profile'])->first();
@@ -140,8 +140,11 @@ class AuthController extends Controller
             if ($user_data) {
                 if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
                     $user_data['profile'] = $user_data->profile;
-                    $notificationC = new Notifications;
-                    $user_data['notifications'] = $notificationC->adminNotifications();
+                    $user_data['notifications'] = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+                        ->where('notification_to', Auth::user()->user_id)
+                        ->orderBy('id', 'DESC')
+                        ->limit(10)
+                        ->get();
 
                     if (!$user_data->profile->user_profile_avatar) {
                         $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
