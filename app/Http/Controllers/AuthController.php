@@ -91,6 +91,7 @@ class AuthController extends Controller
         $user_data = User::where('user_id', Auth::user()->user_id)
             ->with([
                 'profile',
+                'fund',
                 'wallet' => function ($q) {
                     $q->orderBy('wallet_id', 'DESC')->first();
                 },
@@ -104,6 +105,9 @@ class AuthController extends Controller
 
         if ($user_data) {
             if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
+                if ($user_data->fund) {
+                    $user_data['total_available_fund'] = $user_data->fund->history()->sum('amount');
+                }
             } else {
                 return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
             }

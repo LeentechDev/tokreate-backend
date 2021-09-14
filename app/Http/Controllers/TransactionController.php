@@ -239,17 +239,6 @@ class TransactionController extends Controller
                     'amount' => $user_royalty,
                     'fund_id' => $fund->fund_id,
                 ]);
-
-                $new_transaction = Transaction::find($transaction->transaction_id);
-
-                $fund2 = Fund::where('user_id', $_edition->owner_id)->first();
-                $user_earning = $new_transaction->transaction_token_price - ($new_transaction->transaction_computed_commission + $new_transaction->transaction_royalty_amount);
-                FundHistory::create([
-                    'type' => Constants::FUND_SOURCE_SOLD,
-                    'amount' => $user_earning,
-                    'fund_id' => $fund2->fund_id,
-                ]);
-
             }
         } else {
             if ($token->remaining_token > 0) {
@@ -269,6 +258,18 @@ class TransactionController extends Controller
                 ]);
             }
         }
+
+        $new_transaction = Transaction::find($transaction->transaction_id);
+
+        $fund2 = Fund::where('user_id', $_edition->owner_id)->first();
+        $user_earning = $new_transaction->transaction_token_price - ($new_transaction->transaction_computed_commission + $new_transaction->transaction_royalty_amount);
+        FundHistory::create([
+            'type' => Constants::FUND_SOURCE_SOLD,
+            'amount' => $user_earning,
+            'fund_id' => $fund2->fund_id,
+        ]);
+
+        return true;
     }
 
     private function transferTokenOwnership($transaction)
@@ -278,13 +279,13 @@ class TransactionController extends Controller
 
         if ($_edition) {
 
-            $this->createEdition($transaction);
-
-            /* change the owner of token edition */
-            $_edition->update([
-                'owner_id' => $transaction->user_id,
-                'on_market' => 0,
-            ]);
+            if ($this->createEdition($transaction)) {
+                /* change the owner of token edition */
+                $_edition->update([
+                    'owner_id' => $transaction->user_id,
+                    'on_market' => 0,
+                ]);
+            }
         };
     }
 
