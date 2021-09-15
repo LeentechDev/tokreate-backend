@@ -273,9 +273,9 @@ class TokenController extends Controller
                             if ($admin->profile->user_notification_settings == 1) {
                                 Notifications::create([
                                     'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . '</b> request for minting.</p>',
-                                    'notification_to' => 0,
+                                    'notification_to' => $admin->user_id,
                                     'notification_from' => Auth::user()->user_id,
-                                    'notification_item' => $admin->user_id,
+                                    'notification_item' => $token->token_id,
                                     'notification_type' => Constants::NOTIF_MINTING_REQ,
                                 ]);
                             }
@@ -434,7 +434,6 @@ class TokenController extends Controller
 
         $token_list = $tokens
             ->join('transactions', 'transactions.transaction_token_id', 'tokens.token_id')
-            ->orderBy('token_status', 'ASC')
             ->where(function ($q) use ($searchTerm, $request) {
                 if ($searchTerm) {
                     $q->where('token_title', 'like', '%' . $searchTerm . '%')
@@ -444,6 +443,8 @@ class TokenController extends Controller
                     $q->where('transaction_urgency', $request->filter_urgency);
                 }
             })
+            ->orderBy('token_status', 'ASC')
+            ->orderBy('token_id', 'ASC')
             ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
             ->paginate($request->limit);
 

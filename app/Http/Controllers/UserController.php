@@ -29,22 +29,17 @@ class UserController extends Controller
         $user = User::where('user_id', Auth::user()->user_id)
             ->with([
                 'profile',
+                'fund',
                 'wallet' => function ($q) {
                     $q->orderBy('wallet_id', 'DESC')->first();
-                },
-                'fund'
+                }
             ])->first();
 
-        if (Auth::user()->user_role_id === Constants::USER_ADMIN) {
-            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
-                ->where('notification_to', 0)->limit(10)->get();
-        } else {
-            $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
-                ->where('notification_to', Auth::user()->user_id)->limit(10)->get();
-        }
+        $notifications = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+            ->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
 
         $user['notifications'] = $notifications;
-        if($user->fund){
+        if ($user->fund) {
             $user['total_available_fund'] = $user->fund->history()->sum('amount');
         }
         $response = (object)[

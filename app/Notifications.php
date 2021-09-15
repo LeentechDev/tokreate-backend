@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Support\Facades\Auth;
 
 class Notifications extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
@@ -29,20 +30,20 @@ class Notifications extends Model implements AuthenticatableContract, Authorizab
      *
      * @var array
      */
-    protected $hidden = [
-    ];
-    
-    public function getJWTIdentifier(){
+    protected $hidden = [];
+
+    public function getJWTIdentifier()
+    {
         return $this->getKey();
     }
-    public function getJWTCustomClaims(){
+    public function getJWTCustomClaims()
+    {
         return [];
     }
 
-    public function adminNotifications(){
+    public function adminNotifications()
+    {
         return Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
-        ->where('notification_to', 0)->orderBy('id', 'DESC')->limit(10)->get();
+            ->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
     }
-
-   
 }

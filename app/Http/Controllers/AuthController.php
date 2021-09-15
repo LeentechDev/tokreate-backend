@@ -91,12 +91,13 @@ class AuthController extends Controller
         $user_data = User::where('user_id', Auth::user()->user_id)
             ->with([
                 'profile',
+                'fund',
                 'wallet' => function ($q) {
                     $q->orderBy('wallet_id', 'DESC')->first();
                 },
                 'notifications' => function ($q) {
                     $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
-                    $q->orderBy('id', 'DESC')->paginate(10);
+                    $q->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
                 }
             ])
             ->where('user_role_id', Constants::USER_ARTIST)->with(['profile'])->first();
@@ -104,6 +105,9 @@ class AuthController extends Controller
 
         if ($user_data) {
             if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
+                if ($user_data->fund) {
+                    $user_data['total_available_fund'] = $user_data->fund->history()->sum('amount');
+                }
             } else {
                 return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
             }
@@ -136,8 +140,11 @@ class AuthController extends Controller
             if ($user_data) {
                 if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
                     $user_data['profile'] = $user_data->profile;
-                    $notificationC = new Notifications;
-                    $user_data['notifications'] = $notificationC->adminNotifications();
+                    $user_data['notifications'] = Notifications::join('user_profiles', 'user_profiles.user_id', 'notification.notification_from')
+                        ->where('notification_to', Auth::user()->user_id)
+                        ->orderBy('id', 'DESC')
+                        ->limit(10)
+                        ->get();
 
                     if (!$user_data->profile->user_profile_avatar) {
                         $user_data->profile->user_profile_avatar = url('app/images/default_avatar.jpg');
