@@ -125,8 +125,7 @@ class WithdrawalController extends Controller
         } else {
             return response()->json(['message' => 'Transaction status update failed!'], 409);
         }
-    }  
-
+    }
 }
 
 

@@ -123,6 +123,8 @@ $router->group(['prefix' => 'api/reports'], function () use ($router) {
     $router->get('user-outgoing', 'DashboardController@userOutgoing');
     $router->get('user-royalties', 'DashboardController@userRoyalties');
     $router->get('user-dashboard', 'DashboardController@userDashboardReports');
+    $router->get('total-earnings', 'DashboardController@getTotalEarnings');
+    $router->get('earning-list', 'DashboardController@getCommissionList');
 });
 
 $router->group(['prefix' => 'api/withdrawals'], function () use ($router) {
