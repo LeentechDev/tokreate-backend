@@ -39,7 +39,7 @@
                                     <td style="padding:0 50px;">
                                         <h1
                                             style="color:#1e1e2d; font-weight:600; margin:0;font-size:28px;font-family:'Rubik',sans-serif;">
-                                            Minting Status</h1>
+                                            Purchase Status</h1>
                                         <span
                                             style="display:inline-block; vertical-align:middle; margin:29px 0 26px; border-bottom:1px solid #cecece;width:100px;"></span>
                                         <p style="color:#455056; font-size:15px;line-height:24px; margin:0;">
