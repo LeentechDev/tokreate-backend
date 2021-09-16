@@ -272,7 +272,7 @@ class TokenController extends Controller
                         foreach ($all_admin as $key => $admin) {
                             if ($admin->profile->user_notification_settings == 1) {
                                 Notifications::create([
-                                    'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . '</b> request for minting.</p>',
+                                    'notification_message' => '<p><b>' . $user_details->profile->user_profile_full_name . '</b> request for minting the artwork <b>' . $request->input('token_title') . '</b>.</p>',
                                     'notification_to' => $admin->user_id,
                                     'notification_from' => Auth::user()->user_id,
                                     'notification_item' => $token->token_id,
