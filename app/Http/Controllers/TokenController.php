@@ -113,14 +113,15 @@ class TokenController extends Controller
 
     public function addToMarket(Request $request)
     {
-        $edition = Edition::find($request->edition_id);
+        $_edition = Edition::where('owner_id', Auth::user()->user_id)->where('edition_id', $request->edition_id);
+        $edition = $_edition->first();
 
         /* if the token is created by requestor - update all the remaining token edition owned by him*/
         if ($edition) {
             $edition->on_market = Constants::TOKEN_ON_MARKET;
             $edition->current_price = $request->price;
+            $updated = $edition->save();
 
-            $updated = $edition->update();
             if ($updated) {
 
                 TokenHistory::create([
@@ -149,7 +150,7 @@ class TokenController extends Controller
             }
         } else {
             $response = (object)[
-                "message" => "Artwork not found.",
+                "message" => "Artwork not found. May be you already sold this artwork.",
             ];
             return response()->json($response, 409);
         }
@@ -262,7 +263,7 @@ class TokenController extends Controller
                             $history = new TokenHistory;
                             $history->token_id = $token->token_id;
                             $history->price = $token->token_starting_price;
-                            $history->type = $token->token_on_market;
+                            $history->type = Constants::TOKEN_HISTORY_MINT;
                             $history = $history->save();
                         }
 
