@@ -45,6 +45,7 @@ $router->group(['prefix' => 'api/user'], function () use ($router) {
     $router->put('update-web-notif', 'UserController@changeNotifSettings');
     $router->put('update-mail-notif', 'UserController@changeEmailNotifSettings');
     $router->post('update-account', 'UserController@updateAccount');
+    $router->post('update-payout', 'UserController@updatePayout');
 });
 
 
@@ -68,6 +69,7 @@ $router->group(['prefix' => 'api/token'], function () use ($router) {
     $router->get('specific-token/{token_id}', 'TokenController@specificToken');
     $router->post('add-to-market', 'TokenController@addToMarket');
     $router->get('history', 'TokenController@getTokenHistory');
+    $router->get('download/{id}', 'TokenController@downloadToken');
 });
 
 
