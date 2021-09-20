@@ -147,6 +147,8 @@ class HomeController extends Controller
             DB::table('gas_fees')->where('gas_fee_name', 'gas_fee_updated_at')->update(['gas_fee_updated_at' => $r->gas_fee_updated_at]);
 
             SiteSettings::where('name', 'commission_percentage')->update(['value' => $r->commision_rate]);
+            SiteSettings::where('name', 'allowance_fee')->update(['value' => $r->allowance_fee]);
+
             $response = (object)[
                 "success" => true,
                 "result" => [

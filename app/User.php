@@ -13,6 +13,7 @@ use App\User_profile;
 use App\Wallet;
 use App\Token;
 use App\Fund;
+use App\Payout;
 use App\Edition;
 use App\Notifications;
 
@@ -44,7 +45,8 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     ];
 
     protected $with = [
-        'profile'
+        'profile',
+        'payout_details'
     ];
 
     public function getJWTIdentifier()
@@ -64,6 +66,11 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function wallet()
     {
         return $this->hasOne(Wallet::class, 'user_id', 'user_id');
+    }
+
+    public function payout_details()
+    {
+        return $this->hasOne(Payout::class, 'user_id', 'user_id');
     }
 
     public function token_editions()

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
 use App\Token;
-use App\Edition;
+use App\Payout;
 use App\User_profile;
 use App\Constants;
 use App\Notifications;
@@ -243,6 +243,47 @@ class UserController extends Controller
         }
     }
 
+    public function updatePayout(Request $request)
+    {
+        /* try { */
+        $payout_details = Payout::where('user_id', Auth::user()->user_id)->first();
+        $request['user_id'] = Auth::user()->user_id;
+        if ($payout_details) {
+            $payout_details->update($request->all());
+        } else {
+            Payout::create([
+                'user_id' => Auth::user()->user_id,
+                'payout_first_name' => $request->payout_first_name,
+                'payout_middle_name' => $request->payout_middle_name,
+                'payout_last_name' => $request->payout_last_name,
+                'payout_proc_id' => $request->payout_proc_id,
+                'payout_proc_details' => $request->payout_proc_details,
+                'payout_email_address' => $request->payout_email_address,
+                'payout_mobile_no' => $request->payout_mobile_no,
+                'payout_birth_date' => $request->payout_birth_date,
+                'payout_street1' => $request->payout_street1,
+                'payout_street2' => $request->payout_street2,
+                'payout_barangay' => $request->payout_barangay,
+                'payout_city' => $request->payout_city,
+                'payout_province' => $request->payout_province,
+                'payout_country' => $request->payout_country,
+                'payout_currency' => 'PHP',
+                'payout_nationality' => $request->payout_nationality
+            ]);
+        }
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "message" => "Payout details has been successfully saved",
+                "datas" => $request->all()
+            ]
+        ];
+        return response()->json($response, 200);
+        /* } catch (\Throwable $th) {
+            return response()->json(['message' => 'Failed saving payout details.'], 409);
+        } */
+    }
+
     public function changePassword(Request $req)
     {
         $old_password = $req->old_password;
@@ -415,14 +456,6 @@ class UserController extends Controller
                 DB::raw("(case when tokens.user_id = " . $user_id . " then " . $user_id . " else " . $user_id . " end)")
             )
             ->leftJoin("editions", 'editions.token_id', 'tokens.token_id')
-            /* ->with([
-                'transactions' => function ($q) {
-                    $q->orderBy('transaction_id', 'DESC');
-                }, 
-                'history' => function ($q) {
-                    $q->orderBy('id', 'DESC');
-                }, 
-            ]) */
             ->groupBy(
                 DB::raw(
                     '(case when tokens.user_id = ' . $user_id . ' then tokens.token_id else editions.edition_id end )'
@@ -475,31 +508,6 @@ class UserController extends Controller
             return response()->json($response, 200);
         }
     }
-
-    /* public function getSpecificRequestMintingDetailsArtist(Request $request, $id){
-        $viewSpecificRequestMinting = Token::where('tokens.token_id', $id)
-        ->join('transactions', 'tokens.user_id', 'transactions.transaction_token_id')
-        ->first();
-
-        if($viewSpecificRequestMinting){
-            $response=(object)[
-                "success" => true,  
-                "result" => [
-                    "datas" => $viewSpecificRequestMinting,
-                    "message" => "Here are the details of specific request minting details.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }else{
-            $response=(object)[
-                "success" => true,
-                "result" => [
-                    "message" => "Specific request minting snot found.",
-                ]
-            ];
-            return response()->json($response, 200);
-        }
-    } */
 
     public function deactivateUser(Request $request)
     {
