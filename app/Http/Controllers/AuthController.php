@@ -82,43 +82,49 @@ class AuthController extends Controller
             'user_email' => 'required|string',
             'password' => 'required|string',
         ]);
-        // try {
-        $credentials = $request->only(['user_email', 'password']);
-        if (!$token = Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
-        }
+        try {
+            $credentials = $request->only(['user_email', 'password']);
 
-        $user_data = User::where('user_id', Auth::user()->user_id)
-            ->with([
-                'profile',
-                'fund',
-                'wallet' => function ($q) {
-                    $q->orderBy('wallet_id', 'DESC')->first();
-                },
-                'notifications' => function ($q) {
-                    $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
-                    $q->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
-                }
-            ])
-            ->where('user_role_id', Constants::USER_ARTIST)->with(['profile'])->first();
+            $myTTL = 60; /* minutes */
+            if ($request->remember === 'true') {
+                $myTTL = 43900; /* 1 month */
+            }
+            Auth::factory()->setTTL($myTTL);
+            if (!$token = Auth::attempt($credentials)) {
+                return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
+            }
+
+            $user_data = User::where('user_id', Auth::user()->user_id)
+                ->with([
+                    'profile',
+                    'fund',
+                    'wallet' => function ($q) {
+                        $q->orderBy('wallet_id', 'DESC')->first();
+                    },
+                    'notifications' => function ($q) {
+                        $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
+                        $q->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
+                    }
+                ])
+                ->where('user_role_id', Constants::USER_ARTIST)->with(['profile'])->first();
 
 
-        if ($user_data) {
-            if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
-                if ($user_data->fund) {
-                    $user_data['total_available_fund'] = $user_data->fund->history()->sum('amount');
+            if ($user_data) {
+                if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
+                    if ($user_data->fund) {
+                        $user_data['total_available_fund'] = $user_data->fund->history()->sum('amount');
+                    }
+                } else {
+                    return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
                 }
             } else {
-                return response()->json(['message' => 'Oops! Your account is deactivated.'], 401);
+                return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
             }
-        } else {
-            return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
-        }
 
-        return $this->respondWithToken($user_data, $token);
-        /* } catch (\Exception $e) {
+            return $this->respondWithToken($user_data, $token);
+        } catch (\Exception $e) {
             return response()->json(['message' => 'Login failed! Please try again.'], 409);
-        } */
+        }
     }
 
 
@@ -130,6 +136,12 @@ class AuthController extends Controller
         ]);
         try {
             $credentials = $request->only(['user_email', 'password']);
+
+            $myTTL = 60; /* minutes */
+            if ($request->remember === 'true') {
+                $myTTL = 43900; /* 1 month */
+            }
+            Auth::factory()->setTTL($myTTL);
             if (!$token = Auth::attempt($credentials)) {
                 return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
             }
