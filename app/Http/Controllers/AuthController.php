@@ -94,7 +94,7 @@ class AuthController extends Controller
                 'fund',
                 'wallet' => function ($q) {
                     $q->orderBy('wallet_id', 'DESC')->first();
-                },
+                },  
                 'notifications' => function ($q) {
                     $q->join('user_profiles', 'user_profiles.user_id', 'notification.notification_from');
                     $q->where('notification_to', Auth::user()->user_id)->orderBy('id', 'DESC')->limit(10)->get();
