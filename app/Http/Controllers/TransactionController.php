@@ -13,10 +13,7 @@ use App\Constants;
 use App\Edition;
 use App\Fund;
 use App\FundHistory;
-use App\SiteSettings;
 use App\Notifications;
-use App\TokenHistory;
-use DB;
 
 class TransactionController extends Controller
 {
@@ -113,35 +110,51 @@ class TransactionController extends Controller
     public function requestTransferOwnership(Request $request)
     {
 
-        $transaction = Transaction::create(
-            [
-                "user_id" =>  Auth::user()->user_id,
-                "transaction_token_id" => $request->input('token_id'),
-                "transaction_type" => Constants::TRANSACTION_TRANSFER,
-                "transaction_payment_method" =>  "",
-                "transaction_details" =>  "",
-                "transaction_service_fee" =>  0,
-                "transaction_urgency"   => "",
-                "transaction_gas_fee" =>  0,
-                "transaction_allowance_fee" =>  0,
-                "transaction_grand_total" => 0,
-                "transaction_payment_status" => Constants::TRANSACTION_PAYMENT_PENDING,
-                "transaction_status" =>  Constants::TRANSACTION_DRAFT,
-                "edition_id" => $request->input('edition_id'),
-                /* "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100, */ /* no commission for every sales yet */
-                "transaction_computed_commission" => 0,
-            ]
-        );
-        if ($transaction) {
-            $response = (object)[
-                "result" => [
-                    "token" => $request->input('token_id'),
-                    "transaction" => $transaction,
-                    // "message" => "Your artwork has been successfully request for minting."
-                ]
-            ];
+        $is_ts_owner = Edition::where('owner_id', $request->owner_id)->where('edition_id', $request->input('edition_id'))->first();
+        if ($is_ts_owner) {
+            $has_transaction_success = Transaction::where('transaction_token_id', $request->input('token_id'))
+                ->where('edition_id', $request->input('edition_id'))
+                ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->whereNotIn('transaction_status', [Constants::TRANSACTION_FAILED, Constants::TRANSACTION_SUCCESS])
+                ->whereNotNull('transaction_payment_tnxid')
+                ->first();
+            if (!$has_transaction_success) {
+                $transaction = Transaction::create(
+                    [
+                        "user_id" =>  Auth::user()->user_id,
+                        "transaction_token_id" => $request->input('token_id'),
+                        "transaction_type" => Constants::TRANSACTION_TRANSFER,
+                        "transaction_payment_method" =>  "",
+                        "transaction_details" =>  "",
+                        "transaction_service_fee" =>  0,
+                        "transaction_urgency"   => "",
+                        "transaction_gas_fee" =>  0,
+                        "transaction_allowance_fee" =>  0,
+                        "transaction_grand_total" => 0,
+                        "transaction_payment_status" => Constants::TRANSACTION_PAYMENT_PENDING,
+                        "transaction_status" =>  Constants::TRANSACTION_DRAFT,
+                        "edition_id" => $request->input('edition_id'),
+                        /* "transaction_computed_commission" => ($request->input('token_starting_price') * $commission->value) / 100, */ /* no commission for every sales yet */
+                        "transaction_computed_commission" => 0,
+                    ]
+                );
+                if ($transaction) {
+                    $response = (object)[
+                        "result" => [
+                            "token" => $request->input('token_id'),
+                            "transaction" => $transaction,
+                            // "message" => "Your artwork has been successfully request for minting."
+                        ]
+                    ];
+                }
+                return response()->json($response, 200);
+            } else {
+                $response = (object)["message" => "This artwork is already sold. Try other artworks."];
+            }
+        } else {
+            $response = (object)["message" => "This artwork is already sold. Try other artworks."];
         }
-        return response()->json($response, 200);
+        return response()->json($response, 500);
     }
 
     public function updateTransactionStatus(Request $request)

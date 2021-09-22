@@ -102,7 +102,8 @@ class UserController extends Controller
         die; */
 
         foreach ($tokens as $key => $value) {
-            $tokens[$key]->history = $value->history()->orderBy('id', 'DESC')->paginate(10);
+            // $tokens[$key]->history = $value->history()->orderBy('id', 'DESC')->paginate(10);
+            $tokens[$key]->history = $value->history()->join('transactions', 'transactions.transaction_id', 'token_history.transaction_id')->where('transaction_status', Constants::TRANSACTION_SUCCESS)->orderBy('id', 'DESC')->paginate(10);
             $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
             $tokens[$key]->mint_transactions = $value->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
             $tokens[$key]->owner = User::find($value->owner_id);
@@ -164,7 +165,7 @@ class UserController extends Controller
             /* } */
 
             if ($token_details) {
-                $token_details->history = $token_details->history()->orderBy('id', 'DESC')->paginate(10);
+                $token_details->history = $token_details->history()->join('transactions', 'transactions.transaction_id', 'token_history.transaction_id')->where('transaction_status', Constants::TRANSACTION_SUCCESS)->orderBy('id', 'DESC')->paginate(10);
                 $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->paginate(10);
                 $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
                 $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
