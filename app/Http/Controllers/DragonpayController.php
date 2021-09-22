@@ -48,7 +48,7 @@ class DragonpayController extends Controller
                 ->whereNotNull('transaction_payment_tnxid')
                 ->where('transaction_id', '<>', $request->input('transaction_id'))
                 ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
-                ->where('transaction_status', '<>', Constants::TRANSACTION_FAILED)
+                ->whereNotIn('transaction_status', [Constants::TRANSACTION_FAILED, Constants::TRANSACTION_SUCCESS])
                 ->first();
 
             if (!$is_ts_owner || $has_transaction_success) {
