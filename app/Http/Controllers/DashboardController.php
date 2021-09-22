@@ -424,8 +424,8 @@ class DashboardController extends Controller
     public function getTotalEarnings(Request $request){
         // try{
             $total_earnings['totalEarnings'] = DB::table('transactions') 
-                                                ->where('transaction_payment_status', Constants::TRANSACTION_PAYMENT_SUCCESS)
-                                                ->sum('transaction_computed_commission');
+                ->where('transaction_payment_status', Constants::TRANSACTION_PAYMENT_SUCCESS)
+                ->sum('transaction_computed_commission');
             $year = $request->year ? $request->year : date('Y');
             $datas = array();
 
