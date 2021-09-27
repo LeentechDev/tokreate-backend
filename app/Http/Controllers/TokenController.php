@@ -87,7 +87,7 @@ class TokenController extends Controller
                 $token_details->owner = User::find($token_details->owner_id);
             }
 
-            $token_details->history = $token_details->history()->orderBy('id', 'DESC')->get();
+            $token_details->history = $token_details->history()->join('transactions', 'transactions.transaction_id', 'token_history.transaction_id')->where('transaction_status', Constants::TRANSACTION_SUCCESS)->orderBy('id', 'DESC')->paginate(10);
             $token_details->transactions = $token_details->transactions()->orderBy('transaction_id', 'DESC')->get();
             $token_details->mint_transactions = $token_details->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
             $token_details['token_properties'] = json_decode(json_decode($token_details->token_properties));
@@ -360,6 +360,14 @@ class TokenController extends Controller
                         'notification_from' => Auth::user()->user_id,
                         'notification_type' => Constants::NOTIF_MINTING_RES,
                     ]);
+                }
+
+                $mint_transaction = Transaction::where('transaction_type', Constants::TRANSACTION_MINTING)->where('transaction_token_id', $request->input('token_id'))->first();
+                if ($mint_transaction) {
+                    $mint_transaction->transaction_status = $request->token_status;
+                    $mint_transaction->save();
+
+                    TokenHistory::where('type', Constants::TOKEN_HISTORY_MINT)->where('token_id', $request->input('token_id'))->update(['transaction_id' => $mint_transaction->transaction_id]);
                 }
 
                 return response()->json($response, 200);

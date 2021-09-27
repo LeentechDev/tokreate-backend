@@ -38,7 +38,25 @@ class DragonpayController extends Controller
 
     public function payment(Request $request)
     {
+
         $transaction = Transaction::find($request->input('transaction_id'));
+
+        if ($transaction->transaction_type == Constants::TRANSACTION_TRANSFER) {
+            $is_ts_owner = Edition::where('owner_id', $request->owner_id)->where('edition_id', $transaction->edition_id)->first();
+            $has_transaction_success = Transaction::where('transaction_token_id', $request->input('transaction_token_id'))
+                ->where('edition_id', $transaction->edition_id)
+                ->whereNotNull('transaction_payment_tnxid')
+                ->where('transaction_id', '<>', $request->input('transaction_id'))
+                ->where('transaction_type', Constants::TRANSACTION_TRANSFER)
+                ->whereNotIn('transaction_status', [Constants::TRANSACTION_FAILED, Constants::TRANSACTION_SUCCESS])
+                ->first();
+
+            if (!$is_ts_owner || $has_transaction_success) {
+                $response = (object)["message" => "This artwork is already sold. Try other artworks."];
+                return response()->json($response, 500);
+            }
+        }
+
         $allowance_fee = SiteSettings::where('name', 'allowance_fee')->first();
         if ($transaction) {
             $allowance_percentage = $allowance_fee->value;

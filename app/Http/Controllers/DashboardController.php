@@ -403,94 +403,98 @@ class DashboardController extends Controller
         }
     }
 
-    public function yearlyEarnings(Request $request){
+    public function yearlyEarnings(Request $request)
+    {
         $year = $request->year;
-        
-            
 
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $reports,
-                ]
-            ];
 
-            return response()->json($response, 200);
+
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $reports,
+            ]
+        ];
+
+        return response()->json($response, 200);
         /* } catch (\Throwable $th) {
             return response()->json(['message' => "Something wen't wrong"], 200);
         } */
     }
 
-    public function getTotalEarnings(Request $request){
+    public function getTotalEarnings(Request $request)
+    {
         // try{
-            $total_earnings['totalEarnings'] = DB::table('transactions') 
-                ->where('transaction_payment_status', Constants::TRANSACTION_PAYMENT_SUCCESS)
-                ->sum('transaction_computed_commission');
-            $year = $request->year ? $request->year : date('Y');
-            $datas = array();
+        $total_earnings['totalEarnings'] = DB::table('transactions')
+            ->where('transaction_payment_status', Constants::TRANSACTION_PAYMENT_SUCCESS)
+            ->sum('transaction_computed_commission');
+        $year = $request->year ? $request->year : date('Y');
+        $datas = array();
 
-            $res = DB::table('transactions')->select(
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 1 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as jan "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 2 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as feb "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 3 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as mar "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 4 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as apr "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 5 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as may "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 6 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as jun "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 7 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as jul "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 8 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as aug "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 9 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as sept "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 10 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as oct "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 11 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as nov "),
-                DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 12 and EXTRACT(YEAR FROM transaction_created_at) = ".$year." and transaction_status = ".Constants::TRANSACTION_SUCCESS.") as dece ")
-            )->first();
+        $res = DB::table('transactions')->select(
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 1 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as jan "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 2 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as feb "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 3 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as mar "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 4 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as apr "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 5 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as may "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 6 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as jun "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 7 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as jul "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 8 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as aug "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 9 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as sept "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 10 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as oct "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 11 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as nov "),
+            DB::raw("(Select SUM(transaction_computed_commission) from transactions where EXTRACT(MONTH FROM transaction_created_at) = 12 and EXTRACT(YEAR FROM transaction_created_at) = " . $year . " and transaction_status = " . Constants::TRANSACTION_SUCCESS . ") as dece ")
+        )->first();
 
-            $total_earnings['monthly_earnings'] = $res;
-            $total_earnings['year'] = $year;
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $total_earnings,
-                ]
-            ];
-            return response()->json($response, 200);
+        $total_earnings['monthly_earnings'] = $res;
+        $total_earnings['year'] = $year;
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $total_earnings,
+            ]
+        ];
+        return response()->json($response, 200);
         /* } catch (\Throwable $th) {
             return response()->json(['message' => "Something wen't wrong"], 200);
         } */
     }
 
-    public function getCommissionList(Request $request){
+    public function getCommissionList(Request $request)
+    {
         $searchTerm = $request->search_keyword;
         $getCommissionList =  Transaction::select(
             'transactions.*',
-            'collector.user_profile_full_name as collector_fullname',
-            'collector.user_profile_avatar as collector_avatar',
-            'owner.user_profile_full_name as owner_fullname',
-            'owner.user_profile_avatar as owner_avatar')
+            // 'collector.user_profile_full_name as collector_fullname',
+            // 'collector.user_profile_avatar as collector_avatar',
+            // 'owner.user_profile_full_name as owner_fullname',
+            // 'owner.user_profile_avatar as owner_avatar'
+        )
             ->join('token_history', 'token_history.transaction_id', 'transactions.transaction_id')
-            ->join('user_profiles as collector', 'collector.user_id', 'token_history.buyer_id')
-            ->join('user_profiles  as owner', 'owner.user_id', 'token_history.seller_id')
+            // ->join('user_profiles as collector', 'collector.user_id', 'token_history.buyer_id')
+            // ->join('user_profiles  as owner', 'owner.user_id', 'token_history.seller_id')
             ->where('transaction_payment_status', Constants::TRANSACTION_PAYMENT_SUCCESS)
             ->where('transactions.transaction_computed_commission', '<>', 0)
             ->where(function ($q) use ($searchTerm, $request) {
-                if ($searchTerm) {
-                    $q->where('transactions.transaction_id', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
-                }
+                // if ($searchTerm !== '') {
+                //     $q->where('transactions.transaction_id', 'like', '%' . $searchTerm . '%')
+                //         ->orWhere('collector.user_profile_full_name', 'like', '%' . $searchTerm . '%')
+                //         ->orWhere('owner.user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                // }
             })
             ->paginate($request->limit);
 
-        if($getCommissionList){
-            $response=(object)[
-                "success" => true,  
+        if ($getCommissionList) {
+            $response = (object)[
+                "success" => true,
                 "result" => [
-                    "datas" => $getCommissionList,  
+                    "datas" => $getCommissionList,
                     "message" => "Here are the list of collected commissions",
                 ]
             ];
             return response()->json($response, 200);
-        }else{
-            $response=(object)[
+        } else {
+            $response = (object)[
                 "success" => false,
                 "result" => [
                     // "datas" => $getCommissionList, 
