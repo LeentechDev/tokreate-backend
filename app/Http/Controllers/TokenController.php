@@ -399,7 +399,7 @@ class TokenController extends Controller
                 }
             })
             ->orderBy('token_status', 'ASC')
-            ->orderBy('token_id', 'ASC')
+            ->orderBy('token_created_at', 'DESC')
             ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)
             ->paginate($request->limit);
 
