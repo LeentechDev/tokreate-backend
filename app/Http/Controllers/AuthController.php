@@ -225,7 +225,7 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Your password reset link is expired'], 500);
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Something went wrong.'], 409);
+            return response()->json(['message' => 'The user email has already been taken.'], 409);
         }
     }
 
