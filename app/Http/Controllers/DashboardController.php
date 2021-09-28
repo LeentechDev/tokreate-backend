@@ -464,7 +464,7 @@ class DashboardController extends Controller
     {
         $searchTerm = $request->search_keyword;
         $getCommissionList =  Transaction::select(
-            'transactions.*',
+            'transactions.*'
             // 'collector.user_profile_full_name as collector_fullname',
             // 'collector.user_profile_avatar as collector_avatar',
             // 'owner.user_profile_full_name as owner_fullname',
