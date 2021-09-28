@@ -55,7 +55,6 @@ class PostbackController extends Controller
                     file_put_contents($file, $request->status);     // Save our content to the file.
                 }
 
-
                 switch ($request->status) {
                     case 'S':
                         try {

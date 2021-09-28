@@ -15,6 +15,7 @@ use App\Fund;
 use App\FundHistory;
 use App\Notifications;
 use App\Payout;
+use App\Http\Controllers\DragonpayController;
 
 class TransactionController extends Controller
 {
@@ -225,23 +226,8 @@ class TransactionController extends Controller
                     /* request for payout */
                     $payout_details = Payout::where('user_id', $edition_owner->user_id)->first();
 
-                    $endpoint = 'https://test.dragonpay.ph/api/payout/merchant/v1/{merchantid}/post';
-                    if ($this->dragon_env == 'PRODUCTION') {
-                        $endpoint = 'https://gw.dragonpay.ph/api/payout/merchant/v1/{merchantid}/post';
-                    }
-
-                    $params = array('foo' => 'bar');
-                    $url = $endpoint . '?' . http_build_query($params);
-
-                    $ch = curl_init();
-                    curl_setopt($ch, CURLOPT_URL, $url);
-                    curl_setopt($ch, CURLOPT_HEADER, 0);
-                    curl_setopt($ch, CURLOPT_POST, 1);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-                    $output = curl_exec($ch);      
-                    curl_close($ch);
-                    echo $output;
-
+                    $dragonpay = new DragonpayController();
+                    $dragonpay->payout($payout_details);
                 }
 
 
