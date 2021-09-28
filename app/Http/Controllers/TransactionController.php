@@ -218,6 +218,8 @@ class TransactionController extends Controller
                 ]);
             }
 
+            /* request for payout */
+
             return response()->json($response, 200);
         } else {
             return response()->json(['message' => 'Transaction status update failed!'], 409);
@@ -374,11 +376,12 @@ class TransactionController extends Controller
     }
 
 
-    public function getTotalEarnings(){
-        
-        $getTotalEarnings['totalEarnings'] = DB::table('transactions') 
-        ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
-        ->sum('transaction_computed_commission');
+    public function getTotalEarnings()
+    {
+
+        $getTotalEarnings['totalEarnings'] = DB::table('transactions')
+            ->where('transaction_status', Constants::TRANSACTION_SUCCESS)
+            ->sum('transaction_computed_commission');
 
         $response = (object)[
             "success" => true,
@@ -389,14 +392,16 @@ class TransactionController extends Controller
         return response()->json($response, 200);
     }
 
-    public function getCommissionList(Request $request){
+    public function getCommissionList(Request $request)
+    {
         $searchTerm = $request->search_keyword;
         $getCommissionList =  Transaction::select(
             'transactions.*',
             'collector.user_profile_full_name as collector_fullname',
             'collector.user_profile_avatar as collector_avatar',
             'owner.user_profile_full_name as owner_fullname',
-            'owner.user_profile_avatar as owner_avatar')
+            'owner.user_profile_avatar as owner_avatar'
+        )
 
             ->whereNotNull('transactions.transaction_computed_commission')
             ->join('token_history', 'token_history.transaction_id', 'transactions.transaction_id')
@@ -413,17 +418,17 @@ class TransactionController extends Controller
             })
             ->paginate($request->limit);
 
-        if($getCommissionList){
-            $response=(object)[
-                "success" => true,  
+        if ($getCommissionList) {
+            $response = (object)[
+                "success" => true,
                 "result" => [
-                    "datas" => $getCommissionList,  
+                    "datas" => $getCommissionList,
                     "message" => "Here are the list of collected commissions",
                 ]
             ];
             return response()->json($response, 200);
-        }else{
-            $response=(object)[
+        } else {
+            $response = (object)[
                 "success" => false,
                 "result" => [
                     // "datas" => $getCommissionList, 
@@ -433,5 +438,4 @@ class TransactionController extends Controller
         }
         return response()->json($response, 200);
     }
-    
 }
