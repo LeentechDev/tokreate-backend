@@ -54,4 +54,7 @@ class Constants
     const FUND_SOURCE_SOLD = 1;
     const FUND_SOURCE_ROYALTY = 2;
     const FUND_SOURCE_REFUND = 3;
+
+    const PAYOUT_STATUS_PENDING = 0;
+    const PAYOUT_STATUS_DONE = 1;
 }

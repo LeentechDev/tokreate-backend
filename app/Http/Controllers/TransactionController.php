@@ -225,9 +225,9 @@ class TransactionController extends Controller
 
                     /* request for payout */
                     $payout_details = Payout::where('user_id', $edition_owner->user_id)->first();
-
+                    
                     $dragonpay = new DragonpayController();
-                    $dragonpay->payout($payout_details);
+                    $dragonpay->payout($payout_details, $transaction_details);
                 }
 
 

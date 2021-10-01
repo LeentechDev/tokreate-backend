@@ -50,11 +50,6 @@ class PostbackController extends Controller
 
             if (strval($request->digest) == $validateDigest) {
 
-                $file = 'test.txt';
-                if (!is_file($file)) {         // Some simple example content.
-                    file_put_contents($file, $request->status);     // Save our content to the file.
-                }
-
                 switch ($request->status) {
                     case 'S':
                         try {
@@ -119,12 +114,38 @@ class PostbackController extends Controller
         }
     }
 
-    private function getBaseUrl()
+    public function webhookPayout(Request $request)
     {
-        if (SELF::MODE == 'development') {
-            return 'https://test.dragonpay.ph/';
-        } else {
-            return 'https://gw.dragonpay.ph/';
+        $request = $request->input();
+        /* $isSafe = $this->_validateDigestSha1(
+            $request['merchantTxnId'],
+            $request['refNo'],
+            $request['status'],
+            $request['message'],
+            $request['digest']
+        ); */
+
+        $file = 'test.txt';
+        if (!is_file($file)) {         // Some simple example content.
+            file_put_contents($file, 'asda');     // Save our content to the file.
         }
+
+        /* if ($request['status'] == 'S' && $isSafe) {
+        } */
+    }
+
+    private function _validateDigestSha1($merchanttxnid, $refNo, $status, $message, $digest)
+    {
+        $parameters = [
+            $merchanttxnid,
+            $refNo,
+            $status,
+            $message,
+            $this->MERCHANT_PASS
+        ];
+
+        $digest_string = implode(':', $parameters);
+        $sha1 = sha1($digest_string);
+        return $sha1 == $digest;
     }
 }
