@@ -180,7 +180,7 @@ class PostbackController extends Controller
         $response = curl_exec($ch);
         curl_close($ch);
 
-        var_dump($response);
+        var_dump($this->getBaseUrl() . 'DragonPayWebService/PayoutService.asmx', $response);
         die;
 
         $response1 = str_replace("<soap:Body>", "", $response);
