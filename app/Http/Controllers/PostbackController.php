@@ -153,7 +153,7 @@ class PostbackController extends Controller
     private function getBaseUrl()
     {
         if (SELF::MODE == 'development') {
-            return 'http://test.dragonpay.ph/';
+            return 'https://test.dragonpay.ph/';
         } else {
             return 'https://gw.dragonpay.ph/';
         }
@@ -180,7 +180,7 @@ class PostbackController extends Controller
         $response = curl_exec($ch);
         curl_close($ch);
 
-        var_dump($this->getBaseUrl() . 'DragonPayWebService/PayoutService.asmx', $response);
+        print_r($response);
         die;
 
         $response1 = str_replace("<soap:Body>", "", $response);
@@ -202,20 +202,9 @@ class PostbackController extends Controller
             $xml .= '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">';
             $xml .= '<soap12:Body>';
             $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
-
             $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
             $xml .= '<merchantTxnId>12345RTER</merchantTxnId>';
             $xml .= '<userName>Ribak</userName>';
-            // $xml .= '<firstName>Ribak</firstName>';
-            // $xml .= '<middleName>Ribak1</middleName>';
-            // $xml .= '<lastName>Ribak2</lastName>';
-            // $xml .= '<street1>Ribak3</street1>';
-            // $xml .= '<street2>Ribak4</street2>';
-            // $xml .= '<barangay>Riba5</barangay>';
-            // $xml .= '<city>Tanza</city>';
-            // $xml .= '<province>Cavite</province>';
-            // $xml .= '<birthDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</birthDate>';
-            // $xml .= '<nationality>Filipino</nationality>';
             $xml .= '<amount>10000</amount>';
             $xml .= '<currency>PHP</currency>';
             $xml .= '<description>Payout</description>';
@@ -224,13 +213,11 @@ class PostbackController extends Controller
             $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
             $xml .= '<email>RonaldComendador20@gmail.com</email>';
             $xml .= '<mobileNo>09069244734</mobileNo>';
-
             $xml .= '</RequestPayoutEx>';
             $xml .= '</soap12:Body>';
             $xml .= '</soap12:Envelope>';
 
             $headers = $this->header($xml);
-
             $parser = $this->run($xml, $headers);
 
             return $parser;
