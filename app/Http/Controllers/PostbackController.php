@@ -159,20 +159,20 @@ class PostbackController extends Controller
         }
     }
 
-    private function header($xml, $asmx)
+    private function header($xml)
     {
         return array(
-            "POST /DragonpayWebService/" . $asmx . " HTTP/1.1",
+            "POST /DragonpayWebService/PayoutService.asmx HTTP/1.1",
             "Host: " . $this->getBaseUrl(),
             "Content-Type: application/soap+xml; charset=utf-8",
             "Content-Length: " . strlen($xml)
         );
     }
 
-    private function run($xml, $headers, $asmx)
+    private function run($xml, $headers)
     {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->getBaseUrl() . 'DragonPayWebService/' . $asmx);
+        curl_setopt($ch, CURLOPT_URL, $this->getBaseUrl() . 'DragonPayWebService/PayoutService.asmx');
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
@@ -197,7 +197,6 @@ class PostbackController extends Controller
     public function payoutTest()
     {
         try {
-            $asmx = 'PayoutService.asmx';
 
             $xml = '<?xml version="1.0" encoding="utf-8"?>';
             $xml .= '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">';
@@ -217,21 +216,22 @@ class PostbackController extends Controller
             // $xml .= '<province>Cavite</province>';
             // $xml .= '<birthDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</birthDate>';
             // $xml .= '<nationality>Filipino</nationality>';
-            $xml .= '<email>RonaldComendador20@gmail.com</email>';
-            $xml .= '<mobileNo>09069244734</mobileNo>';
-            $xml .= '<description>Payout</description>';
             $xml .= '<amount>10000</amount>';
             $xml .= '<currency>PHP</currency>';
+            $xml .= '<description>Payout</description>';
             $xml .= '<procId>GCSH</procId>';
+            $xml .= '<procDetail>09069244734</procDetail>';
             $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
+            $xml .= '<email>RonaldComendador20@gmail.com</email>';
+            $xml .= '<mobileNo>09069244734</mobileNo>';
 
             $xml .= '</RequestPayoutEx>';
             $xml .= '</soap12:Body>';
             $xml .= '</soap12:Envelope>';
 
-            $headers = $this->header($xml, $asmx);
+            $headers = $this->header($xml);
 
-            $parser = $this->run($xml, $headers, $asmx);
+            $parser = $this->run($xml, $headers);
 
             return $parser;
         } catch (\Throwable $th) {
