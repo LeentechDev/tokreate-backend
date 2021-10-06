@@ -148,4 +148,87 @@ class PostbackController extends Controller
         $sha1 = sha1($digest_string);
         return $sha1 == $digest;
     }
+
+
+    private function getBaseUrl()
+    {
+        if (SELF::MODE == 'development') {
+            return 'https://test.dragonpay.ph/';
+        } else {
+            return 'https://gw.dragonpay.ph/';
+        }
+    }
+
+    private function header($xml, $asmx)
+    {
+        return array(
+            "POST /DragonPayWebService/" . $asmx . " HTTP/1.1",
+            "Host: " . $this->getBaseUrl(),
+            "Content-Type: application/soap+xml; charset=utf-8",
+            "Content-Length: " . strlen($xml)
+        );
+    }
+
+    private function run($xml, $headers, $asmx)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->getBaseUrl() . 'DragonPayWebService/' . $asmx);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        $response1 = str_replace("<soap:Body>", "", $response);
+        $response2 = str_replace("</soap:Body>", "", $response1);
+
+        $parser = simplexml_load_string($response2);
+        $parser = json_encode($parser);
+        $parser = json_decode($parser, true);
+
+        return $parser;
+    }
+
+
+    public function payoutTest()
+    {
+        try {
+            $asmx = 'PayoutService.asmx';
+
+            $xml = '<?xml version="1.0" encoding="utf-8"?>';
+            $xml .= '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">';
+            $xml .= '<soap12:Body>';
+            $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
+            $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
+            $xml .= '<merchantTxnId>12345RTER</merchantTxnId>';
+            $xml .= '<firstName>Ribak</firstName>';
+            $xml .= '<middleName>Ribak1</middleName>';
+            $xml .= '<lastName>Ribak2</lastName>';
+            $xml .= '<street1>Ribak3</street1>';
+            $xml .= '<street2>Ribak4</street2>';
+            $xml .= '<barangay>Riba5</barangay>';
+            $xml .= '<city>Tanza</city>';
+            $xml .= '<province>Cavite</province>';
+            $xml .= '<email>RonaldComendador20@gmail.com</email>';
+            $xml .= '<mobileNo>09069244734</mobileNo>';
+            $xml .= '<amount>10000</amount>';
+            $xml .= '<currency>PHP</currency>';
+            $xml .= '<procId>GCSH</procId>';
+            $xml .= '<procDetail>0069244734</procDetail>';
+            $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
+
+            $xml .= '</RequestPayoutEx>';
+            $xml .= '</soap12:Body>';
+            $xml .= '</soap12:Envelope>';
+
+            $headers = $this->header($xml, $asmx);
+
+            $parser = $this->run($xml, $headers, $asmx);
+
+            return $parser;
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Unable to process payout, user don't payout details"], 409);
+        }
+    }
 }
