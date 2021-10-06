@@ -205,7 +205,6 @@ class DragonpayController extends Controller
                     "Country" => $payout_details->payout_country
                 ]
             ];
-            // $payload = json_encode($data);
 
             $url = $this->getBaseUrl() . 'PayoutService.asmx?' . http_build_query($data, '', '&');
 
