@@ -180,6 +180,9 @@ class PostbackController extends Controller
         $response = curl_exec($ch);
         curl_close($ch);
 
+        var_dump($response);
+        die;
+
         $response1 = str_replace("<soap:Body>", "", $response);
         $response2 = str_replace("</soap:Body>", "", $response1);
 
@@ -199,7 +202,8 @@ class PostbackController extends Controller
             $xml = '<?xml version="1.0" encoding="utf-8"?>';
             $xml .= '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">';
             $xml .= '<soap12:Body>';
-            $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
+            $xml .= '<RequestCashPayout xmlns="http://api.dragonpay.ph/">';
+
             $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
             $xml .= '<merchantTxnId>12345RTER</merchantTxnId>';
             $xml .= '<firstName>Ribak</firstName>';
@@ -218,7 +222,7 @@ class PostbackController extends Controller
             $xml .= '<procDetail>0069244734</procDetail>';
             $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
 
-            $xml .= '</RequestPayoutEx>';
+            $xml .= '</RequestCashPayout>';
             $xml .= '</soap12:Body>';
             $xml .= '</soap12:Envelope>';
 
