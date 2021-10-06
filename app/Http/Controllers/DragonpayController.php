@@ -163,68 +163,71 @@ class DragonpayController extends Controller
 
     public function payout($payout_details, $transaction_details)
     {
+        try {
+            $url = $this->getBaseUrl() . 'DragonpayWebService/PayoutService.asmx';
 
-        $url = $this->getBaseUrl() . 'DragonpayWebService/PayoutService.asmx';
+            $headers = array();
+            $headers[] = "Authorization: Bearer " . base64_encode(Self::MERCHANT_API_KEY);
+            $headers[] = "Content-Type: application/json";
 
-        $headers = array();
-        $headers[] = "Authorization: Bearer " . base64_encode(Self::MERCHANT_API_KEY);
-        $headers[] = "Content-Type: application/json";
+            $payout_amount = 0;
 
-        $payout_amount = 0;
+            if ($transaction_details) {
+                $payout_amount = $transaction_details->transaction_grand_total - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
 
-        if ($transaction_details) {
-            $payout_amount = $transaction_details->transaction_grand_total - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
+                $pout_tnx = PayoutTransaction::create([
+                    'user_id' => $payout_details->user_id,
+                    'amount' => $payout_amount,
+                    'status' => Constants::PAYOUT_STATUS_PENDING,
+                ]);
 
-            $pout_tnx = PayoutTransaction::create([
-                'user_id' => $payout_details->user_id,
-                'amount' => $payout_amount,
-                'status' => Constants::PAYOUT_STATUS_PENDING,
-            ]);
+                $data = [
+                    "TxnId" => $pout_tnx->id,
+                    "FirstName" => $payout_details->payout_first_name,
+                    "MiddleName" => $payout_details->payout_middle_name,
+                    "LastName" => $payout_details->payout_last_name,
+                    "Amount" => $payout_amount,
+                    "Currency" => "PHP",
+                    "Description" => "Payout",
+                    "ProcId" => $payout_details->payout_proc_id,
+                    "ProcDetail" => $payout_details->payout_proc_details,
+                    "RunDate" => date('Y-m-d '),
+                    "Email" => $payout_details->payout_email_address,
+                    "MobileNo" => $payout_details->payout_mobile_no,
+                    "BirthDate" => $payout_details->payout_birth_date,
+                    "Nationality" => "Philippines",
+                    "Address" => [
+                        "Street1" => $payout_details->payout_street1,
+                        "Street2" => $payout_details->payout_street2,
+                        "Barangay" => $payout_details->payout_barangay,
+                        "City" => $payout_details->payout_city,
+                        "Province" => $payout_details->payout_province,
+                        "Country" => $payout_details->payout_country
+                    ]
+                ];
 
-            $data = [
-                "TxnId" => $pout_tnx->id,
-                "FirstName" => $payout_details->payout_first_name,
-                "MiddleName" => $payout_details->payout_middle_name,
-                "LastName" => $payout_details->payout_last_name,
-                "Amount" => $payout_amount,
-                "Currency" => "PHP",
-                "Description" => "Payout",
-                "ProcId" => $payout_details->payout_proc_id,
-                "ProcDetail" => $payout_details->payout_proc_details,
-                "RunDate" => date('Y-m-d '),
-                "Email" => $payout_details->payout_email_address,
-                "MobileNo" => $payout_details->payout_mobile_no,
-                "BirthDate" => $payout_details->payout_birth_date,
-                "Nationality" => "Philippines",
-                "Address" => [
-                    "Street1" => $payout_details->payout_street1,
-                    "Street2" => $payout_details->payout_street2,
-                    "Barangay" => $payout_details->payout_barangay,
-                    "City" => $payout_details->payout_city,
-                    "Province" => $payout_details->payout_province,
-                    "Country" => $payout_details->payout_country
-                ]
-            ];
+                $url = $this->getBaseUrl() . 'PayoutService.asmx?' . http_build_query($data, '', '&');
 
-            $url = $this->getBaseUrl() . 'PayoutService.asmx?' . http_build_query($data, '', '&');
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_HEADER, 0);
+                // curl_setopt($ch, CURLOPT_POST, 1);
+                // curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            // curl_setopt($ch, CURLOPT_POST, 1);
-            // curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                $output = curl_exec($ch);
+                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $return = [
+                    'body' => json_decode($output, true),
+                    'http_code' => $http_code
+                ];
+                curl_close($ch);
 
-            $output = curl_exec($ch);
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $return = [
-                'body' => json_decode($output, true),
-                'http_code' => $http_code
-            ];
-            curl_close($ch);
-
-            return $return;
+                return $return;
+            }
+        } catch (\Throwable $th) {
+            return response()->json(['message' => "Unable to process payout, user don't payout details"], 409);
         }
     }
 

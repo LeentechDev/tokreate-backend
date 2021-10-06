@@ -177,11 +177,7 @@ class TransactionController extends Controller
                 unset($request['token_id']);
                 $_transaction->update($request->all());
 
-                $transaction_details = $_transaction->first();
-
-                if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
-                    $this->transferTokenOwnership($transaction_details);
-                }
+                
 
                 $response = (object)[
                     "success" => true,
@@ -228,7 +224,12 @@ class TransactionController extends Controller
                     $payout_details = Payout::where('user_id', $edition_owner->user_id)->first();
 
                     $dragonpay = new DragonpayController();
+                    $transaction_details = $_transaction->first();
                     $dragonpay->payout($payout_details, $transaction_details);
+
+                    if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
+                        $this->transferTokenOwnership($transaction_details);
+                    }
                 }
 
 
