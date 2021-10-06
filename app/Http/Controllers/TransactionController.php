@@ -63,7 +63,7 @@ class TransactionController extends Controller
                 ->with(['transaction_owner', 'token'])
                 ->orderBy($request->sort, $request->sort_dirc)
                 ->orderBy('transaction_payment_status', 'ASC')
-                ->paginate($request->limit);
+                ->paginate(10);
 
             $response = (object)[
                 "success" => true,
@@ -177,7 +177,7 @@ class TransactionController extends Controller
                 unset($request['token_id']);
                 $_transaction->update($request->all());
 
-                
+
 
                 $response = (object)[
                     "success" => true,
