@@ -164,65 +164,10 @@ class DragonpayController extends Controller
     public function payout($payout_details, $transaction_details)
     {
         try {
-            /* $url = $this->getBaseUrl() . 'DragonpayWebService/PayoutService.asmx';
-
-            $headers = array();
-            $headers[] = "Authorization: Bearer " . base64_encode(Self::MERCHANT_API_KEY);
-            $headers[] = "Content-Type: application/json"; */
 
             $payout_amount = 0;
 
             if ($transaction_details && $payout_details) {
-                /* $payout_amount = $transaction_details->transaction_grand_total - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
-
-                $pout_tnx = PayoutTransaction::create([
-                    'user_id' => $payout_details->user_id,
-                    'amount' => $payout_amount,
-                    'status' => Constants::PAYOUT_STATUS_PENDING,
-                ]);
-
-                $data = [
-                    "TxnId" => $pout_tnx->id,
-                    "FirstName" => $payout_details->payout_first_name,
-                    "MiddleName" => $payout_details->payout_middle_name,
-                    "LastName" => $payout_details->payout_last_name,
-                    "Amount" => $payout_amount,
-                    "Currency" => "PHP",
-                    "Description" => "Payout",
-                    "ProcId" => $payout_details->payout_proc_id,
-                    "ProcDetail" => $payout_details->payout_proc_details,
-                    "RunDate" => date('Y-m-d '),
-                    "Email" => $payout_details->payout_email_address,
-                    "MobileNo" => $payout_details->payout_mobile_no,
-                    "BirthDate" => $payout_details->payout_birth_date,
-                    "Nationality" => "Philippines",
-                    "Address" => [
-                        "Street1" => $payout_details->payout_street1,
-                        "Street2" => $payout_details->payout_street2,
-                        "Barangay" => $payout_details->payout_barangay,
-                        "City" => $payout_details->payout_city,
-                        "Province" => $payout_details->payout_province,
-                        "Country" => $payout_details->payout_country
-                    ]
-                ];
-
-                $url = $this->getBaseUrl() . 'PayoutService.asmx?' . http_build_query($data, '', '&');
-
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, $url);
-                curl_setopt($ch, CURLOPT_HEADER, 0);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-                $output = curl_exec($ch);
-                $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                $return = [
-                    'body' => json_decode($output, true),
-                    'http_code' => $http_code
-                ];
-                curl_close($ch);
-
-                return $return; */
 
                 $payout_amount = $transaction_details->transaction_grand_total - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
 
@@ -237,29 +182,48 @@ class DragonpayController extends Controller
                 $xml = '<?xml version="1.0" encoding="utf-8"?>';
                 $xml .= '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">';
                 $xml .= '<soap12:Body>';
-                $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
-                $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
-                $xml .= '<merchantTxnId>' . $pout_tnx->id . '</merchantTxnId>';
-                $xml .= '<userName>' . $payout_details->payout_first_name . '</userName>';
-                // $xml .= '<firstName>' . $payout_details->payout_first_name . '</firstName>';
-                // $xml .= '<middleName>' . $payout_details->payout_middle_name . '</middleName>';
-                // $xml .= '<lastName>' . $payout_details->payout_last_name . '</lastName>';
-                // $xml .= '<street1>' . $payout_details->payout_street1 . '</street1>';
-                // $xml .= '<street2>' . $payout_details->payout_street2 . '</street2>';
-                // $xml .= '<barangay>' . $payout_details->payout_barangay . '</barangay>';
-                // $xml .= '<city>' . $payout_details->payout_city . '</city>';
-                // $xml .= '<province>' . $payout_details->payout_province . '</province>';
-                $xml .= '<amount>' . $payout_amount . '</amount>';
-                $xml .= '<currency>PHP</currency>';
-                $xml .= '<description>Payout</description>';
-                $xml .= '<procId>' . $payout_details->payout_proc_id . '</procId>';
-                $xml .= '<procDetail>' . $payout_details->payout_proc_details . '</procDetail>';
-                $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
-                $xml .= '<email>' . $payout_details->payout_email_address . '</email>';
-                // $xml .= '<birthDate>' . $payout_details->payout_birth_date . '</birthDate>';
-                $xml .= '<mobileNo>' . $payout_details->payout_mobile_no . '</mobileNo>';
 
-                $xml .= '</RequestPayoutEx>';
+                $cash_pickups = ['CEBL', 'LBC', 'MLH', 'RDP'];
+
+                if (in_array($payout_details->payout_proc_id, $cash_pickups)) {
+                    $xml .= '<RequestCashPayout  xmlns="http://api.dragonpay.ph/">';
+                    $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
+                    $xml .= '<merchantTxnId>' . $pout_tnx->id . '</merchantTxnId>';
+                    $xml .= '<firstName>' . $payout_details->payout_first_name . '</firstName>';
+                    $xml .= '<middleName>' . $payout_details->payout_middle_name . '</middleName>';
+                    $xml .= '<lastName>' . $payout_details->payout_last_name . '</lastName>';
+                    $xml .= '<street1>' . $payout_details->payout_street1 . '</street1>';
+                    $xml .= '<street2>' . $payout_details->payout_street2 . '</street2>';
+                    $xml .= '<barangay>' . $payout_details->payout_barangay . '</barangay>';
+                    $xml .= '<city>' . $payout_details->payout_city . '</city>';
+                    $xml .= '<province>' . $payout_details->payout_province . '</province>';
+                    $xml .= '<email>' . $payout_details->payout_email_address . '</email>';
+                    $xml .= '<mobileNo>' . $payout_details->payout_mobile_no . '</mobileNo>';
+                    $xml .= '<birthDate>' . $payout_details->payout_birth_date . '</birthDate>';
+                    $xml .= '<amount>' . $payout_amount . '</amount>';
+                    $xml .= '<currency>PHP</currency>';
+                    $xml .= '<description>Payout</description>';
+                    $xml .= '<procId>' . $payout_details->payout_proc_id . '</procId>';
+                    $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
+                    $xml .= '</RequestCashPayout>';
+                } else {
+                    $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
+                    $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
+                    $xml .= '<merchantTxnId>' . $pout_tnx->id . '</merchantTxnId>';
+                    $xml .= '<userName>' . $payout_details->payout_first_name . '</userName>';
+                    $xml .= '<amount>' . $payout_amount . '</amount>';
+                    $xml .= '<currency>PHP</currency>';
+                    $xml .= '<description>Payout</description>';
+                    $xml .= '<procId>' . $payout_details->payout_proc_id . '</procId>';
+                    $xml .= '<procDetail>' . $payout_details->payout_proc_details . '</procDetail>';
+                    $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
+                    $xml .= '<email>' . $payout_details->payout_email_address . '</email>';
+                    $xml .= '<mobileNo>' . $payout_details->payout_mobile_no . '</mobileNo>';
+                    $xml .= '</RequestPayoutEx>';
+                }
+
+
+
                 $xml .= '</soap12:Body>';
                 $xml .= '</soap12:Envelope>';
                 $headers = $this->header($xml, $asmx);

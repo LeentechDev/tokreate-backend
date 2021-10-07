@@ -227,10 +227,51 @@ class TransactionController extends Controller
                         $dragonpay = new DragonpayController();
                         $transaction_details = $_transaction->first();
 
-                        $dragonpay->payout($payout_details, $transaction_details);
-                        if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
-                            $this->transferTokenOwnership($transaction_details);
+                        $payout_res = $dragonpay->payout($payout_details, $transaction_details);
+                        if($payout_res){
+
+                            switch ($payout_res['RequestPayoutExResponse']['RequestPayoutExResult']) {
+                                case 0:
+                                    if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
+                                        $this->transferTokenOwnership($transaction_details);
+                                    }
+                                    break;
+                                case -1:
+                                    return response()->json(['message' => "Something went wrong, please try again later."], 409);
+                                    break;
+                                case -4:
+                                    return response()->json(['message' => "Unable to create a payout transaction"], 409);
+                                    break;
+                                case -5:
+                                    return response()->json(['message' => "Invalid payout account details"], 409);
+                                    break;
+                                case -6:
+                                    return response()->json(['message' => "Cannot accept a pre-dated run date"], 409);
+                                    break;
+                                case -7:
+                                    return response()->json(['message' => "Amount limited exceeded"], 409);
+                                    break;
+                                case -8:
+                                    return response()->json(['message' => "Similar transaction id already exists"], 409);
+                                    break;
+                                case -9:
+                                    return response()->json(['message' => "Server IP access is not allowed"], 409);
+                                    break;
+                                case -10:
+                                    return response()->json(['message' => "Payout account is blacklisted"], 409);
+                                    break;
+                                case -11:
+                                    return response()->json(['message' => "Payout account is not enrolled for bank"], 409);
+                                    break;
+                                case -12:
+                                    return response()->json(['message' => "Invalid API Key"], 409);
+                                    break;
+                                default:
+                                    # code...
+                                    break;
+                            }
                         }
+                        
                     } else {
                         return response()->json(['message' => "Unable to process payout, user don't payout details"], 409);
                     }

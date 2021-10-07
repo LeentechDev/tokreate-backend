@@ -19,7 +19,7 @@ $router->get('/mail', 'MailController@mail');
 $router->post('/dragonpay-webhook', 'PostbackController@webhook');
 $router->get('/dragonpay-webhook-payout', 'PostbackController@webhookPayout');
 
-$router->post('/payoutTest', 'PostbackController@payoutTest');
+// $router->post('/payoutTest', 'PostbackController@payoutTest');
 
 $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('register', 'AuthController@register');
