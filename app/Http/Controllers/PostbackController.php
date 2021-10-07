@@ -164,9 +164,8 @@ class PostbackController extends Controller
         return array(
             "POST /DragonpayWebService/PayoutService.asmx HTTP/1.1",
             "Host: " . $this->getBaseUrl(),
-            "Content-Type: text/xml; charset=utf-8",
+            "Content-Type: application/soap+xml; charset=utf-8",
             "Content-Length: " . strlen($xml),
-            "SOAPAction: http://api.dragonpay.ph/RequestPayoutEx"
         );
     }
 
