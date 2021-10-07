@@ -29,7 +29,7 @@ class DragonpayController extends Controller
 
     protected const MERCHANT_ID = 'LEENTECH';
     protected const MERCHANT_PASS = 'Da5qgHfEw3zN';
-    protected const MERCHANT_API_KEY = 'bec973b72e20e653ddc54c0b37cbf18a254b6928';
+    protected const MERCHANT_API_KEY = 'f275624ca412c6b00d4b11874d9ce38f020c9016';
     protected const MODE = 'development';
 
     public function __construct()
@@ -172,7 +172,7 @@ class DragonpayController extends Controller
 
             $payout_amount = 0;
 
-            if ($transaction_details) {
+            if ($transaction_details && $payout_details) {
                 /* $payout_amount = $transaction_details->transaction_grand_total - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
 
                 $pout_tnx = PayoutTransaction::create([
@@ -240,29 +240,29 @@ class DragonpayController extends Controller
                 $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
                 $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
                 $xml .= '<merchantTxnId>' . $pout_tnx->id . '</merchantTxnId>';
-                $xml .= '<firstName>' . $payout_details->payout_first_name . '</firstName>';
-                $xml .= '<middleName>' . $payout_details->payout_middle_name . '</middleName>';
-                $xml .= '<lastName>' . $payout_details->payout_last_name . '</lastName>';
-                $xml .= '<street1>' . $payout_details->payout_street1 . '</street1>';
-                $xml .= '<street2>' . $payout_details->payout_street2 . '</street2>';
-                $xml .= '<barangay>' . $payout_details->payout_barangay . '</barangay>';
-                $xml .= '<city>' . $payout_details->payout_city . '</city>';
-                $xml .= '<province>' . $payout_details->payout_province . '</province>';
-                $xml .= '<email>' . $payout_details->payout_email_address . '</email>';
-                $xml .= '<birthDate>' . $payout_details->payout_birth_date . '</birthDate>';
-                $xml .= '<mobileNo>' . $payout_details->payout_mobile_no . '</mobileNo>';
+                $xml .= '<userName>' . $payout_details->payout_first_name . '</userName>';
+                // $xml .= '<firstName>' . $payout_details->payout_first_name . '</firstName>';
+                // $xml .= '<middleName>' . $payout_details->payout_middle_name . '</middleName>';
+                // $xml .= '<lastName>' . $payout_details->payout_last_name . '</lastName>';
+                // $xml .= '<street1>' . $payout_details->payout_street1 . '</street1>';
+                // $xml .= '<street2>' . $payout_details->payout_street2 . '</street2>';
+                // $xml .= '<barangay>' . $payout_details->payout_barangay . '</barangay>';
+                // $xml .= '<city>' . $payout_details->payout_city . '</city>';
+                // $xml .= '<province>' . $payout_details->payout_province . '</province>';
                 $xml .= '<amount>' . $payout_amount . '</amount>';
                 $xml .= '<currency>PHP</currency>';
+                $xml .= '<description>Payout</description>';
                 $xml .= '<procId>' . $payout_details->payout_proc_id . '</procId>';
                 $xml .= '<procDetail>' . $payout_details->payout_proc_details . '</procDetail>';
                 $xml .= '<runDate>' . \Carbon\Carbon::now()->format('Y-m-d') . '</runDate>';
+                $xml .= '<email>' . $payout_details->payout_email_address . '</email>';
+                // $xml .= '<birthDate>' . $payout_details->payout_birth_date . '</birthDate>';
+                $xml .= '<mobileNo>' . $payout_details->payout_mobile_no . '</mobileNo>';
 
                 $xml .= '</RequestPayoutEx>';
                 $xml .= '</soap12:Body>';
                 $xml .= '</soap12:Envelope>';
-
                 $headers = $this->header($xml, $asmx);
-
                 $parser = $this->run($xml, $headers, $asmx);
 
                 return $parser;
@@ -294,10 +294,12 @@ class DragonpayController extends Controller
         $response1 = str_replace("<soap:Body>", "", $response);
         $response2 = str_replace("</soap:Body>", "", $response1);
 
+
+
+
         $parser = simplexml_load_string($response2);
         $parser = json_encode($parser);
         $parser = json_decode($parser, true);
-
         return $parser;
     }
 }

@@ -223,12 +223,16 @@ class TransactionController extends Controller
                     /* request for payout */
                     $payout_details = Payout::where('user_id', $edition_owner->user_id)->first();
 
-                    $dragonpay = new DragonpayController();
-                    $transaction_details = $_transaction->first();
-                    $dragonpay->payout($payout_details, $transaction_details);
+                    if ($payout_details) {
+                        $dragonpay = new DragonpayController();
+                        $transaction_details = $_transaction->first();
 
-                    if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
-                        $this->transferTokenOwnership($transaction_details);
+                        $dragonpay->payout($payout_details, $transaction_details);
+                        if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
+                            $this->transferTokenOwnership($transaction_details);
+                        }
+                    } else {
+                        return response()->json(['message' => "Unable to process payout, user don't payout details"], 409);
                     }
                 }
 
