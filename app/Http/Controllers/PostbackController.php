@@ -180,6 +180,7 @@ class PostbackController extends Controller
         $response = curl_exec($ch);
         curl_close($ch);
 
+        print_r($headers);
         print_r($xml);
         print_r($response);
         die;
