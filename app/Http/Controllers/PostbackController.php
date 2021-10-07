@@ -183,6 +183,7 @@ class PostbackController extends Controller
 
         print_r($headerSent);
         print_r($xml);
+        print_r($response);
         die;
 
         $response1 = str_replace("<soap:Body>", "", $response);
