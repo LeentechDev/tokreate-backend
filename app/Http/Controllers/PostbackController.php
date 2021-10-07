@@ -28,7 +28,7 @@ class PostbackController extends Controller
 
     protected const MERCHANT_ID = 'LEENTECH';
     protected const MERCHANT_PASS = 'Da5qgHfEw3zN';
-    protected const MERCHANT_API_KEY = 'bec973b72e20e653ddc54c0b37cbf18a254b6928';
+    protected const MERCHANT_API_KEY = 'f275624ca412c6b00d4b11874d9ce38f020c9016';
     protected const MODE = 'development';
 
 
