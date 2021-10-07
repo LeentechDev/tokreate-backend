@@ -177,12 +177,12 @@ class PostbackController extends Controller
         curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $headerSent = curl_getinfo($ch, CURLINFO_HEADER_OUT);
         $response = curl_exec($ch);
         curl_close($ch);
 
-        print_r($headers);
+        print_r($headerSent);
         print_r($xml);
-        print_r($response);
         die;
 
         $response1 = str_replace("<soap:Body>", "", $response);
