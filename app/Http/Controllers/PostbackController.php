@@ -162,9 +162,7 @@ class PostbackController extends Controller
     private function header($xml)
     {
         return array(
-            "POST /DragonpayWebService/PayoutService.asmx HTTP/1.1",
-            "Host: " . $this->getBaseUrl(),
-            "Content-Type: application/soap+xml; charset=utf-8",
+            "Content-Type: text/xml; charset=utf-8",
             "Content-Length: " . strlen($xml),
         );
     }
@@ -177,7 +175,6 @@ class PostbackController extends Controller
         curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $headerSent = curl_getinfo($ch, CURLINFO_HEADER_OUT);
         $response = curl_exec($ch);
         curl_close($ch);
 
@@ -201,7 +198,7 @@ class PostbackController extends Controller
             $xml .= '<soap12:Body>';
             $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
             $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
-            $xml .= '<merchantTxnId>12345RTER</merchantTxnId>';
+            $xml .= '<merchantTxnId>12345RTER2</merchantTxnId>';
             $xml .= '<userName>Ribak</userName>';
             $xml .= '<amount>10000</amount>';
             $xml .= '<currency>PHP</currency>';

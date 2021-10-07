@@ -275,17 +275,15 @@ class DragonpayController extends Controller
     private function header($xml, $asmx)
     {
         return array(
-            "POST /DragonPayWebService/" . $asmx . " HTTP/1.1",
-            "Host: " . $this->getBaseUrl(),
-            "Content-Type: application/soap+xml; charset=utf-8",
-            "Content-Length: " . strlen($xml)
+            "Content-Type: text/xml; charset=utf-8",
+            "Content-Length: " . strlen($xml),
         );
     }
 
     private function run($xml, $headers, $asmx)
     {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->getBaseUrl() . 'DragonPayWebService/' . $asmx);
+        curl_setopt($ch, CURLOPT_URL, $this->getBaseUrl() . 'DragonPayWebService/PayoutService.asmx');
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $xml);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
