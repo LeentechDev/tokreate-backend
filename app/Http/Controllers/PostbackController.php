@@ -164,9 +164,8 @@ class PostbackController extends Controller
         return array(
             "POST /DragonpayWebService/PayoutService.asmx HTTP/1.1",
             "Host: " . $this->getBaseUrl(),
-            "Content-Type: text/xml; charset=utf-8",
-            "Content-Length: " . strlen($xml),
-            "SOAPAction: http://api.dragonpay.ph/RequestPayoutEx"
+            "Content-Type: application/soap+xml; charset=utf-8",
+            "Content-Length: " . strlen($xml)
         );
     }
 
@@ -181,7 +180,6 @@ class PostbackController extends Controller
         $response = curl_exec($ch);
         curl_close($ch);
 
-        print_r($xml);
         print_r($response);
         die;
 
@@ -201,8 +199,8 @@ class PostbackController extends Controller
         try {
 
             $xml = '<?xml version="1.0" encoding="utf-8"?>';
-            $xml .= '<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">';
-            $xml .= '<soap:Body>';
+            $xml .= '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">';
+            $xml .= '<soap12:Body>';
             $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
             $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
             $xml .= '<merchantTxnId>12345RTER</merchantTxnId>';
@@ -216,8 +214,8 @@ class PostbackController extends Controller
             $xml .= '<email>RonaldComendador20@gmail.com</email>';
             $xml .= '<mobileNo>09069244734</mobileNo>';
             $xml .= '</RequestPayoutEx>';
-            $xml .= '</soap:Body>';
-            $xml .= '</soap:Envelope>';
+            $xml .= '</soap12:Body>';
+            $xml .= '</soap12:Envelope>';
 
             $headers = $this->header($xml);
             $parser = $this->run($xml, $headers);
