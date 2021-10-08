@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 use App\Constants;
+use App\PayoutTransaction;
 use App\Withdrawal;
 use App\Transaction;
-use DB; 
+use DB;
+
 class WithdrawalController extends Controller
 {
     /**
@@ -22,7 +24,8 @@ class WithdrawalController extends Controller
         $this->middleware('auth');
     }
 
-    public function requestWithdrawal(Request $request){
+    public function requestWithdrawal(Request $request)
+    {
         $withdrawal = Withdrawal::create(
             [
                 "withdrawal_user_id" =>  Auth::user()->user_id,
@@ -42,71 +45,74 @@ class WithdrawalController extends Controller
         return response()->json($response, 200);
     }
 
-    public function getWithdrawals(Request $request){
+    public function getWithdrawals(Request $request)
+    {
         $searchTerm = $request->search_keyword;
-        try {
-            $withdrawals = Withdrawal::join('user_profiles', 'user_profiles.user_id', 'withdrawals.withdrawal_user_id')
-                    ->where(function ($q) use ($searchTerm, $request) {
-                    if ($searchTerm) {
-                        $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%');
-                    }
-                    if ($request->filter_status !== "") {
-                        $q->where('withdrawal_status', $request->filter_status);
-                    }
-                    if($request->user_id){
-                        $q->where('withdrawal_user_id', $request->user_id);
-                    }
-                })
-                ->orderBy($request->sort, $request->sort_dirc)
-                ->paginate($request->limit);
+        // try {
+        $withdrawals = PayoutTransaction::join('user_profiles', 'user_profiles.user_id', 'payout_transactions.user_id')
+            ->where(function ($q) use ($searchTerm, $request) {
+                if ($searchTerm) {
+                    $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                }
+                if ($request->filter_status !== "") {
+                    $q->where('status', $request->filter_status);
+                }
+                if ($request->user_id) {
+                    $q->where('user_id', $request->user_id);
+                }
+            })
+            ->orderBy($request->sort, $request->sort_dirc)
+            ->paginate($request->limit);
 
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $withdrawals,
-                ]
-            ];
-            return response()->json($response, 200);
-        } catch (\Throwable $th) {
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $withdrawals,
+            ]
+        ];
+        return response()->json($response, 200);
+        /* } catch (\Throwable $th) {
             return response()->json("Something wen't wrong", 500);
-        }
+        } */
     }
 
-    public function getUserWithdrawals(Request $request){
+    public function getUserWithdrawals(Request $request)
+    {
         $searchTerm = $request->search_keyword;
         $user_id = Auth::user()->user_id;
-        if($request->user_id){
+        if ($request->user_id) {
             $user_id = $request->user_id;
         }
-        
-        // try {
-            $withdrawals = Withdrawal::join('user_profiles', 'user_profiles.user_id', 'withdrawals.withdrawal_user_id')
-                ->where(function ($q) use ($searchTerm, $request, $user_id) {
-                        if ($searchTerm) {
-                            $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%');
-                        }
-                        if ($request->filter_status !== "") {
-                            $q->where('withdrawal_status', $request->filter_status);
-                        }
-                        $q->where('withdrawal_user_id', $user_id);
-                })
-                ->orderBy($request->sort, $request->sort_dirc)
-                ->paginate($request->limit);
 
-            $response = (object)[
-                "success" => true,
-                "result" => [
-                    "datas" => $withdrawals,
-                ]
-            ];
-            return response()->json($response, 200);
+        // try {
+        $withdrawals = PayoutTransaction::join('user_profiles', 'user_profiles.user_id', 'payout_transactions.user_id')
+            ->where(function ($q) use ($searchTerm, $request, $user_id) {
+                if ($searchTerm) {
+                    $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%');
+                }
+                if ($request->filter_status !== "") {
+                    $q->where('status', $request->filter_status);
+                }
+                $q->where('user_id', $user_id);
+            })
+            ->orderBy($request->sort, $request->sort_dirc)
+            ->paginate($request->limit);
+
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $withdrawals,
+            ]
+        ];
+        return response()->json($response, 200);
         // } catch (\Throwable $th) {
         //     return response()->json("Something wen't wrong", 500);
         // }
     }
 
 
-    public function updateWithdrawalStatus(Request $request){
+    public function updateWithdrawalStatus(Request $request)
+    {
         $this->validate($request, [
             'withdrawal_id' => 'required|string',
             'withdrawal_status' => 'required|string',
@@ -127,5 +133,3 @@ class WithdrawalController extends Controller
         }
     }
 }
-
-
