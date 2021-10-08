@@ -13,6 +13,7 @@ use App\Transaction;
 use App\Token;
 use App\Constants;
 use App\Edition;
+use App\PayoutTransaction;
 use App\SiteSettings;
 use App\TokenHistory;
 use DB;
@@ -117,21 +118,63 @@ class PostbackController extends Controller
     public function webhookPayout(Request $request)
     {
         $request = $request->input();
-        /* $isSafe = $this->_validateDigestSha1(
-            $request['merchantTxnId'],
-            $request['refNo'],
-            $request['status'],
-            $request['message'],
-            $request['digest']
-        ); */
 
         $file = 'test.txt';
         if (!is_file($file)) {         // Some simple example content.
             file_put_contents($file, 'asda');     // Save our content to the file.
         }
 
-        /* if ($request['status'] == 'S' && $isSafe) {
-        } */
+        $_payout_tnxs = Edition::find('id', $request['merchantTxnId']);
+
+        if ($_payout_tnxs) {
+            switch ($request['status']) {
+                case 'S':
+                    $_payout_tnxs->update([
+                        'status' => Constants::PAYOUT_STATUS_DONE,
+                        'on_market' => 0,
+                    ]);
+                    break;
+                case 'F':
+                    $_payout_tnxs->update([
+                        'status' => Constants::PAYOUT_STATUS_FAILED,
+                        'on_market' => 0,
+                    ]);
+                    break;
+                case 'P':
+                    $_payout_tnxs->update([
+                        'status' => Constants::PAYOUT_STATUS_PENDING,
+                        'on_market' => 0,
+                    ]);
+                    break;
+                case 'U':
+                    $_payout_tnxs->update([
+                        'status' => Constants::PAYOUT_STATUS_UNKNOWN,
+                        'on_market' => 0,
+                    ]);
+                    break;
+                case 'R':
+                    $_payout_tnxs->update([
+                        'status' => Constants::PAYOUT_STATUS_REFUND,
+                        'on_market' => 0,
+                    ]);
+                    break;
+                case 'K':
+                    $_payout_tnxs->update([
+                        'status' => Constants::PAYOUT_STATUS_CHARGEBACK,
+                        'on_market' => 0,
+                    ]);
+                    break;
+                case 'V':
+                    $_payout_tnxs->update([
+                        'status' => Constants::PAYOUT_STATUS_VOID,
+                        'on_market' => 0,
+                    ]);
+                    break;
+                default:
+                    # code...
+                    break;
+            }
+        }
     }
 
     private function _validateDigestSha1($merchanttxnid, $refNo, $status, $message, $digest)

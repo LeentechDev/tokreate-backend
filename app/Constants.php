@@ -57,4 +57,9 @@ class Constants
 
     const PAYOUT_STATUS_PENDING = 0;
     const PAYOUT_STATUS_DONE = 1;
+    const PAYOUT_STATUS_FAILED = 2;
+    const PAYOUT_STATUS_UNKNOWN = 3;
+    const PAYOUT_STATUS_REFUND = 4;
+    const PAYOUT_STATUS_CHARGEBACK = 5;
+    const PAYOUT_STATUS_VOID = 6;
 }

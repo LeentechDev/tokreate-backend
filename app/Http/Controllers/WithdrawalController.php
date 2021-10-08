@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 use App\Constants;
+use App\PayoutTransaction;
 use App\Withdrawal;
 use App\Transaction;
 use DB; 
@@ -45,16 +46,16 @@ class WithdrawalController extends Controller
     public function getWithdrawals(Request $request){
         $searchTerm = $request->search_keyword;
         try {
-            $withdrawals = Withdrawal::join('user_profiles', 'user_profiles.user_id', 'withdrawals.withdrawal_user_id')
+            $withdrawals = PayoutTransaction::join('user_profiles', 'user_profiles.user_id', 'withdrawals.user_id')
                     ->where(function ($q) use ($searchTerm, $request) {
                     if ($searchTerm) {
                         $q->where('user_profile_full_name', 'like', '%' . $searchTerm . '%');
                     }
                     if ($request->filter_status !== "") {
-                        $q->where('withdrawal_status', $request->filter_status);
+                        $q->where('status', $request->filter_status);
                     }
                     if($request->user_id){
-                        $q->where('withdrawal_user_id', $request->user_id);
+                        $q->where('user_id', $request->user_id);
                     }
                 })
                 ->orderBy($request->sort, $request->sort_dirc)
