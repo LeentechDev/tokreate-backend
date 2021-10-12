@@ -169,13 +169,7 @@ class DragonpayController extends Controller
 
             if ($transaction_details && $payout_details) {
 
-                $payout_amount = $transaction_details->transaction_grand_total - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
-
-                $pout_tnx = PayoutTransaction::create([
-                    'user_id' => $payout_details->user_id,
-                    'amount' => $payout_amount,
-                    'status' => Constants::PAYOUT_STATUS_PENDING,
-                ]);
+                $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
 
                 $asmx = 'PayoutService.asmx';
 
@@ -188,7 +182,7 @@ class DragonpayController extends Controller
                 if (in_array($payout_details->payout_proc_id, $cash_pickups)) {
                     $xml .= '<RequestCashPayout  xmlns="http://api.dragonpay.ph/">';
                     $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
-                    $xml .= '<merchantTxnId>' . $pout_tnx->id . '</merchantTxnId>';
+                    $xml .= '<merchantTxnId>' . $transaction_details->transaction_id . '</merchantTxnId>';
                     $xml .= '<firstName>' . $payout_details->payout_first_name . '</firstName>';
                     $xml .= '<middleName>' . $payout_details->payout_middle_name . '</middleName>';
                     $xml .= '<lastName>' . $payout_details->payout_last_name . '</lastName>';

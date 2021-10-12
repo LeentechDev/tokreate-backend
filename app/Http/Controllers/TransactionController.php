@@ -16,6 +16,7 @@ use App\FundHistory;
 use App\Notifications;
 use App\Payout;
 use App\Http\Controllers\DragonpayController;
+use App\PayoutTransaction;
 
 class TransactionController extends Controller
 {
@@ -230,6 +231,15 @@ class TransactionController extends Controller
                                             'notification_type' => Constants::NOTIF_MINTING_RES,
                                         ]);
                                     }
+
+                                    $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
+
+                                    $pout_tnx = PayoutTransaction::create([
+                                        'user_id' => $payout_details->user_id,
+                                        'amount' => $payout_amount,
+                                        'status' => Constants::PAYOUT_STATUS_PENDING,
+                                        'transaction_id' => $transaction_details->transaction_id
+                                    ]);
                                 }
 
 
