@@ -63,7 +63,7 @@ class TransactionController extends Controller
                 ->with(['transaction_owner', 'token'])
                 ->orderBy($request->sort, $request->sort_dirc)
                 ->orderBy('transaction_payment_status', 'ASC')
-                ->paginate(10);
+                ->paginate();
 
             $response = (object)[
                 "success" => true,
@@ -208,7 +208,7 @@ class TransactionController extends Controller
                                             $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is failed.</p>';
                                             break;
                                         case 3:
-                                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfull and transfered the ownership to you wallet.</p>';
+                                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfully and transferred the ownership to your wallet.</p>';
                                             break;
                                         default:
                                             # code...
