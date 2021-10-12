@@ -173,114 +173,108 @@ class TransactionController extends Controller
             $edition_owner = User::where('user_id',  $edition_details->owner_id)->first();
             $user_details = User::where('user_id', $transaction->user_id)->first();
 
-            if ($_transaction) {
-                unset($request['token_id']);
-                $_transaction->update($request->all());
+            /* request for payout */
+            $payout_details = Payout::where('user_id', $edition_owner->user_id)->first();
+
+            if ($payout_details) {
+                $dragonpay = new DragonpayController();
+                $transaction_details = $_transaction->first();
+
+                $payout_res = $dragonpay->payout($payout_details, $transaction_details);
+                if ($payout_res) {
+
+                    switch ($payout_res['RequestPayoutExResponse']['RequestPayoutExResult']) {
+                        case 0:
+                            $this->transferTokenOwnership($transaction_details);
+                            if ($_transaction) {
+                                unset($request['token_id']);
+                                $_transaction->update($request->all());
+
+                                $response = (object)[
+                                    "success" => true,
+                                    "result" => [
+                                        "message" => "Transaction status has been successfully updated."
+                                    ]
+                                ];
+                                $msg = "";
+
+                                if ($user_details) {
+                                    /* email and notification */
+                                    switch ($request->transaction_status) {
+                                        case 1:
+                                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is now processing.</p>';
+                                            break;
+                                        case 2:
+                                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is failed.</p>';
+                                            break;
+                                        case 3:
+                                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfull and transfered the ownership to you wallet.</p>';
+                                            break;
+                                        default:
+                                            # code...
+                                            break;
+                                    }
+
+                                    if ($user_details->profile->user_mail_notification == 1) {
+                                        Mail::send('mail.transfer-status', ['msg' => $msg], function ($message) use ($user_details) {
+                                            $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Purshase Token Status');
+                                            $message->from('support@tokreate.com', 'Tokreate');
+                                        });
+                                    }
+
+                                    if ($user_details->profile->user_notification_settings == 1) {
+                                        Notifications::create([
+                                            'notification_message' => $msg,
+                                            'notification_to' => $user_details->user_id,
+                                            'notification_from' => Auth::user()->user_id,
+                                            'notification_type' => Constants::NOTIF_MINTING_RES,
+                                        ]);
+                                    }
+                                }
 
 
-
-                $response = (object)[
-                    "success" => true,
-                    "result" => [
-                        "message" => "Transaction status has been successfully updated."
-                    ]
-                ];
-                $msg = "";
-
-                if ($user_details) {
-                    /* email and notification */
-                    switch ($request->transaction_status) {
-                        case 1:
-                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is now processing.</p>';
+                                return response()->json($response, 200);
+                            } else {
+                                return response()->json(['message' => 'Transaction status update failed!'], 409);
+                            }
                             break;
-                        case 2:
-                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is failed.</p>';
+                        case -1:
+                            return response()->json(['message' => "Something went wrong, please try again later."], 409);
                             break;
-                        case 3:
-                            $msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfull and transfered the ownership to you wallet.</p>';
+                        case -4:
+                            return response()->json(['message' => "Unable to create a payout transaction"], 409);
+                            break;
+                        case -5:
+                            return response()->json(['message' => "Invalid payout account details"], 409);
+                            break;
+                        case -6:
+                            return response()->json(['message' => "Cannot accept a pre-dated run date"], 409);
+                            break;
+                        case -7:
+                            return response()->json(['message' => "Amount limited exceeded"], 409);
+                            break;
+                        case -8:
+                            return response()->json(['message' => "Similar transaction id already exists"], 409);
+                            break;
+                        case -9:
+                            return response()->json(['message' => "Server IP access is not allowed"], 409);
+                            break;
+                        case -10:
+                            return response()->json(['message' => "Payout account is blacklisted"], 409);
+                            break;
+                        case -11:
+                            return response()->json(['message' => "Payout account is not enrolled for bank"], 409);
+                            break;
+                        case -12:
+                            return response()->json(['message' => "Invalid API Key"], 409);
                             break;
                         default:
                             # code...
                             break;
                     }
-
-                    if ($user_details->profile->user_mail_notification == 1) {
-                        Mail::send('mail.transfer-status', ['msg' => $msg], function ($message) use ($user_details) {
-                            $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Purshase Token Status');
-                            $message->from('support@tokreate.com', 'Tokreate');
-                        });
-                    }
-
-                    if ($user_details->profile->user_notification_settings == 1) {
-                        Notifications::create([
-                            'notification_message' => $msg,
-                            'notification_to' => $user_details->user_id,
-                            'notification_from' => Auth::user()->user_id,
-                            'notification_type' => Constants::NOTIF_MINTING_RES,
-                        ]);
-                    }
-
-                    /* request for payout */
-                    $payout_details = Payout::where('user_id', $edition_owner->user_id)->first();
-
-                    if ($payout_details) {
-                        $dragonpay = new DragonpayController();
-                        $transaction_details = $_transaction->first();
-
-                        $payout_res = $dragonpay->payout($payout_details, $transaction_details);
-                        if($payout_res){
-
-                            switch ($payout_res['RequestPayoutExResponse']['RequestPayoutExResult']) {
-                                case 0:
-                                    if (Constants::TRANSACTION_SUCCESS == $request->transaction_status) {
-                                        $this->transferTokenOwnership($transaction_details);
-                                    }
-                                    break;
-                                case -1:
-                                    return response()->json(['message' => "Something went wrong, please try again later."], 409);
-                                    break;
-                                case -4:
-                                    return response()->json(['message' => "Unable to create a payout transaction"], 409);
-                                    break;
-                                case -5:
-                                    return response()->json(['message' => "Invalid payout account details"], 409);
-                                    break;
-                                case -6:
-                                    return response()->json(['message' => "Cannot accept a pre-dated run date"], 409);
-                                    break;
-                                case -7:
-                                    return response()->json(['message' => "Amount limited exceeded"], 409);
-                                    break;
-                                case -8:
-                                    return response()->json(['message' => "Similar transaction id already exists"], 409);
-                                    break;
-                                case -9:
-                                    return response()->json(['message' => "Server IP access is not allowed"], 409);
-                                    break;
-                                case -10:
-                                    return response()->json(['message' => "Payout account is blacklisted"], 409);
-                                    break;
-                                case -11:
-                                    return response()->json(['message' => "Payout account is not enrolled for bank"], 409);
-                                    break;
-                                case -12:
-                                    return response()->json(['message' => "Invalid API Key"], 409);
-                                    break;
-                                default:
-                                    # code...
-                                    break;
-                            }
-                        }
-                        
-                    } else {
-                        return response()->json(['message' => "Unable to process payout, user don't payout details"], 409);
-                    }
                 }
-
-
-                return response()->json($response, 200);
             } else {
-                return response()->json(['message' => 'Transaction status update failed!'], 409);
+                return response()->json(['message' => "Unable to process payout, user don't payout details"], 409);
             }
         } catch (\Exception $e) {
             return response()->json(['message' => 'Token status update failed!'], 409);

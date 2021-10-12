@@ -30,6 +30,7 @@ class HomeController extends Controller
             'E.token_id',
             'tokens.token_id'
         )
+            ->join('user_profiles', 'user_profiles.user_id', 'E.owner_id')
             ->with(['transactions' => function ($q) {
                 $q->orderBy('transaction_id', 'DESC');
             }])
@@ -38,7 +39,7 @@ class HomeController extends Controller
             ->where('E.on_market', Constants::TOKEN_ON_MARKET)
             ->where(function ($q) use ($searchTerm) {
                 if ($searchTerm) {
-                    $q->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+                    $q->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('user_profile_full_name', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
                 }
             })
             ->where(DB::raw("(Select count(transaction_id) from transactions where transaction_payment_status IN (" . Constants::TRANSACTION_PAYMENT_PENDING . "," . Constants::TRANSACTION_PAYMENT_SUCCESS . ") and transaction_status IN (" . Constants::TRANSACTION_PENDING . "," . Constants::TRANSACTION_PROCESSING . ") and `transactions`.`edition_id` = `E`.`edition_id` )"), '=', 0)
