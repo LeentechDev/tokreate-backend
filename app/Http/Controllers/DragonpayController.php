@@ -203,7 +203,7 @@ class DragonpayController extends Controller
                 } else {
                     $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
                     $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
-                    $xml .= '<merchantTxnId>' . $pout_tnx->id . '</merchantTxnId>';
+                    $xml .= '<merchantTxnId>' . $transaction_details->transaction_id . '</merchantTxnId>';
                     $xml .= '<userName>' . $payout_details->payout_first_name . '</userName>';
                     $xml .= '<amount>' . $payout_amount . '</amount>';
                     $xml .= '<currency>PHP</currency>';
