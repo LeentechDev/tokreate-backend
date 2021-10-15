@@ -218,7 +218,7 @@ class TransactionController extends Controller
 
                                     if ($user_details->profile->user_mail_notification == 1) {
                                         Mail::send('mail.transfer-status', ['msg' => $msg], function ($message) use ($user_details) {
-                                            $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Purshase Token Status');
+                                            $message->to($user_details->user_email, $user_details->profile->user_profile_full_name)->subject('Purchase Token Status');
                                             $message->from('support@tokreate.com', 'Tokreate');
                                         });
                                     }

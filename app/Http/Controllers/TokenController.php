@@ -44,7 +44,8 @@ class TokenController extends Controller
             ->orderBy('token_id', 'DESC')
             ->where(function ($q) use ($searchTerm) {
                 if ($searchTerm) {
-                    $q->where('token_title', 'like', '%' . $searchTerm . '%')->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+                    $q->where('token_title', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('token_description', 'like', '%' . $searchTerm . '%');
                 }
             })
             ->paginate($request->limit);
