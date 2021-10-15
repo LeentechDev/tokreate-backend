@@ -138,17 +138,20 @@ class DragonpayController extends Controller
     public function createHistory($transaction)
     {
 
-        $edition = Edition::find($transaction->edition_id);
-        if ($edition) {
-            TokenHistory::create([
-                'token_id' => $transaction->transaction_token_id,
-                'edition_id' => $transaction->edition_id,
-                'price' => $edition->current_price,
-                'type' => Constants::TOKEN_HISTORY_BUY,
-                'buyer_id' => $transaction->user_id,
-                'seller_id' => $edition->owner_id,
-                'transaction_id' => $transaction->transaction_id
-            ]);
+        $tokenHistory = TokenHistory::where('transaction_id', $transaction->transaction_id)->first();
+        if (!$tokenHistory) {
+            $edition = Edition::find($transaction->edition_id);
+            if ($edition) {
+                TokenHistory::create([
+                    'token_id' => $transaction->transaction_token_id,
+                    'edition_id' => $transaction->edition_id,
+                    'price' => $edition->current_price,
+                    'type' => Constants::TOKEN_HISTORY_BUY,
+                    'buyer_id' => $transaction->user_id,
+                    'seller_id' => $edition->owner_id,
+                    'transaction_id' => $transaction->transaction_id
+                ]);
+            }
         }
     }
 

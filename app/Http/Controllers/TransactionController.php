@@ -213,7 +213,7 @@ class TransactionController extends Controller
 
                                         if ($user_details) {
                                             /* email and notification */
-                                            $email_msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfully and transferred the ownership to your wallet.</p>';
+                                            $email_msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfull and transferred the ownership to your wallet.</p>';
 
                                             $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
 
