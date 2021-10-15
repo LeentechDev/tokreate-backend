@@ -234,7 +234,7 @@ class TransactionController extends Controller
 
                                     $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
 
-                                    $pout_tnx = PayoutTransaction::create([
+                                    PayoutTransaction::create([
                                         'user_id' => $payout_details->user_id,
                                         'amount' => $payout_amount,
                                         'status' => Constants::PAYOUT_STATUS_PENDING,
