@@ -283,7 +283,7 @@ class TokenController extends Controller
                             }
 
                             if ($admin->profile->user_mail_notification == 1) {
-                                $msg = '<p><b>' . $admin->profile->user_profile_full_name . '</b> requested for minting the artwork <b>' . $request->input('token_title') . '</b>.</p>';
+                                $msg = '<p><b>' . $user_details->profile->user_profile_full_name . '</b> requested for minting the artwork <b>' . $request->input('token_title') . '</b>.</p>';
                                 Mail::send('mail.email', ['msg' => $msg, 'title' => 'Minting Request'], function ($message) use ($admin) {
                                     $message->to($admin->user_email, $admin->profile->user_profile_full_name)->subject('Minting Request');
                                     $message->from('support@tokreate.com', 'Tokreate');
