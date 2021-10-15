@@ -171,7 +171,7 @@ class TransactionController extends Controller
             $_transaction = Transaction::where('transaction_token_id', $request->input('token_id'))->where('transaction_id', $request->input('transaction_id'));
             $transaction = $_transaction->first();
             $edition_details = Edition::find($transaction->edition_id);
-        
+
             $token_creator = Token::find($transaction->transaction_token_id);
 
             $edition_owner = User::where('user_id',  $edition_details->owner_id)->first();
@@ -181,6 +181,14 @@ class TransactionController extends Controller
                 unset($request['token_id']);
                 $_transaction->update($request->all());
                 $email_msg = "";
+
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Transaction status has been successfully updated."
+                    ]
+                ];
+
                 switch ($request->transaction_status) {
                     case 1:
                         $email_msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is now processing.</p>';
@@ -202,14 +210,6 @@ class TransactionController extends Controller
                                 switch ($payout_res['RequestPayoutExResponse']['RequestPayoutExResult']) {
                                     case 0:
                                         $this->transferTokenOwnership($transaction_details);
-
-
-                                        $response = (object)[
-                                            "success" => true,
-                                            "result" => [
-                                                "message" => "Transaction status has been successfully updated."
-                                            ]
-                                        ];
 
                                         if ($user_details) {
                                             /* email and notification */
@@ -233,16 +233,13 @@ class TransactionController extends Controller
                                             });
                                         }
 
-                                        if($token_creator->creator->user_id !== $edition_owner->user_id){
+                                        if ($token_creator->creator->user_id !== $edition_owner->user_id) {
                                             $email_msg3 = '<p>Hi <b>' . $token_creator->creator->profile->user_profile_full_name . '</b>, your created artwork "<b>' . $transaction->token->token_title . '</b>" has been sold for <b>Php ' . $transaction->transaction_token_price . '</b>. You will received <b>Php ' . $transaction->transaction_royalty_amount . '</b>.</p>';
                                             Mail::send('mail.email', ['msg' => $email_msg3, 'title' => 'Token Purchase'], function ($message) use ($token_creator) {
                                                 $message->to($token_creator->creator->user_email, $token_creator->creator->profile->user_profile_full_name)->subject('Token Purchase');
                                                 $message->from('support@tokreate.com', 'Tokreate');
                                             });
                                         }
-
-
-                                        return response()->json($response, 200);
                                         break;
                                     case -1:
                                         return response()->json(['message' => "Something went wrong, please try again later."], 409);
@@ -303,6 +300,7 @@ class TransactionController extends Controller
                         'notification_type' => Constants::NOTIF_MINTING_RES,
                     ]);
                 }
+                return response()->json($response, 200);
             } else {
                 return response()->json(['message' => 'Transaction status update failed!'], 409);
             }
