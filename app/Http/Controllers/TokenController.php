@@ -45,7 +45,7 @@ class TokenController extends Controller
             ->where(function ($q) use ($searchTerm) {
                 if ($searchTerm) {
                     $q->where('token_title', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('token_description', 'like', '%' . $searchTerm . '%');
+                        ->orWhere('token_description', 'like', '%' . $searchTerm . '%');
                 }
             })
             ->paginate($request->limit);
@@ -280,6 +280,14 @@ class TokenController extends Controller
                                     'notification_item' => $token->token_id,
                                     'notification_type' => Constants::NOTIF_MINTING_REQ,
                                 ]);
+                            }
+
+                            if ($admin->profile->user_mail_notification == 1) {
+                                $msg = '<p><b>' . $admin->profile->user_profile_full_name . '</b> requested for minting the artwork <b>' . $request->input('token_title') . '</b>.</p>';
+                                Mail::send('mail.email', ['msg' => $msg, 'title' => 'Minting Request'], function ($message) use ($admin) {
+                                    $message->to($admin->user_email, $admin->profile->user_profile_full_name)->subject('Minting Request');
+                                    $message->from('support@tokreate.com', 'Tokreate');
+                                });
                             }
                         }
                     }
