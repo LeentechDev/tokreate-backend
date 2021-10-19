@@ -207,7 +207,13 @@ class TransactionController extends Controller
                             $payout_res = $dragonpay->payout($payout_details, $transaction_details);
                             if ($payout_res) {
 
-                                switch ($payout_res['RequestPayoutExResponse']['RequestPayoutExResult']) {
+                                if(isset($payout_res['RequestPayoutExResponse'])){
+                                    $payout_res = $payout_res['RequestPayoutExResponse']['RequestPayoutExResult'];
+                                }else{
+                                    $payout_res = $payout_res['RequestCashPayoutResponse']['RequestCashPayoutResult'];
+                                }
+
+                                switch ($payout_res) {
                                     case 0:
                                         $this->transferTokenOwnership($transaction_details);
 
