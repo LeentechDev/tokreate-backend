@@ -93,7 +93,7 @@ class WithdrawalController extends Controller
                 if ($request->filter_status !== "") {
                     $q->where('status', $request->filter_status);
                 }
-                $q->where('user_id', $user_id);
+                $q->where('payout_transactions.user_id', $user_id);
             })
             ->orderBy($request->sort, $request->sort_dirc)
             ->paginate($request->limit);
