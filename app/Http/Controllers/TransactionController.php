@@ -171,7 +171,6 @@ class TransactionController extends Controller
             $_transaction = Transaction::where('transaction_token_id', $request->input('token_id'))->where('transaction_id', $request->input('transaction_id'));
             $transaction = $_transaction->first();
             $edition_details = Edition::find($transaction->edition_id);
-
             $token_creator = Token::find($transaction->transaction_token_id);
 
             $edition_owner = User::where('user_id',  $edition_details->owner_id)->first();
@@ -204,12 +203,17 @@ class TransactionController extends Controller
                             $dragonpay = new DragonpayController();
                             $transaction_details = $_transaction->first();
 
-                            $payout_res = $dragonpay->payout($payout_details, $transaction_details);
+                            $estimated_royalty_amount = 0;
+                            if ($token_creator->creator->user_id !== $edition_owner->user_id) {
+                                $estimated_royalty_amount = ($token_creator->current_price * $token_creator->token_royalty) / 100;
+                            }
+
+                            $payout_res = $dragonpay->payout($payout_details, $transaction_details, $estimated_royalty_amount);
                             if ($payout_res) {
 
-                                if(isset($payout_res['RequestPayoutExResponse'])){
+                                if (isset($payout_res['RequestPayoutExResponse'])) {
                                     $payout_res = $payout_res['RequestPayoutExResponse']['RequestPayoutExResult'];
-                                }else{
+                                } else {
                                     $payout_res = $payout_res['RequestCashPayoutResponse']['RequestCashPayoutResult'];
                                 }
 
@@ -240,7 +244,7 @@ class TransactionController extends Controller
                                         }
 
                                         if ($token_creator->creator->user_id !== $edition_owner->user_id) {
-                                            $email_msg3 = '<p>Hi <b>' . $token_creator->creator->profile->user_profile_full_name . '</b>, your created artwork "<b>' . $transaction->token->token_title . '</b>" has been sold for <b>Php ' . $transaction->transaction_token_price . '</b>. You will received <b>Php ' . $transaction->transaction_royalty_amount . '</b>.</p>';
+                                            $email_msg3 = '<p>Hi <b>' . $token_creator->creator->profile->user_profile_full_name . '</b>, your created artwork "<b>' . $transaction->token->token_title . '</b>" has been sold for <b>Php ' . $transaction->transaction_token_price . '</b>. You will received <b>Php ' . $estimated_royalty_amount . '</b> royalty amount.</p>';
                                             Mail::send('mail.email', ['msg' => $email_msg3, 'title' => 'Token Purchase'], function ($message) use ($token_creator) {
                                                 $message->to($token_creator->creator->user_email, $token_creator->creator->profile->user_profile_full_name)->subject('Token Purchase');
                                                 $message->from('support@tokreate.com', 'Tokreate');

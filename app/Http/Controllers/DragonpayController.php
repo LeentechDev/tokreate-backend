@@ -164,7 +164,7 @@ class DragonpayController extends Controller
         }
     }
 
-    public function payout($payout_details, $transaction_details)
+    public function payout($payout_details, $transaction_details, $royalty_amount)
     {
         try {
 
@@ -172,7 +172,7 @@ class DragonpayController extends Controller
 
             if ($transaction_details && $payout_details) {
 
-                $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
+                $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $royalty_amount;
 
                 $asmx = 'PayoutService.asmx';
 
