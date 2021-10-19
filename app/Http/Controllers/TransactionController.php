@@ -204,8 +204,8 @@ class TransactionController extends Controller
                             $transaction_details = $_transaction->first();
 
                             $estimated_royalty_amount = 0;
-                            if ($token_creator->creator->user_id !== $edition_owner->user_id) {
-                                $estimated_royalty_amount = ($token_creator->current_price * $token_creator->token_royalty) / 100;
+                            if ($token_creator->creator->user_id !== $edition_details->owner_id) {
+                                $estimated_royalty_amount = ($edition_details->current_price * $token_creator->token_royalty) / 100;
                             }
 
                             $payout_res = $dragonpay->payout($payout_details, $transaction_details, $estimated_royalty_amount);
@@ -334,7 +334,7 @@ class TransactionController extends Controller
         /* if creator is not the seller of the token compute the royalties */
         if ((int)$token->user_id !== (int)$_edition->owner_id) {
 
-            $user_royalty = ($token->current_price * $token->token_royalty) / 100;
+            $user_royalty = ($_edition->current_price * $token->token_royalty) / 100;
 
             $_transaction->transaction_royalty_amount = $user_royalty;
             $transaction_saved = $_transaction->save();
