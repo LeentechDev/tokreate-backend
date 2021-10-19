@@ -287,7 +287,7 @@ class TransactionController extends Controller
                                 }
                             }
                         } else {
-                            return response()->json(['message' => "Unable to process payout, user don't payout details"], 409);
+                            return response()->json(['message' => "Unable to process payout, user don't have payout details"], 409);
                         }
                         break;
                     default:
