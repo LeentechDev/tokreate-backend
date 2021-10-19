@@ -179,7 +179,7 @@ class TransactionController extends Controller
 
             if ($_transaction) {
                 unset($request['token_id']);
-                $_transaction->update($request->all());
+
                 $email_msg = "";
 
                 $response = (object)[
@@ -300,6 +300,9 @@ class TransactionController extends Controller
                         'notification_type' => Constants::NOTIF_MINTING_RES,
                     ]);
                 }
+
+                $_transaction->update($request->all());
+
                 return response()->json($response, 200);
             } else {
                 return response()->json(['message' => 'Transaction status update failed!'], 409);
