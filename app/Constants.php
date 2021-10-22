@@ -62,4 +62,11 @@ class Constants
     const PAYOUT_STATUS_REFUND = 4;
     const PAYOUT_STATUS_CHARGEBACK = 5;
     const PAYOUT_STATUS_VOID = 6;
+
+    const CRON_TERMS = 1;
+    const CRON_POLICY = 2;
+    const CRON_COMMISSION = 3;
+
+    const CRON_STATUS_PENDING = 0;
+    const CRON_STATUS_DONE = 1;
 }

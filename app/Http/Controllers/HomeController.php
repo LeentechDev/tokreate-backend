@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Constants;
+use App\CronJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\User;
@@ -148,7 +149,29 @@ class HomeController extends Controller
             DB::table('gas_fees')->where('gas_fee_name', 'gas_fee_updated_by')->update(['gas_fee_updated_by' => $r->gas_fee_updated_by]);
             DB::table('gas_fees')->where('gas_fee_name', 'gas_fee_updated_at')->update(['gas_fee_updated_at' => $r->gas_fee_updated_at]);
 
+            $commission_rate_value = SiteSettings::where('name', 'commission_percentage')->first();
             SiteSettings::where('name', 'commission_percentage')->update(['value' => $r->commision_rate]);
+
+            if ($commission_rate_value->value !== $r->commision_rate) {
+
+                $users = User::where('user_role_id', '!=', Constants::USER_ADMIN)->pluck('user_id')->toArray();
+
+                $batches = array_chunk($users, 10);
+                $no_batch = count($batches);
+
+                for ($i = 0; $i < $no_batch; $i++) {
+
+                    $batch = implode(',', $batches[$i]);
+
+                    CronJobs::create([
+                        'user_id' => $batch,
+                        'content' => "",
+                        'type'    => Constants::CRON_COMMISSION,
+                        'status'  => Constants::CRON_STATUS_PENDING
+                    ]);
+                }
+            }
+
             SiteSettings::where('name', 'allowance_fee')->update(['value' => $r->allowance_fee]);
 
             $response = (object)[

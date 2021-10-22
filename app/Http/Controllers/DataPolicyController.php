@@ -2,36 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants;
+use App\CronJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Data_policy;
 use DB;
+use App\User;
 
 class DataPolicyController  extends Controller
 {
-     /**
+    /**
      * Instantiate a new UserController instance.
      *
      * @return void
      */
 
 
-    public function viewDataPolicy(){
-        $dataPolicy= DB::select("SELECT * FROM `data_policy`
+    public function viewDataPolicy()
+    {
+        $dataPolicy = DB::select("SELECT * FROM `data_policy`
         LEFT JOIN `user_profiles` ON `user_profiles`.`user_id` = `data_policy`.`data_policy_update_by`
         WHERE id='1'");
-       
-        if($dataPolicy){
-            $response=(object)[
-                "success" => true,  
+
+        if ($dataPolicy) {
+            $response = (object)[
+                "success" => true,
                 "result" => [
                     "datas" => $dataPolicy,
                     "message" => "Here are the details of data policy.",
                 ]
             ];
             return response()->json($response, 200);
-        }else{
-            $response=(object)[
+        } else {
+            $response = (object)[
                 "success" => true,
                 "result" => [
                     "message" => "Data Policy not found.",
@@ -45,26 +49,40 @@ class DataPolicyController  extends Controller
     public function updateDataPolicy(Request $request)
     {
         $dataPolicy = Data_policy::findOrFail($request->id);
-        
-        if($dataPolicy){
+
+        if ($dataPolicy) {
             $dataPolicy->update($request->all());
-            $response=(object)[
+            $response = (object)[
                 "success" => true,
                 "result" => [
                     "message" => "Data Policy has been successfully updated",
                 ]
             ];
-        }else{
-            $response=(object)[
+
+            $users = User::where('user_role_id', '!=', Constants::USER_ADMIN)->pluck('user_id')->toArray();
+
+            $batches = array_chunk($users, 10);
+            $no_batch = count($batches);
+
+            for ($i = 0; $i < $no_batch; $i++) {
+
+                $batch = implode(',', $batches[$i]);
+
+                CronJobs::create([
+                    'user_id' => $batch,
+                    'content' => "",
+                    'type'    => Constants::CRON_POLICY,
+                    'status'  => Constants::CRON_STATUS_PENDING
+                ]);
+            }
+        } else {
+            $response = (object)[
                 "success" => false,
                 "result" => [
                     "message" => "Invalid parameters",
                 ]
             ];
-        } 
+        }
         return response()->json($response, 200);
     }
 }
-
-
-    
