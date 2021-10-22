@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Mail;
 use App\Notifications;
 use App\Constants;
 use Illuminate\Support\Facades\Log;
+use App\CronJobs;
 
-class CronJobs extends Command
+class CronJob extends Command
 {
     /**
      * The name and signature of the console command.
@@ -39,7 +40,7 @@ class CronJobs extends Command
     public function handle()
     {
         try {
-            $crons = CronJobs::where('status', Constants::CRON_STATUS_PENDING)->limit(3)->get();
+            $crons = CronJobs::where('status', Constants::CRON_STATUS_PENDING)->get();
 
             foreach ($crons as $cron) {
 
@@ -50,10 +51,10 @@ class CronJobs extends Command
                         foreach ($users as $user_id) {
                             $user = User::where('user_id', $user_id)->first();
 
-                            $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/termsandcondition'>Terms of Use</a>.</p>";
+                            $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/termsandcondition'>Terms of Use</a>.</p>";
                             $subject = "Terms and Condition Updates";
 
-                            Mail::send('mail.email', ['msg' => $email_msg], function ($message) use ($user, $subject) {
+                            Mail::send('mail.email', ['msg' => $email_msg, 'title' => $subject], function ($message) use ($user, $subject) {
                                 $message->to($user->user_email, $user->profile->user_profile_full_name)->subject($subject);
                                 $message->from('support@tokreate.com', 'Tokreate');
                             });
@@ -72,10 +73,10 @@ class CronJobs extends Command
                         foreach ($users as $user_id) {
                             $user = User::where('user_id', $user_id)->first();
 
-                            $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/privacypolicy'>Privacy Policy</a>.</p>";
+                            $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/privacypolicy'>Privacy Policy</a>.</p>";
                             $subject = "Privacy Policy";
 
-                            Mail::send('mail.email', ['msg' => $email_msg], function ($message) use ($user, $subject) {
+                            Mail::send('mail.email', ['msg' => $email_msg, 'title' => $subject], function ($message) use ($user, $subject) {
                                 $message->to($user->user_email, $user->profile->user_profile_full_name)->subject($subject);
                                 $message->from('support@tokreate.com', 'Tokreate');
                             });
@@ -94,10 +95,10 @@ class CronJobs extends Command
                         foreach ($users as $user_id) {
                             $user = User::where('user_id', $user_id)->first();
 
-                            $email_msg = '<p>Hi <b>' . $user->profile->user_profile_full_name . '</b>,</p>' . $cron->content;
+                            $email_msg = '<p>Hi <b>' . $user->profile->user_profile_full_name . '</b>, <br><br> </p>' . $cron->content;
                             $subject = "Update on Commission Rate";
 
-                            Mail::send('mail.transfer-status', ['msg' => $email_msg], function ($message) use ($user, $subject) {
+                            Mail::send('mail.transfer-status', ['msg' => $email_msg, 'title' => $subject], function ($message) use ($user, $subject) {
                                 $message->to($user->user_email, $user->profile->user_profile_full_name)->subject($subject);
                                 $message->from('support@tokreate.com', 'Tokreate');
                             });

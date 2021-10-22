@@ -16,7 +16,7 @@ class CreateTableCronJobs extends Migration
         Schema::create('cron_jobs', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('user_id');
-            $table->integer('content');
+            $table->text('content')->nullable();
             $table->integer('type');
             $table->integer('status')->comment('0 = Pending, 1 = Done');
             $table->timestamps();
