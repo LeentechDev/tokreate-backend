@@ -203,87 +203,111 @@ class TransactionController extends Controller
                             $dragonpay = new DragonpayController();
                             $transaction_details = $_transaction->first();
 
-                            $estimated_royalty_amount = 0;
-                            if ($token_creator->creator->user_id !== $edition_details->owner_id) {
-                                $estimated_royalty_amount = ($edition_details->current_price * $token_creator->token_royalty) / 100;
-                            }
-
-                            $payout_res = $dragonpay->payout($payout_details, $transaction_details, $estimated_royalty_amount);
-                            if ($payout_res) {
-
-                                if (isset($payout_res['RequestPayoutExResponse'])) {
-                                    $payout_res = $payout_res['RequestPayoutExResponse']['RequestPayoutExResult'];
-                                } else {
-                                    $payout_res = $payout_res['RequestCashPayoutResponse']['RequestCashPayoutResult'];
+                            if($transaction_details){
+                                $estimated_royalty_amount = 0;
+                                if ($token_creator->creator->user_id !== $edition_details->owner_id) {
+                                    $estimated_royalty_amount = ($edition_details->current_price * $token_creator->token_royalty) / 100;
                                 }
 
-                                switch ($payout_res) {
-                                    case 0:
-                                        $this->transferTokenOwnership($transaction_details);
+                                $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $estimated_royalty_amount;
 
-                                        if ($user_details) {
-                                            /* email and notification */
-                                            $email_msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfull and transferred the ownership to your wallet.</p>';
+                                $payout_res = $dragonpay->payout($payout_details, $transaction_details->transaction_id, $payout_amount);
 
-                                            $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $transaction_details->transaction_royalty_amount;
+                                if ($payout_res) {
 
-                                            PayoutTransaction::create([
-                                                'user_id' => $payout_details->user_id,
-                                                'amount' => $payout_amount,
-                                                'status' => Constants::PAYOUT_STATUS_PENDING,
-                                                'transaction_id' => $transaction_details->transaction_id
-                                            ]);
-                                        }
+                                    if (isset($payout_res['RequestPayoutExResponse'])) {
+                                        $payout_res = $payout_res['RequestPayoutExResponse']['RequestPayoutExResult'];
+                                    } else {
+                                        $payout_res = $payout_res['RequestCashPayoutResponse']['RequestCashPayoutResult'];
+                                    }
 
-                                        if ($edition_owner->profile->user_mail_notification == 1) {
-                                            $email_msg2 = '<p>Hi <b>' . $edition_owner->profile->user_profile_full_name . '</b>, your token "<b>' . $transaction->token->token_title . '</b>" has been sold to ' . $user_details->profile->user_profile_full_name . ' for <b>Php ' . $transaction->transaction_token_price . '</b> .</p>';
-                                            Mail::send('mail.email', ['msg' => $email_msg2, 'title' => 'Token Purchase'], function ($message) use ($edition_owner) {
-                                                $message->to($edition_owner->user_email, $edition_owner->profile->user_profile_full_name)->subject('Token Purchase');
-                                                $message->from('support@tokreate.com', 'Tokreate');
-                                            });
-                                        }
+                                    switch ($payout_res) {
+                                        case 0:
+                                            $this->transferTokenOwnership($transaction_details);
 
-                                        if ($token_creator->creator->user_id !== $edition_owner->user_id) {
-                                            $email_msg3 = '<p>Hi <b>' . $token_creator->creator->profile->user_profile_full_name . '</b>, your created artwork "<b>' . $transaction->token->token_title . '</b>" has been sold for <b>Php ' . $transaction->transaction_token_price . '</b>. You will received <b>Php ' . $estimated_royalty_amount . '</b> royalty amount.</p>';
-                                            Mail::send('mail.email', ['msg' => $email_msg3, 'title' => 'Token Purchase'], function ($message) use ($token_creator) {
-                                                $message->to($token_creator->creator->user_email, $token_creator->creator->profile->user_profile_full_name)->subject('Token Purchase');
-                                                $message->from('support@tokreate.com', 'Tokreate');
-                                            });
-                                        }
-                                        break;
-                                    case -1:
-                                        return response()->json(['message' => "Something went wrong, please try again later."], 409);
-                                        break;
-                                    case -4:
-                                        return response()->json(['message' => "Unable to create a payout transaction"], 409);
-                                        break;
-                                    case -5:
-                                        return response()->json(['message' => "Invalid payout account details"], 409);
-                                        break;
-                                    case -6:
-                                        return response()->json(['message' => "Cannot accept a pre-dated run date"], 409);
-                                        break;
-                                    case -7:
-                                        return response()->json(['message' => "Amount limited exceeded"], 409);
-                                        break;
-                                    case -8:
-                                        return response()->json(['message' => "Similar transaction id already exists"], 409);
-                                        break;
-                                    case -9:
-                                        return response()->json(['message' => "Server IP access is not allowed"], 409);
-                                        break;
-                                    case -10:
-                                        return response()->json(['message' => "Payout account is blacklisted"], 409);
-                                        break;
-                                    case -11:
-                                        return response()->json(['message' => "Payout account is not enrolled for bank"], 409);
-                                        break;
-                                    case -12:
-                                        return response()->json(['message' => "Invalid API Key"], 409);
-                                        break;
-                                    default:
-                                        # code...
-                                        break;
+                                            if ($user_details) {
+                                                /* email and notification */
+                                                $email_msg = '<p>Hi <b>' . $user_details->profile->user_profile_full_name . '</b>, your purchase for "<b>' . $transaction->token->token_title . '</b>" is successfull and transferred the ownership to your wallet.</p>';
+
+                                                PayoutTransaction::create([
+                                                    'user_id' => $payout_details->user_id,
+                                                    'amount' => $payout_amount,
+                                                    'status' => Constants::PAYOUT_STATUS_PENDING,
+                                                    'transaction_id' => $transaction_details->transaction_id
+                                                ]);
+                                            }
+
+                                            if ($edition_owner->profile->user_mail_notification == 1) {
+                                                $email_msg2 = '<p>Hi <b>' . $edition_owner->profile->user_profile_full_name . '</b>, your token "<b>' . $transaction->token->token_title . '</b>" has been sold to ' . $user_details->profile->user_profile_full_name . ' for <b>Php ' . $transaction->transaction_token_price . '</b> .</p>';
+                                                Mail::send('mail.email', ['msg' => $email_msg2, 'title' => 'Token Purchase'], function ($message) use ($edition_owner) {
+                                                    $message->to($edition_owner->user_email, $edition_owner->profile->user_profile_full_name)->subject('Token Purchase');
+                                                    $message->from('support@tokreate.com', 'Tokreate');
+                                                });
+                                            }
+
+                                            if ($token_creator->creator->user_id !== $edition_owner->user_id) {
+
+                                                $payout_details = Payout::where('user_id', $token_creator->creator->user_id)->first();
+                                                $royalty_payout_tnxid = 'R-'.$transaction_details->transaction_id;
+
+                                                $payout_res2 = $dragonpay->payout($payout_details, $royalty_payout_tnxid, $estimated_royalty_amount);
+
+                                                if (isset($payout_res2['RequestPayoutExResponse'])) {
+                                                    $payout_res2 = $payout_res2['RequestPayoutExResponse']['RequestPayoutExResult'];
+                                                } else {
+                                                    $payout_res2 = $payout_res2['RequestCashPayoutResponse']['RequestCashPayoutResult'];
+                                                }
+            
+                                                if ($payout_res2 == 0) {
+                                                    PayoutTransaction::create([
+                                                        'user_id' => $payout_details->user_id,
+                                                        'amount' => $payout_amount,
+                                                        'status' => Constants::PAYOUT_STATUS_PENDING,
+                                                        'transaction_id' => $royalty_payout_tnxid
+                                                    ]);
+                                                }
+
+                                                $email_msg3 = '<p>Hi <b>' . $token_creator->creator->profile->user_profile_full_name . '</b>, your created artwork "<b>' . $transaction->token->token_title . '</b>" has been sold for <b>Php ' . $transaction->transaction_token_price . '</b>. You will received <b>Php ' . $estimated_royalty_amount . '</b> royalty amount.</p>';
+                                                Mail::send('mail.email', ['msg' => $email_msg3, 'title' => 'Token Purchase'], function ($message) use ($token_creator) {
+                                                    $message->to($token_creator->creator->user_email, $token_creator->creator->profile->user_profile_full_name)->subject('Token Purchase');
+                                                    $message->from('support@tokreate.com', 'Tokreate');
+                                                });
+                                            }
+                                            break;
+                                        case -1:
+                                            return response()->json(['message' => "Something went wrong, please try again later."], 409);
+                                            break;
+                                        case -4:
+                                            return response()->json(['message' => "Unable to create a payout transaction"], 409);
+                                            break;
+                                        case -5:
+                                            return response()->json(['message' => "Invalid payout account details"], 409);
+                                            break;
+                                        case -6:
+                                            return response()->json(['message' => "Cannot accept a pre-dated run date"], 409);
+                                            break;
+                                        case -7:
+                                            return response()->json(['message' => "Amount limited exceeded"], 409);
+                                            break;
+                                        case -8:
+                                            return response()->json(['message' => "Similar transaction id already exists"], 409);
+                                            break;
+                                        case -9:
+                                            return response()->json(['message' => "Server IP access is not allowed"], 409);
+                                            break;
+                                        case -10:
+                                            return response()->json(['message' => "Payout account is blacklisted"], 409);
+                                            break;
+                                        case -11:
+                                            return response()->json(['message' => "Payout account is not enrolled for bank"], 409);
+                                            break;
+                                        case -12:
+                                            return response()->json(['message' => "Invalid API Key"], 409);
+                                            break;
+                                        default:
+                                            # code...
+                                            break;
+                                    }
                                 }
                             }
                         } else {

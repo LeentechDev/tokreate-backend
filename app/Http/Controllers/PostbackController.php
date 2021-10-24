@@ -124,50 +124,43 @@ class PostbackController extends Controller
             file_put_contents($file, 'asda');     // Save our content to the file.
         }
 
-        $_payout_tnxs = Edition::find('id', $request['merchantTxnId']);
+        $_payout_tnxs = PayoutTransaction::find('transaction_id', $request['merchantTxnId']);
 
         if ($_payout_tnxs) {
             switch ($request['status']) {
                 case 'S':
                     $_payout_tnxs->update([
                         'status' => Constants::PAYOUT_STATUS_DONE,
-                        'on_market' => 0,
                     ]);
                     break;
                 case 'F':
                     $_payout_tnxs->update([
                         'status' => Constants::PAYOUT_STATUS_FAILED,
-                        'on_market' => 0,
                     ]);
                     break;
                 case 'P':
                     $_payout_tnxs->update([
                         'status' => Constants::PAYOUT_STATUS_PENDING,
-                        'on_market' => 0,
                     ]);
                     break;
                 case 'U':
                     $_payout_tnxs->update([
                         'status' => Constants::PAYOUT_STATUS_UNKNOWN,
-                        'on_market' => 0,
                     ]);
                     break;
                 case 'R':
                     $_payout_tnxs->update([
                         'status' => Constants::PAYOUT_STATUS_REFUND,
-                        'on_market' => 0,
                     ]);
                     break;
                 case 'K':
                     $_payout_tnxs->update([
                         'status' => Constants::PAYOUT_STATUS_CHARGEBACK,
-                        'on_market' => 0,
                     ]);
                     break;
                 case 'V':
                     $_payout_tnxs->update([
                         'status' => Constants::PAYOUT_STATUS_VOID,
-                        'on_market' => 0,
                     ]);
                     break;
                 default:

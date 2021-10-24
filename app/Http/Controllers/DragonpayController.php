@@ -164,15 +164,11 @@ class DragonpayController extends Controller
         }
     }
 
-    public function payout($payout_details, $transaction_details, $royalty_amount)
+    public function payout($payout_details, $merchantTxnId, $payout_amount)
     {
         try {
 
-            $payout_amount = 0;
-
-            if ($transaction_details && $payout_details) {
-
-                $payout_amount = $transaction_details->transaction_token_price - $transaction_details->transaction_computed_commission - $royalty_amount;
+            if ($payout_details) {
 
                 $asmx = 'PayoutService.asmx';
 
@@ -185,7 +181,7 @@ class DragonpayController extends Controller
                 if (in_array($payout_details->payout_proc_id, $cash_pickups)) {
                     $xml .= '<RequestCashPayout  xmlns="http://api.dragonpay.ph/">';
                     $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
-                    $xml .= '<merchantTxnId>' . $transaction_details->transaction_id . '</merchantTxnId>';
+                    $xml .= '<merchantTxnId>' . $merchantTxnId . '</merchantTxnId>';
                     $xml .= '<firstName>' . $payout_details->payout_first_name . '</firstName>';
                     $xml .= '<middleName>' . $payout_details->payout_middle_name . '</middleName>';
                     $xml .= '<lastName>' . $payout_details->payout_last_name . '</lastName>';
@@ -206,7 +202,7 @@ class DragonpayController extends Controller
                 } else {
                     $xml .= '<RequestPayoutEx xmlns="http://api.dragonpay.ph/">';
                     $xml .= '<apiKey>' . SELF::MERCHANT_API_KEY . '</apiKey>';
-                    $xml .= '<merchantTxnId>' . $transaction_details->transaction_id . '</merchantTxnId>';
+                    $xml .= '<merchantTxnId>' . $merchantTxnId . '</merchantTxnId>';
                     $xml .= '<userName>' . $payout_details->payout_first_name . ' ' . $payout_details->payout_last_name . '</userName>';
                     $xml .= '<amount>' . $payout_amount . '</amount>';
                     $xml .= '<currency>PHP</currency>';

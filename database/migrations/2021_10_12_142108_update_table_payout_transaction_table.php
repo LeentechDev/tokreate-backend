@@ -14,7 +14,7 @@ class UpdateTablePayoutTransactionTable extends Migration
     public function up()
     {
         Schema::table('payout_transactions', function (Blueprint $table) {
-            $table->integer('transaction_id')->nullable();
+            $table->text('transaction_id')->nullable();
         });
     }
 

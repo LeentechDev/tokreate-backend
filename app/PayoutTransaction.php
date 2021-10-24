@@ -24,6 +24,7 @@ class PayoutTransaction extends Model implements AuthenticatableContract, Author
         'user_id',
         'amount',
         'status',
+        'transaction_id'
     ];
 
     protected $table = "payout_transactions";
