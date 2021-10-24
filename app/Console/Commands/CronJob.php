@@ -51,20 +51,22 @@ class CronJob extends Command
                         foreach ($users as $user_id) {
                             $user = User::where('user_id', $user_id)->first();
 
-                            $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/termsandcondition'>Terms of Use</a>.</p>";
-                            $subject = "Terms and Condition Updates";
+                            if($user){
+                                $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/termsandcondition'>Terms of Use</a>.</p>";
+                                $subject = "Terms and Condition Updates";
 
-                            Mail::send('mail.email', ['msg' => $email_msg, 'title' => $subject], function ($message) use ($user, $subject) {
-                                $message->to($user->user_email, $user->profile->user_profile_full_name)->subject($subject);
-                                $message->from('support@tokreate.com', 'Tokreate');
-                            });
+                                Mail::send('mail.email', ['msg' => $email_msg, 'title' => $subject], function ($message) use ($user, $subject) {
+                                    $message->to($user->user_email, $user->profile->user_profile_full_name)->subject($subject);
+                                    $message->from('support@tokreate.com', 'Tokreate');
+                                });
 
-                            Notifications::create([
-                                'notification_message' => $email_msg,
-                                'notification_to' => $user_id,
-                                'notification_from' => 0,
-                                'notification_type' => Constants::NOTIF_MINTING_RES,
-                            ]);
+                                Notifications::create([
+                                    'notification_message' => $email_msg,
+                                    'notification_to' => $user_id,
+                                    'notification_from' => 0,
+                                    'notification_type' => Constants::NOTIF_MINTING_RES,
+                                ]);
+                            }
                         }
                         break;
 
