@@ -52,7 +52,7 @@ class CronJob extends Command
                             $user = User::where('user_id', $user_id)->first();
 
                             if($user){
-                                $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/termsandcondition'>Terms of Use</a>.</p>";
+                                $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "termsandcondition'>Terms of Use</a>.</p>";
                                 $subject = "Terms and Condition Updates";
 
                                 Mail::send('mail.email', ['msg' => $email_msg, 'title' => $subject], function ($message) use ($user, $subject) {
@@ -63,8 +63,8 @@ class CronJob extends Command
                                 Notifications::create([
                                     'notification_message' => $email_msg,
                                     'notification_to' => $user_id,
-                                    'notification_from' => 0,
-                                    'notification_type' => Constants::NOTIF_MINTING_RES,
+                                    'notification_from' => $cron->from_user_id,
+                                    'notification_type' => Constants::NOTIF_TERMS_UPDATE,
                                 ]);
                             }
                         }
@@ -76,7 +76,7 @@ class CronJob extends Command
                             $user = User::where('user_id', $user_id)->first();
 
                             if($user){
-                                $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "/privacypolicy'>Privacy Policy</a>.</p>";
+                                $email_msg = "<p>Dear <b>" . $user->profile->user_profile_full_name . "</b>, <br><br> We are continuing to develop more features on our websites. To address these changes, we've updated our <a href='" . ENV('APP_URL') . "privacypolicy'>Privacy Policy</a>.</p>";
                                 $subject = "Privacy Policy";
 
                                 Mail::send('mail.email', ['msg' => $email_msg, 'title' => $subject], function ($message) use ($user, $subject) {
@@ -87,8 +87,8 @@ class CronJob extends Command
                                 Notifications::create([
                                     'notification_message' => $email_msg,
                                     'notification_to' => $user_id,
-                                    'notification_from' => 0,
-                                    'notification_type' => Constants::NOTIF_MINTING_RES,
+                                    'notification_from' => $cron->from_user_id,
+                                    'notification_type' => Constants::NOTIF_POLICY_UPDATE,
                                 ]);
                             }
                         }
@@ -111,8 +111,8 @@ class CronJob extends Command
                                 Notifications::create([
                                     'notification_message' => $email_msg,
                                     'notification_to' => $user_id,
-                                    'notification_from' => 0,
-                                    'notification_type' => Constants::NOTIF_MINTING_RES,
+                                    'notification_from' => $cron->from_user_id,
+                                    'notification_type' => Constants::NOTIF_COMMISSION_UPDATE,
                                 ]);
                             }
                         }

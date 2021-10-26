@@ -72,6 +72,7 @@ class TermsandConditionController  extends Controller
 
                 CronJobs::create([
                     'user_id' => $batch,
+                    'from_user_id' => Auth::user()->user_id,
                     'content' => "",
                     'type'    => Constants::CRON_TERMS,
                     'status'  => Constants::CRON_STATUS_PENDING

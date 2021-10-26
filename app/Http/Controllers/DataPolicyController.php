@@ -70,6 +70,7 @@ class DataPolicyController  extends Controller
 
                 CronJobs::create([
                     'user_id' => $batch,
+                    'from_user_id' => Auth::user()->user_id,
                     'content' => "",
                     'type'    => Constants::CRON_POLICY,
                     'status'  => Constants::CRON_STATUS_PENDING

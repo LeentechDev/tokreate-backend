@@ -19,7 +19,7 @@ class CronJobs extends Model implements AuthenticatableContract, AuthorizableCon
      */
     protected $primaryKey = 'id';
     protected $fillable = [
-        'id', 'user_id', 'content', 'type', 'status', 'created_at', 'updated_at'
+        'id', 'user_id', 'from_user_id', 'content', 'type', 'status', 'created_at', 'updated_at'
     ];
 
     protected $table = 'cron_jobs';

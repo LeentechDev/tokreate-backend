@@ -165,7 +165,8 @@ class HomeController extends Controller
 
                     CronJobs::create([
                         'user_id' => $batch,
-                        'content' => "<p> Commision Rate has been update to " . $r->commision_rate . "% </p>",
+                        'content' => "<p> Commision Rate has been updated to " . $r->commision_rate . "% </p>",
+                        'from_user_id' => Auth::user()->user_id,
                         'type'    => Constants::CRON_COMMISSION,
                         'status'  => Constants::CRON_STATUS_PENDING
                     ]);

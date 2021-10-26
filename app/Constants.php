@@ -20,6 +20,9 @@ class Constants
     const NOTIF_MINTING_RES = 2;
     const NOTIF_WALLET_REQ = 3;
     const NOTIF_MINTING_REQ = 4;
+    const NOTIF_COMMISSION_UPDATE = 5;
+    const NOTIF_TERMS_UPDATE = 6;
+    const NOTIF_POLICY_UPDATE = 7;
 
     const PENDING = 0;
     const PROCESSING = 1;
