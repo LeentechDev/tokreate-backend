@@ -98,7 +98,7 @@ class DragonpayController extends Controller
                 'txnid' => $tnxid,
                 'amount' => $request['transaction_grand_total'],
                 'ccy' => 'PHP',
-                'description' => 'test',
+                'description' => 'Payment',
                 'email' => $user_details->user_email,
 
             );
@@ -108,7 +108,7 @@ class DragonpayController extends Controller
             $digest_string = implode(':', $params);
             unset($params['key']);
             $params['digest'] = sha1($digest_string);
-            if ($request->proc_id) {
+            if ($request->proc_id && $request->proc_id !== 'undefined') {
                 $params['procid'] = $request->proc_id;
             }
 
