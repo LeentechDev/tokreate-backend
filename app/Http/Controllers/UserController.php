@@ -21,7 +21,7 @@ class UserController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth');
+        // $this->middleware('auth');
     }
 
     public function profile()
@@ -554,5 +554,108 @@ class UserController extends Controller
             ];
         }
         return response()->json($response, 200);
+    }
+
+    public function copyLinkArtistProfile(Request $request, $user_name)
+    {
+        $user = User::where('user_name', $user_name)
+            ->with([
+                'profile',
+                'fund',
+                'wallet' => function ($q) {
+                    $q->orderBy('wallet_id', 'DESC')->first();
+                }
+            ])->first();
+
+        if ($user->fund) {
+            $user['total_available_fund'] = $user->fund->history()->sum('amount');
+        }
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "datas" => $user,
+            ]
+        ];
+        return response()->json($response, 200);
+    }
+
+    public function getUserTokensID(Request $req)
+    {
+        $user_id = User::where('user_name', ($req->user_name))->first();
+        
+        // $user_id = Auth::user()->user_id;
+        $page = $req->page;
+        $limit = $req->limit;
+        /* DB::enableQueryLog(); */
+        if ($req->user_id) {
+            $user_id = $req->user_id;
+        } else {
+            if ($req->collection != 2) {
+                if ($req->collection) {
+                    $on_market = 0;
+                } else {
+                    $on_market = 1;
+                }
+
+                $tokens = Token::select(
+                    'tokens.*',
+                    'editions.edition_no',
+                    'editions.on_market',
+                    'editions.edition_id',
+                    'editions.current_price as current_price',
+                    'editions.owner_id',
+                    DB::raw("(case when tokens.user_id = " . $user_id . " then remaining_token else edition_no end ) as remainToken")
+                )
+                    ->rightJoin("editions", 'tokens.token_id', 'editions.token_id')
+                    ->with([
+                        'transactions' => function ($q) {
+                            $q->orderBy('transaction_id', 'DESC');
+                        }
+                    ])
+                    ->where('token_status', Constants::READY)
+                    ->where('on_market', $on_market)
+                    ->where('editions.owner_id', $user_id)
+                    ->paginate($limit);
+            } else {
+                $tokens = Token::select(
+                    '*',
+                    'token_collectible_count as edition_no',
+                    'token_starting_price as current_price'
+                )
+                    ->leftJoin('editions', 'editions.token_id', 'tokens.token_id')
+                    ->where('user_id', $user_id->user_id)
+                    ->groupBy('tokens.token_id')
+                    ->paginate($limit);
+            }
+        }
+        /* print_r(DB::getQueryLog());
+        die; */
+
+        foreach ($tokens as $key => $value) {
+            // $tokens[$key]->history = $value->history()->orderBy('id', 'DESC')->paginate(10);
+            $tokens[$key]->history = $value->history()->join('transactions', 'transactions.transaction_id', 'token_history.transaction_id')->where('transaction_status', Constants::TRANSACTION_SUCCESS)->orderBy('id', 'DESC')->paginate(10);
+            $tokens[$key]->token_properties = json_decode(json_decode($value->token_properties));
+            $tokens[$key]->mint_transactions = $value->transactions()->where('transaction_type', Constants::TRANSACTION_MINTING)->orderBy('transaction_id', 'ASC')->first();
+            $tokens[$key]->owner = User::find($value->owner_id);
+        }
+
+        if ($tokens->total()) {
+            $response = (object)[
+                "success" => false,
+                "result" => [
+                    "datas" => $tokens,
+                ]
+            ];
+        } else {
+            $response = (object)[
+                "success" => false,
+                "result" => [
+                    "datas" => null,
+                    "message" => 'No artworks found.',
+                ]
+            ];
+        }
+        $response = response()->json($response, 200);
+        return $response;
     }
 }
