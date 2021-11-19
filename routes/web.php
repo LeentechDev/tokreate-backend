@@ -49,6 +49,8 @@ $router->group(['prefix' => 'api/user'], function () use ($router) {
     $router->put('update-mail-notif', 'UserController@changeEmailNotifSettings');
     $router->post('update-account', 'UserController@updateAccount');
     $router->post('update-payout', 'UserController@updatePayout');
+    $router->get('copy_link_profile/{id}', 'UserController@copyLinkArtistProfile');
+    $router->get('tokens_artist', 'UserController@getUserTokensID');
 });
 
 

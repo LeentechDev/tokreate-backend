@@ -64,7 +64,7 @@ class TransactionController extends Controller
                 ->with(['transaction_owner', 'token'])
                 ->orderBy($request->sort, $request->sort_dirc)
                 ->orderBy('transaction_payment_status', 'ASC')
-                ->paginate();
+                ->paginate($request->limit);
 
             $response = (object)[
                 "success" => true,
