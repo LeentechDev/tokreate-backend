@@ -41,14 +41,14 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
 
 $router->group(['prefix' => 'api/user'], function () use ($router) {
-    $router->get('profile', 'UserController@profile');
     $router->get('tokens', 'UserController@getUserTokens');
-    $router->get('specific-token', 'UserController@specificToken');
     $router->get('copy_link_profile/{id}', 'UserController@copyLinkArtistProfile');
 });
 
 $router->group(['prefix' => 'api/user'], function () use ($router) {
     $router->group(['middleware' => 'auth'], function () use ($router) {
+        $router->get('profile', 'UserController@profile');
+        $router->get('specific-token', 'UserController@specificToken');
         $router->post('change-password', 'UserController@changePassword');
         $router->put('update-web-notif', 'UserController@changeNotifSettings');
         $router->put('update-mail-notif', 'UserController@changeEmailNotifSettings');
