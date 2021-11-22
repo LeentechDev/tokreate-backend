@@ -53,7 +53,6 @@ class UserController extends Controller
 
     public function getUserTokens(Request $req)
     {
-        $user_id = Auth::user()->user_id;
         $page = $req->page;
         $limit = $req->limit;
         /* DB::enableQueryLog(); */
@@ -61,6 +60,8 @@ class UserController extends Controller
         if ($req->user_name) {
             $user_data = User::where('user_name', ($req->user_name))->first();
             $user_id = $user_data->user_id;
+        }else{
+            $user_id = Auth::user()->user_id;
         }
 
         if ($req->collection != 2) {
