@@ -42,7 +42,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
 $router->group(['prefix' => 'api/user'], function () use ($router) {
     $router->get('profile', 'UserController@profile');
-    $router->get('tokens', 'UserController@getUserTokens');
+    $router->get('tokens', 'UserController@getUserTokens')->middleware('\App\Http\Middleware\Authenticate::class');
     $router->get('specific-token', 'UserController@specificToken');
     $router->post('change-password', 'UserController@changePassword');
     $router->put('update-web-notif', 'UserController@changeNotifSettings');
