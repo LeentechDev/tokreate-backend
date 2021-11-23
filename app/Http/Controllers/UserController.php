@@ -21,7 +21,6 @@ class UserController extends Controller
      */
     public function __construct()
     {
-        
     }
 
     public function profile()
@@ -56,11 +55,11 @@ class UserController extends Controller
         $page = $req->page;
         $limit = $req->limit;
         /* DB::enableQueryLog(); */
-        
+
         if ($req->user_name) {
             $user_data = User::where('user_name', ($req->user_name))->first();
             $user_id = $user_data->user_id;
-        }else{
+        } else {
             $user_id = Auth::user()->user_id;
         }
 
@@ -98,8 +97,12 @@ class UserController extends Controller
             )
                 ->leftJoin('editions', 'editions.token_id', 'tokens.token_id')
                 ->where('user_id', $user_id)
-                ->groupBy('tokens.token_id')
-                ->paginate($limit);
+                ->groupBy('tokens.token_id');
+
+            if ($req->user_name) {
+                $tokens = $tokens->where('token_status', Constants::READY);
+            }
+            $tokens = $tokens->paginate($limit);
         }
         /* print_r(DB::getQueryLog());
         die; */
