@@ -100,8 +100,12 @@ class UserController extends Controller
                 ->groupBy('tokens.token_id');
 
             if ($req->user_name) {
-                if ($user_id != Auth::user()->user_id) {
+                if (!isset(Auth::user()->user_id)) {
                     $tokens = $tokens->where('token_status', Constants::READY);
+                } else {
+                    if ($user_id != Auth::user()->user_id) {
+                        $tokens = $tokens->where('token_status', Constants::READY);
+                    }
                 }
             }
             $tokens = $tokens->paginate($limit);
