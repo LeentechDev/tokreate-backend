@@ -36,7 +36,7 @@ class WalletController extends Controller
         try {
             $cipher = "aes-256-cbc";
             $seed_phrase = $request->input('seed_phrase');
-            $encryption_key = env("ENCRYPTION_KEY");
+            $encryption_key = str_random(8);;
             $initialization_vector = env("INITIALIZATION_VECTOR");
             $wallet_address = $request->input('wallet_address');
             $encrypted_data = openssl_encrypt($seed_phrase, $cipher, $encryption_key, 0, $initialization_vector);
