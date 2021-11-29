@@ -110,6 +110,10 @@ class DragonpayController extends Controller
             $params['digest'] = sha1($digest_string);
             if ($request->proc_id && $request->proc_id !== 'undefined') {
                 $params['procid'] = $request->proc_id;
+                /* comment this if we are going to production server */
+                if ($params['procid'] == 'DPAY') {
+                    $params['procid'] = '';
+                }
             }
 
             $url = $this->getBaseUrl() . 'Pay.aspx?' . http_build_query($params, '', '&');
