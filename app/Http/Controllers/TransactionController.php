@@ -62,8 +62,11 @@ class TransactionController extends Controller
                     }
                 })
                 ->with(['transaction_owner', 'token'])
+                
+                ->orderBy('transaction_payment_status', 'DESC')
+                ->orderBy('transaction_status', 'ASC')
                 ->orderBy($request->sort, $request->sort_dirc)
-                ->orderBy('transaction_payment_status', 'ASC')
+                
                 ->paginate($request->limit);
 
             $response = (object)[
