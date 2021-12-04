@@ -16,6 +16,8 @@ use App\Edition;
 use App\PayoutTransaction;
 use App\SiteSettings;
 use App\TokenHistory;
+use App\Notifications;
+
 use DB;
 
 class PostbackController extends Controller
@@ -62,12 +64,19 @@ class PostbackController extends Controller
 
                             $user_data = User::find($transaction->user_id);
                             $token = Token::find($transaction->transaction_token_id);
-                            Notifications::create([
-                                'notification_message' => '<p<b>' . $user_data->profile->user_profile_full_name . '</b>, has been successfully processed the minting payment for "<b>' . $token->token_title . '</b>"',
-                                'notification_to' => 1,
-                                'notification_from' => $transaction->user_id,
-                                'notification_type' => Constants::NOTIF_MINT_PAYMENT_SUCCESS,
-                            ]);
+                            
+                            $all_admin = User::where('user_role_id', Constants::USER_ADMIN)->get();
+                            foreach ($all_admin as $key => $admin) {
+                                if ($admin->profile->user_notification_settings == 1) {
+                                    Notifications::create([
+                                        'notification_message' => '<p<b>' . $user_data->profile->user_profile_full_name . '</b>, has been successfully processed the minting payment for "<b>' . $token->token_title . '</b>"',
+                                        'notification_to' => $admin->user_id,
+                                        'notification_item' => $transaction->transaction_token_id,
+                                        'notification_from' => $transaction->user_id,
+                                        'notification_type' => Constants::NOTIF_MINT_PAYMENT_SUCCESS,
+                                    ]);
+                                }
+                            }
 
                         } catch (\Throwable $th) {
                             return $th;
