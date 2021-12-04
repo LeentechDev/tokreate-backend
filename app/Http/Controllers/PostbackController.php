@@ -51,59 +51,52 @@ class PostbackController extends Controller
 
             if (strval($request->digest) == $validateDigest) {
 
+                $tnx_qry = Transaction::where('transaction_payment_tnxid', $request->txnid);
+
+                $transaction = $tnx_qry->first();
+
                 switch ($request->status) {
                     case 'S':
                         try {
-                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_SUCCESS
+                            $tnx_qry->update(['transaction_payment_status' => Constants::TRANSACTION_PAYMENT_SUCCESS]);
+
+                            $user_data = User::find($transaction->user_id);
+                            $token = Token::find($transaction->transaction_token_id);
+                            Notifications::create([
+                                'notification_message' => '<p<b>' . $user_data->profile->user_profile_full_name . '</b>, has been successfully processed the minting payment for "<b>' . $token->token_title . '</b>"',
+                                'notification_to' => 1,
+                                'notification_from' => $transaction->user_id,
+                                'notification_type' => Constants::NOTIF_MINT_PAYMENT_SUCCESS,
                             ]);
-                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                            // return responseWithMessage(200, "Success", $result);
+
                         } catch (\Throwable $th) {
                             return $th;
                         }
                         break;
                     case 'P':
                         try {
-                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_PENDING
-                            ]);
-
-                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                            // return responseWithMessage(200, "Success", $result);
+                            $tnx_qry->update(['transaction_payment_status' => Constants::TRANSACTION_PAYMENT_PENDING]);
                         } catch (\Throwable $th) {
                             return $th;
                         }
                         break;
                     case 'F':
                         try {
-                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
-                            ]);
-                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                            // return responseWithMessage(200, "Success", $result);
+                            $tnx_qry->update(['transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED]);
                         } catch (\Throwable $th) {
                             return $th;
                         }
                         break;
                     case 'V':
                         try {
-                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_CANCEL
-                            ]);
-                            $transaction = Transaction::where('transaction_payment_tnxid', $request->txnid)->first();
-                            // return responseWithMessage(200, "Success", $result);
+                            $tnx_qry->update(['transaction_payment_status' => Constants::TRANSACTION_PAYMENT_CANCEL]);
                         } catch (\Throwable $th) {
                             return $th;
                         }
                         break;
                     default:
                         try {
-                            Transaction::where('transaction_payment_tnxid', $request->txnid)->update([
-                                'transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED
-                            ]);
-                            $result = Transaction::where('token_transaction_payment_tnxid', $request->txnid)->first();
-                            // return responseWithMessage(200, "Success", $result);
+                            $tnx_qry->update(['transaction_payment_status' => Constants::TRANSACTION_PAYMENT_FAILED]);
                         } catch (\Throwable $th) {
                             return $th;
                         }

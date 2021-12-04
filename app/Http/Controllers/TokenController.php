@@ -403,10 +403,17 @@ class TokenController extends Controller
                         ->orWhere('user_profile_full_name', 'like', '%' . $searchTerm . '%')
                         ->orWhere('token_description', 'like', '%' . $searchTerm . '%');
                 }
+                if ($request->filter_payment_status !== "") {
+                    $q->where('transaction_payment_status', $request->filter_payment_status);
+                }
+                if ($request->filter_status !== "") {
+                    $q->where('token_status', $request->filter_status);
+                }
                 if ($request->filter_urgency !== "") {
                     $q->where('transaction_urgency', $request->filter_urgency);
                 }
             })
+            ->orderBy('transactions.transaction_payment_status', 'DESC')
             ->orderBy('token_status', 'ASC')
             ->orderBy('token_created_at', 'DESC')
             ->where('transactions.transaction_type', Constants::TRANSACTION_MINTING)

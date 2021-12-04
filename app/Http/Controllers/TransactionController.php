@@ -248,6 +248,15 @@ class TransactionController extends Controller
                                                 });
                                             }
 
+                                            if ($edition_owner->profile->user_notification_settings == 1) {
+                                                Notifications::create([
+                                                    'notification_message' => $email_msg2,
+                                                    'notification_to' => $edition_owner->user_id,
+                                                    'notification_from' => Auth::user()->user_id,
+                                                    'notification_type' => Constants::NOTIF_SOLD_TOKEN,
+                                                ]);
+                                            }
+
                                             if ($token_creator->creator->user_id !== $edition_owner->user_id) {
 
                                                 $payout_details = Payout::where('user_id', $token_creator->creator->user_id)->first();
@@ -271,10 +280,21 @@ class TransactionController extends Controller
                                                 }
 
                                                 $email_msg3 = '<p>Hi <b>' . $token_creator->creator->profile->user_profile_full_name . '</b>, your created artwork "<b>' . $transaction->token->token_title . '</b>" has been sold for <b>Php ' . $transaction->transaction_token_price . '</b>. You will received <b>Php ' . $estimated_royalty_amount . '</b> royalty amount.</p>';
-                                                Mail::send('mail.email', ['msg' => $email_msg3, 'title' => 'Token Purchase'], function ($message) use ($token_creator) {
-                                                    $message->to($token_creator->creator->user_email, $token_creator->creator->profile->user_profile_full_name)->subject('Token Purchase');
-                                                    $message->from('support@tokreate.com', 'Tokreate');
-                                                });
+                                                if ($token_creator->creator->profile->user_mail_notification == 1) {
+                                                    Mail::send('mail.email', ['msg' => $email_msg3, 'title' => 'Token Purchase'], function ($message) use ($token_creator) {
+                                                        $message->to($token_creator->creator->user_email, $token_creator->creator->profile->user_profile_full_name)->subject('Token Purchase');
+                                                        $message->from('support@tokreate.com', 'Tokreate');
+                                                    });
+                                                }
+
+                                                if ($token_creator->creator->profile->user_notification_settings == 1) {
+                                                    Notifications::create([
+                                                        'notification_message' => $email_msg3,
+                                                        'notification_to' => $token_creator->creator->user_id,
+                                                        'notification_from' => Auth::user()->user_id,
+                                                        'notification_type' => Constants::NOTIF_SOLD_TOKEN,
+                                                    ]);
+                                                }
                                             }
                                             break;
                                         case -1:
