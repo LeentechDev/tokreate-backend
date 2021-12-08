@@ -570,6 +570,7 @@ class UserController extends Controller
 
     public function copyLinkArtistProfile(Request $request, $user_name)
     {
+        $user_name = str_replace('%20', ' ', $user_name);
         $user = User::where('user_name', $user_name)
             ->with([
                 'profile',
