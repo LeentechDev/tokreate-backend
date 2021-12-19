@@ -3,10 +3,12 @@
 namespace App;
 
 use Illuminate\Auth\Authenticatable;
+use Illuminate\Auth\MustVerifyEmail;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 use App\User_profile;
@@ -17,9 +19,10 @@ use App\Payout;
 use App\Edition;
 use App\Notifications;
 
-class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
+
+class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject, MustVerifyEmailContract
 {
-    use Authenticatable, Authorizable;
+    use Authenticatable, Authorizable, MustVerifyEmail;
 
     /**
      * The attributes that are mass assignable.
@@ -30,7 +33,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     const UPDATED_AT = 'user_last_login';
     protected $primaryKey = 'user_id';
     protected $fillable = [
-        'user_name', 'user_bio', 'user_email', 'user_role_id', 'user_last_login', 'user_status', 'user_notification_settings'
+        'user_name', 'user_bio', 'user_email', 'user_role_id', 'email_verified_at', 'user_last_login', 'user_status', 'user_notification_settings'
     ];
 
     // protected $with = ['profile'];
@@ -47,6 +50,15 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     protected $with = [
         'profile',
         'payout_details'
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
     ];
 
     public function getJWTIdentifier()

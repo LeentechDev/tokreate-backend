@@ -37,6 +37,10 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('gas-fee', 'HomeController@getGasFees');
     $router->get('site-settings', 'HomeController@siteSettings');
     $router->post('update-site-settings', 'HomeController@updateSiteSettings');
+
+
+    $router->post('email/verification-notification', 'AuthController@sendVerificationEmail');
+    $router->get('verify-email/{id}/{hash}', 'AuthController@verify');
 });
 
 
@@ -67,6 +71,8 @@ $router->group(['prefix' => 'api/users'], function () use ($router) {
     $router->get('', 'UserController@userManagementList');
     $router->get('{user_id}', 'UserController@viewUserProfile');
 });
+
+
 
 
 $router->group(['prefix' => 'api/token'], function () use ($router) {

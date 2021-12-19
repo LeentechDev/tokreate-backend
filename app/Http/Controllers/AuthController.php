@@ -13,6 +13,7 @@ use App\Notifications;
 use App\ResetPassword;
 use App\Fund;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
@@ -26,6 +27,7 @@ class AuthController extends Controller
     protected const MERCHANT_PASS = 'Da5qgHfEw3zN';
     protected const MERCHANT_API_KEY = 'bec973b72e20e653ddc54c0b37cbf18a254b6928';
     protected const MODE = 'development';
+    
     public function register(Request $request)
     {
         $this->validate($request, [
@@ -33,7 +35,7 @@ class AuthController extends Controller
             'user_email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
-        /* try { */
+        try {
             //registration
             $user = new User;
             $user->user_name = $request->input('user_name');
@@ -63,11 +65,9 @@ class AuthController extends Controller
             );
 
             $credentials = $request->only(['user_email', 'password']);
-
             if (!$token = Auth::attempt($credentials)) {
                 return response()->json(['message' => 'Your email and/or password is incorrect.'], 401);
             }
-
             $user_data = User::where('user_id', Auth::user()->user_id)
                 ->with([
                     'profile',
@@ -82,7 +82,6 @@ class AuthController extends Controller
                 ])
                 ->where('user_role_id', Constants::USER_ARTIST)->with(['profile'])->first();
 
-
             if ($user_data) {
                 if ($user_data->user_status === Constants::USER_STATUS_ACTIVE) {
                     if ($user_data->fund) {
@@ -90,20 +89,27 @@ class AuthController extends Controller
                     }
                 }
             }
-            
+
+            if (! Auth::user()->hasVerifiedEmail()) {
+                Auth::user()->sendEmailVerificationNotification();
+            }
+
+            /* event(new Registered($user)); */
             $response = (object)[
                 "success" => true,
                 "result" => [
                     "user_profile" => $user_data,
-                    "token" => $token,
+                    // "token" => $token,
                     "message" => 'Congratulation, your account has been successfully created',
                 ]
             ];
 
-            return response()->json($response, 200);
-        /* } catch (\Exception $e) {
+            // return response()->json($response, 200);
+            
+            
+        } catch (\Exception $e) {
             return response()->json(['message' => 'User Registration Failed!'], 409);
-        } */
+        }
     }
 
     public function login(Request $request)
