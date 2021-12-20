@@ -95,7 +95,7 @@ $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 |
 */
 $app->register(Illuminate\Mail\MailServiceProvider::class);
-$app->register(Illuminate\Notifications\NotificationServiceProvider::class,);
+$app->register(Illuminate\Notifications\NotificationServiceProvider::class);
 $app->configure('mail');
 $app->withFacades();
 $app->alias('mailer', Illuminate\Mail\Mailer::class);
