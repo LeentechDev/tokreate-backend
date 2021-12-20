@@ -5,27 +5,45 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+// use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 class EmailVerificationController extends Controller
 {
 
     public function sendVerificationEmail(Request $request)
     {
-        if ($request->user()->hasVerifiedEmail()) {
-            return [
-                'message' => 'Already Verified'
+        try {
+            if ($request->user()->hasVerifiedEmail()) {
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Email address already verified!",
+                    ]
+                ];
+                return response()->json($response, 201);
+            }
+
+            $user = $request->user();
+            $user->email = $request->user()->user_email;
+            $user->email_address = $request->user()->user_email;
+
+            $user->sendEmailVerificationNotification();
+
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Verification link sent.",
+                ]
             ];
+            return response()->json($response, 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Something went wrong. Try again later!'], 409);
         }
-
-        $request->user()->sendEmailVerificationNotification();
-
-        return ['status' => 'verification-link-sent'];
     }
 
-    public function verify(EmailVerificationRequest $request)
+    public function verify(Request $request)
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        /* if ($request->user()->hasVerifiedEmail()) {
             return [
                 'message' => 'Email already verified'
             ];
@@ -37,6 +55,47 @@ class EmailVerificationController extends Controller
 
         return [
             'message'=>'Email has been verified'
-        ];
+        ]; */
+
+        $this->validate($request, [
+            'token' => 'required|string',
+          ]);
+
+        try {
+            \Tymon\JWTAuth\Facades\JWTAuth::getToken();
+            \Tymon\JWTAuth\Facades\JWTAuth::parseToken()->authenticate();
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Token Expired'], 409);
+        }
+            if ( ! $request->user() ) {
+                $response = (object)[
+                    "success" => false,
+                    "result" => [
+                        "message" => "Email address already verified!",
+                    ]
+                ];
+                return response()->json($response, 401);
+            }
+            
+            if ( $request->user()->hasVerifiedEmail() ) {
+                $response = (object)[
+                    "success" => true,
+                    "result" => [
+                        "message" => "Email address already verified!",
+                    ]
+                ];
+                return response()->json($response, 200);
+            }
+            
+            $request->user()->markEmailAsVerified();
+            $response = (object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Email address has been successfully verified!",
+                ]
+            ];
+            return response()->json($response, 200);
+        
     }
 }

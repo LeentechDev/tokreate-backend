@@ -35,7 +35,7 @@ class AuthController extends Controller
             'user_email' => 'required|email|unique:users',
             'password' => 'required|string',
         ]);
-        try {
+        /* try { */
             //registration
             $user = new User;
             $user->user_name = $request->input('user_name');
@@ -90,26 +90,29 @@ class AuthController extends Controller
                 }
             }
 
-            if (! Auth::user()->hasVerifiedEmail()) {
-                Auth::user()->sendEmailVerificationNotification();
+            $user = $request->user();
+            $user->email = $request->user()->user_email;
+            $user->email_address = $request->user()->user_email;
+
+            if (! $user->hasVerifiedEmail()) {
+                $user->sendEmailVerificationNotification();
             }
 
-            /* event(new Registered($user)); */
             $response = (object)[
                 "success" => true,
                 "result" => [
                     "user_profile" => $user_data,
-                    // "token" => $token,
+                    "token" => $token,
                     "message" => 'Congratulation, your account has been successfully created',
                 ]
             ];
 
-            // return response()->json($response, 200);
+            return response()->json($response, 200);
             
             
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'User Registration Failed!'], 409);
-        }
+        /* } catch (\Exception $e) {
+            return $e;
+        } */
     }
 
     public function login(Request $request)

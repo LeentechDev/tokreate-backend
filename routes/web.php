@@ -39,8 +39,8 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('update-site-settings', 'HomeController@updateSiteSettings');
 
 
-    $router->post('email/verification-notification', 'AuthController@sendVerificationEmail');
-    $router->get('verify-email/{id}/{hash}', 'AuthController@verify');
+    $router->post('email/verification', 'EmailVerificationController@sendVerificationEmail');
+    $router->get('email/verify', ['as' => 'email.verify', 'uses' => 'EmailVerificationController@verify']);
 });
 
 

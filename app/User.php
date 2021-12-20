@@ -3,13 +3,14 @@
 namespace App;
 
 use Illuminate\Auth\Authenticatable;
-use Illuminate\Auth\MustVerifyEmail;
 use Laravel\Lumen\Auth\Authorizable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
-use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+
+use Illuminate\Notifications\Notifiable;
+use App\Traits\MustVerifyEmail;
 
 use App\User_profile;
 use App\Wallet;
@@ -20,9 +21,9 @@ use App\Edition;
 use App\Notifications;
 
 
-class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject, MustVerifyEmailContract
+class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
-    use Authenticatable, Authorizable, MustVerifyEmail;
+    use Authenticatable, Authorizable, MustVerifyEmail, Notifiable;
 
     /**
      * The attributes that are mass assignable.
