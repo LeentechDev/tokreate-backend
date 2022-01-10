@@ -101,6 +101,7 @@ $router->group(['prefix' => 'api/wallet'], function () use ($router) {
 $router->group(['prefix' => 'api/cms'], function () use ($router) {
     $router->post('add-faqs', 'FaqsController@addFaqs');
     $router->post('update-faqs', 'FaqsController@updateFaqs');
+    $router->post('delete-faqs/{id}', 'FaqsController@deleteFaqs');
     $router->get('specific-faqs/{id}', 'FaqsController@specificFaqs');
     $router->get('faqs_list', 'FaqsController@faqsList');
     $router->get('terms-and-conditions', 'TermsandConditionController@viewTermsandConditions');

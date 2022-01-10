@@ -42,6 +42,28 @@ class FaqsController extends Controller
         }
     }
 
+    public function deleteFaqs($id){
+        if($id){
+            Faqs::where('id',$id)->delete();
+    
+            $response=(object)[
+                "success" => true,
+                "result" => [
+                    "message" => "Faqs successfully deleted."
+                ]
+            ];
+            return response()->json($response, 201);
+        }else{
+            $response=(object)[
+                "success" => false,
+                "result" => [
+                    "message" => "Invalid parameters",
+                ]
+            ];
+            return response()->json($response, 401);
+        }
+    }
+
 
     public function updateFaqs(Request $request){
         $faqs = Faqs::findorfail($request->id);
