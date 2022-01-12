@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use Tymon\JWTAuth\Facades\JWTAuth;
-
+use Illuminate\Support\Facades\Auth;
 
 class VerifyEmail extends Notification
 {
@@ -69,7 +69,7 @@ class VerifyEmail extends Notification
             ['id' => $notifiable->getKey()]
         ); */
         $token = JWTAuth::fromUser($notifiable);
-        return ENV('APP_URL').'account/email/verify?token='.$token;
+        return ENV('APP_URL').'account/email/verify?id='.Auth::user()->user_id.'&token='.$token;
     }
 
     /**
