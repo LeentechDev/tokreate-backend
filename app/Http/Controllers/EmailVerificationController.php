@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
 // use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\User;
 
 class EmailVerificationController extends Controller
 {
@@ -69,16 +70,12 @@ class EmailVerificationController extends Controller
             return response()->json(['message' => 'Token Expired'], 409);
         }
             if ( ! $request->user() ) {
-                $response = (object)[
-                    "success" => false,
-                    "result" => [
-                        "message" => "Email address already verified!",
-                    ]
-                ];
-                return response()->json($response, 401);
+                $user = User::find($request->id);
+            }else{
+                $user = $request->user();
             }
             
-            if ( $request->user()->hasVerifiedEmail() ) {
+            if ( $user->hasVerifiedEmail() ) {
                 $response = (object)[
                     "success" => true,
                     "result" => [
@@ -88,7 +85,7 @@ class EmailVerificationController extends Controller
                 return response()->json($response, 200);
             }
             
-            $request->user()->markEmailAsVerified();
+            $user->markEmailAsVerified();
             $response = (object)[
                 "success" => true,
                 "result" => [
