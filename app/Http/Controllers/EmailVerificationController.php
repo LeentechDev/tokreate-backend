@@ -62,37 +62,41 @@ class EmailVerificationController extends Controller
             'token' => 'required|string',
           ]);
 
-        try {
-            \Tymon\JWTAuth\Facades\JWTAuth::getToken();
-            \Tymon\JWTAuth\Facades\JWTAuth::parseToken()->authenticate();
+          $statusCode = 201;
+        if ( ! $request->user() ) {
+            $user = User::find($request->id);
+        }else{
 
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Token Expired'], 409);
+            try {
+                \Tymon\JWTAuth\Facades\JWTAuth::getToken();
+                \Tymon\JWTAuth\Facades\JWTAuth::parseToken()->authenticate();
+    
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Token Expired'], 409);
+            }
+
+            $user = $request->user();
+            $statusCode = 200;
         }
-            if ( ! $request->user() ) {
-                $user = User::find($request->id);
-            }else{
-                $user = $request->user();
-            }
-            
-            if ( $user->hasVerifiedEmail() ) {
-                $response = (object)[
-                    "success" => true,
-                    "result" => [
-                        "message" => "Email address already verified!",
-                    ]
-                ];
-                return response()->json($response, 200);
-            }
-            
-            $user->markEmailAsVerified();
+        
+        if ( $user->hasVerifiedEmail() ) {
             $response = (object)[
                 "success" => true,
                 "result" => [
-                    "message" => "Email address has been successfully verified!",
+                    "message" => "Email address already verified!",
                 ]
             ];
-            return response()->json($response, 200);
+            return response()->json($response, $statusCode);
+        }
+        
+        $user->markEmailAsVerified();
+        $response = (object)[
+            "success" => true,
+            "result" => [
+                "message" => "Email address has been successfully verified!",
+            ]
+        ];
+        return response()->json($response, $statusCode);
         
     }
 }
