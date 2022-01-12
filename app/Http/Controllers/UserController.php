@@ -88,6 +88,7 @@ class UserController extends Controller
                 ->where('token_status', Constants::READY)
                 ->where('on_market', $on_market)
                 ->where('editions.owner_id', $user_id)
+                ->orderBy('created_at', 'DESC')
                 ->paginate($limit);
         } else {
             $tokens = Token::select(
@@ -97,6 +98,7 @@ class UserController extends Controller
             )
                 ->leftJoin('editions', 'editions.token_id', 'tokens.token_id')
                 ->where('user_id', $user_id)
+                ->orderBy('created_at', 'DESC')
                 ->groupBy('tokens.token_id');
 
             if ($req->user_name) {

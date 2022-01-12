@@ -12,7 +12,7 @@ class EmailVerificationController extends Controller
 
     public function sendVerificationEmail(Request $request)
     {
-        try {
+        // try {
             if ($request->user()->hasVerifiedEmail()) {
                 $response = (object)[
                     "success" => true,
@@ -36,9 +36,9 @@ class EmailVerificationController extends Controller
                 ]
             ];
             return response()->json($response, 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Something went wrong. Try again later!'], 409);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json(['message' => 'Something went wrong. Try again later!'], 409);
+        // }
     }
 
     public function verify(Request $request)
